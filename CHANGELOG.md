@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fallback configuration screen for vanilla-compatible setup
 
 ### Technical
-- Built for Minecraft 1.21.11 with Fabric Loader 0.18.2
-- Requires Fabric API 0.139.4+1.21.11
+- Multi-version support: Minecraft 1.21.9, 1.21.10, 1.21.11
+- Built with Stonecutter for separate version-specific JARs
+- Requires Fabric Loader 0.18.0+
 - Java 21 required

@@ -1,6 +1,6 @@
 # Simple Death Bans
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.11-green)](https://minecraft.net)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.9--1.21.11-green)](https://minecraft.net)
 [![Fabric](https://img.shields.io/badge/Mod%20Loader-Fabric-blue)](https://fabricmc.net)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
 [![Version](https://img.shields.io/badge/Version-1.0.0-orange)](https://modrinth.com/mod/simpledeathban)
@@ -127,7 +127,7 @@ Config file: `config/simpledeathbans.json`
 
 **Required:**
 - Fabric Loader 0.18.0+
-- Minecraft 1.21.11
+- Minecraft 1.21.9, 1.21.10, or 1.21.11
 - Fabric API
 
 **Optional (Recommended):**

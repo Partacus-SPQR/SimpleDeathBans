@@ -3,6 +3,9 @@
 build/
 !gradle/wrapper/gradle-wrapper.jar
 
+# Version builds (Stonecutter)
+versions/*/build/
+
 # IDE
 .idea/
 *.iml
