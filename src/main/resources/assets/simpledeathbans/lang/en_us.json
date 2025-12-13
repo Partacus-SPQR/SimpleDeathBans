@@ -1,0 +1,65 @@
+{
+    "itemGroup.simpledeathbans": "Simple Death Bans",
+    
+    "item.simpledeathbans.resurrection_totem": "Resurrection Totem",
+    "item.simpledeathbans.resurrection_totem.tooltip": "Use on a powered Netherite Beacon while crouching to finalize the Resurrection Ritual",
+    
+    "key.simpledeathbans.config": "Open Config Screen",
+    "key.categories.simpledeathbans": "Simple Death Bans",
+    "category.simpledeathbans.category": "Simple Death Bans",
+    
+    "config.simpledeathbans.title": "Simple Death Bans Configuration",
+    "config.simpledeathbans.general": "General Settings",
+    "config.simpledeathbans.soullink": "Soul Link Settings",
+    "config.simpledeathbans.mercy": "Mercy Cooldown Settings",
+    "config.simpledeathbans.pvp": "PvP Settings",
+    "config.simpledeathbans.altar": "Altar of Resurrection Settings",
+    
+    "config.simpledeathbans.baseBanMinutes": "Base Ban Time (minutes)",
+    "config.simpledeathbans.banMultiplier": "Ban Time Multiplier",
+    "config.simpledeathbans.maxBanTier": "Maximum Ban Tier",
+    "config.simpledeathbans.enableSoulLink": "Enable Soul Link",
+    "config.simpledeathbans.soulLinkDamageShare": "Soul Link Damage Share",
+    "config.simpledeathbans.mercyPlaytimeHours": "Mercy Playtime (hours)",
+    "config.simpledeathbans.mercyMovementBlocks": "Mercy Movement Requirement (blocks)",
+    "config.simpledeathbans.mercyBlockInteractions": "Mercy Block Interactions Required",
+    "config.simpledeathbans.pvpBanMultiplier": "PvP Ban Multiplier",
+    "config.simpledeathbans.enableGhostEcho": "Enable Ghost Echo",
+    "config.simpledeathbans.enableResurrectionAltar": "Enable Resurrection Altar",
+    
+    "simpledeathbans.soullink.paired": "§5Your soul has been bound to %s",
+    "simpledeathbans.soullink.severed": "§4Your soul has been severed.",
+    "simpledeathbans.soullink.partner_died": "§4%s's death has claimed your soul.",
+    
+    "simpledeathbans.mercy.forgiven": "§aYour past sins are forgotten.",
+    "simpledeathbans.mercy.tier_reduced": "§aBan tier reduced to %d",
+    
+    "simpledeathbans.ghost.lost": "§7§o%s has been lost to the void for %s.",
+    
+    "simpledeathbans.altar.initiated": "§d[%s] has initiated the Altar of Resurrection. %d/%d remaining to finalize ritual.",
+    "simpledeathbans.altar.joined": "§d[%s] has joined the ritual. %d/%d remaining.",
+    "simpledeathbans.altar.success": "§6§lThe ritual is complete! A lost soul has been freed!",
+    "simpledeathbans.altar.unbanned": "§a%s has been resurrected from the void!",
+    "simpledeathbans.altar.no_banned": "§cNo banned players to resurrect.",
+    "simpledeathbans.altar.invalid_structure": "§cThe beacon must be powered by a full Netherite base!",
+    "simpledeathbans.altar.need_totem": "§cYou need a Resurrection Totem to perform this ritual!",
+    "simpledeathbans.altar.already_joined": "§eYou have already joined this ritual.",
+    
+    "simpledeathbans.ban.message": "§cYou have been banned for %s due to death.\n§7Ban Tier: %d\n§7Reason: %s",
+    "simpledeathbans.ban.pvp_death": "Slain by %s",
+    "simpledeathbans.ban.pve_death": "%s",
+    "simpledeathbans.ban.soul_sever": "Soul Severed",
+    
+    "simpledeathbans.command.reload": "§aConfiguration reloaded!",
+    "simpledeathbans.command.settier": "§aSet %s's ban tier to %d",
+    "simpledeathbans.command.gettier": "§e%s's current ban tier: %d",
+    "simpledeathbans.command.clearbans": "§aCleared all Simple Death Bans!",
+    "simpledeathbans.command.unban": "§aUnbanned %s (ban tier preserved)",
+    "simpledeathbans.command.soullink.set": "§aSoul linked %s and %s",
+    "simpledeathbans.command.soullink.clear": "§aCleared soul link for %s",
+    "simpledeathbans.command.soullink.status": "§e%s is soul linked to %s",
+    "simpledeathbans.command.soullink.none": "§e%s has no soul partner",
+    
+    "death.attack.soul_sever": "%1$s's soul was severed",
+    "death.attack.soul_sever.player": "%1$s's soul was severed by %2$s's death"
+}

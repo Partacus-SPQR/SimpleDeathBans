@@ -1,0 +1,33 @@
+{
+    "schemaVersion": 1,
+    "id": "simpledeathbans",
+    "version": "${version}",
+    "name": "Simple Death Bans",
+    "description": "A hardcore survival mod with progressive banning, soul links, and resurrection rituals.",
+    "authors": ["Partacus-SPQR"],
+    "contact": {
+        "homepage": "https://modrinth.com/mod/simpledeathban",
+        "sources": "https://github.com/Partacus-SPQR/SimpleDeathBan"
+    },
+    "license": "MIT",
+    "icon": "assets/simpledeathbans/icon.png",
+    "environment": "*",
+    "entrypoints": {
+        "main": ["com.simpledeathbans.SimpleDeathBans"],
+        "client": ["com.simpledeathbans.SimpleDeathBansClient"],
+        "modmenu": ["com.simpledeathbans.config.ModMenuIntegration"]
+    },
+    "mixins": [
+        "simpledeathbans.mixins.json"
+    ],
+    "depends": {
+        "fabricloader": ">=0.18.0",
+        "minecraft": "~1.21.11",
+        "java": ">=21",
+        "fabric-api": "*"
+    },
+    "recommends": {
+        "modmenu": ">=17.0.0",
+        "cloth-config": ">=20.0.0"
+    }
+}

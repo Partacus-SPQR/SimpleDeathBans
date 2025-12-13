@@ -1,0 +1,23 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "TNT",
+        "NHN",
+        "TNT"
+    ],
+    "key": {
+        "T": {
+            "item": "minecraft:totem_of_undying"
+        },
+        "N": {
+            "item": "minecraft:nether_star"
+        },
+        "H": {
+            "item": "minecraft:heavy_core"
+        }
+    },
+    "result": {
+        "id": "simpledeathbans:resurrection_totem",
+        "count": 1
+    }
+}
