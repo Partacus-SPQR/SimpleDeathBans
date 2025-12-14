@@ -119,19 +119,22 @@ Config file: `config/simpledeathbans.json`
 ```json
 {
     "baseBanMinutes": 1,
-    "banMultiplier": 1.0,
+    "banMultiplierPercent": 100,
     "maxBanTier": 10,
     "enableSoulLink": false,
-    "soulLinkDamageShare": 1.0,
+    "soulLinkDamageSharePercent": 100,
+    "soulLinkTotemSavesPartner": true,
     "mercyPlaytimeHours": 24,
     "mercyMovementBlocks": 50,
     "mercyBlockInteractions": 20,
-    "pvpBanMultiplier": 0.5,
-    "pveBanMultiplier": 1.0,
+    "pvpBanMultiplierPercent": 50,
+    "pveBanMultiplierPercent": 100,
     "enableGhostEcho": true,
     "enableResurrectionAltar": true
 }
 ```
+
+**Note:** Multipliers are now stored as integer percentages (100 = 100%, 50 = 50%, etc.)
 
 ## Dependencies
 

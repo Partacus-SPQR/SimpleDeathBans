@@ -283,11 +283,11 @@ public class SimpleFallbackConfigScreen extends Screen {
         
         // Soul Link Totem Saves Partner
         soulLinkTotemSavesToggle = ButtonWidget.builder(
-            Text.literal("Totem Saves Partner: " + (config.soulLinkTotemSavesAll ? "ON" : "OFF")),
+            Text.literal("Totem Saves Partner: " + (config.soulLinkTotemSavesPartner ? "ON" : "OFF")),
             button -> {
                 if (canEdit) {
-                    config.soulLinkTotemSavesAll = !config.soulLinkTotemSavesAll;
-                    button.setMessage(Text.literal("Totem Saves Partner: " + (config.soulLinkTotemSavesAll ? "ON" : "OFF")));
+                    config.soulLinkTotemSavesPartner = !config.soulLinkTotemSavesPartner;
+                    button.setMessage(Text.literal("Totem Saves Partner: " + (config.soulLinkTotemSavesPartner ? "ON" : "OFF")));
                 } else {
                     showPermissionDenied();
                 }
@@ -295,7 +295,7 @@ public class SimpleFallbackConfigScreen extends Screen {
         ).dimensions(widgetX, y, WIDGET_WIDTH, 20).build();
         addScrollableWidget(soulLinkTotemSavesToggle, y);
         addResetButton(resetX, y, () -> {
-            config.soulLinkTotemSavesAll = true;
+            config.soulLinkTotemSavesPartner = true;
             soulLinkTotemSavesToggle.setMessage(Text.literal("Totem Saves Partner: ON"));
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
@@ -590,14 +590,14 @@ public class SimpleFallbackConfigScreen extends Screen {
             if (ClientPlayNetworking.canSend(ConfigSyncPayload.ID)) {
                 ClientPlayNetworking.send(new ConfigSyncPayload(
                     config.baseBanMinutes,
-                    config.banMultiplier,
+                    config.banMultiplierPercent,
                     config.maxBanTier,
                     config.exponentialBanMode,
                     config.enableGhostEcho,
                     config.enableSoulLink,
-                    config.soulLinkDamageShare,
+                    config.soulLinkDamageSharePercent,
                     config.soulLinkRandomPartner,
-                    config.soulLinkTotemSavesAll,
+                    config.soulLinkTotemSavesPartner,
                     config.enableSharedHealth,
                     config.sharedHealthDamagePercent,
                     config.sharedHealthTotemSavesAll,
@@ -606,8 +606,8 @@ public class SimpleFallbackConfigScreen extends Screen {
                     config.mercyMovementBlocks,
                     config.mercyBlockInteractions,
                     config.mercyCheckIntervalMinutes,
-                    config.pvpBanMultiplier,
-                    config.pveBanMultiplier,
+                    config.pvpBanMultiplierPercent,
+                    config.pveBanMultiplierPercent,
                     config.enableResurrectionAltar
                 ));
                 LOGGER.info("Sent config update to server");

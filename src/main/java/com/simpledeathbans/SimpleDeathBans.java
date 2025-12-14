@@ -156,14 +156,14 @@ public class SimpleDeathBans implements ModInitializer {
                 if (isOp) {
                     // Player IS an operator - apply config changes
                     config.baseBanMinutes = payload.baseBanMinutes();
-                    config.banMultiplier = payload.banMultiplier();
+                    config.banMultiplierPercent = payload.banMultiplierPercent();
                     config.maxBanTier = payload.maxBanTier();
                     config.exponentialBanMode = payload.exponentialBanMode();
                     config.enableGhostEcho = payload.enableGhostEcho();
                     config.enableSoulLink = payload.enableSoulLink();
-                    config.soulLinkDamageShare = payload.soulLinkDamageShare();
+                    config.soulLinkDamageSharePercent = payload.soulLinkDamageSharePercent();
                     config.soulLinkRandomPartner = payload.soulLinkRandomPartner();
-                    config.soulLinkTotemSavesAll = payload.soulLinkTotemSavesAll();
+                    config.soulLinkTotemSavesPartner = payload.soulLinkTotemSavesPartner();
                     config.enableSharedHealth = payload.enableSharedHealth();
                     config.sharedHealthDamagePercent = payload.sharedHealthDamagePercent();
                     config.sharedHealthTotemSavesAll = payload.sharedHealthTotemSavesAll();
@@ -172,8 +172,8 @@ public class SimpleDeathBans implements ModInitializer {
                     config.mercyMovementBlocks = payload.mercyMovementBlocks();
                     config.mercyBlockInteractions = payload.mercyBlockInteractions();
                     config.mercyCheckIntervalMinutes = payload.mercyCheckIntervalMinutes();
-                    config.pvpBanMultiplier = payload.pvpBanMultiplier();
-                    config.pveBanMultiplier = payload.pveBanMultiplier();
+                    config.pvpBanMultiplierPercent = payload.pvpBanMultiplierPercent();
+                    config.pveBanMultiplierPercent = payload.pveBanMultiplierPercent();
                     config.enableResurrectionAltar = payload.enableResurrectionAltar();
                     
                     config.save();
@@ -188,14 +188,14 @@ public class SimpleDeathBans implements ModInitializer {
                     // Broadcast updated config to ALL online players so they see the changes
                     ConfigSyncPayload broadcastPayload = new ConfigSyncPayload(
                         config.baseBanMinutes,
-                        config.banMultiplier,
+                        config.banMultiplierPercent,
                         config.maxBanTier,
                         config.exponentialBanMode,
                         config.enableGhostEcho,
                         config.enableSoulLink,
-                        config.soulLinkDamageShare,
+                        config.soulLinkDamageSharePercent,
                         config.soulLinkRandomPartner,
-                        config.soulLinkTotemSavesAll,
+                        config.soulLinkTotemSavesPartner,
                         config.enableSharedHealth,
                         config.sharedHealthDamagePercent,
                         config.sharedHealthTotemSavesAll,
@@ -204,8 +204,8 @@ public class SimpleDeathBans implements ModInitializer {
                         config.mercyMovementBlocks,
                         config.mercyBlockInteractions,
                         config.mercyCheckIntervalMinutes,
-                        config.pvpBanMultiplier,
-                        config.pveBanMultiplier,
+                        config.pvpBanMultiplierPercent,
+                        config.pveBanMultiplierPercent,
                         config.enableResurrectionAltar
                     );
                     

@@ -50,24 +50,24 @@ public class ClothConfigScreen {
         
         // Store original values for reverting non-operator changes
         final int origBaseBanMinutes = config.baseBanMinutes;
-        final double origBanMultiplier = config.banMultiplier;
+        final int origBanMultiplierPercent = config.banMultiplierPercent;
         final int origMaxBanTier = config.maxBanTier;
         final boolean origExponentialBanMode = config.exponentialBanMode;
         final boolean origEnableGhostEcho = config.enableGhostEcho;
         final boolean origEnableSoulLink = config.enableSoulLink;
-        final double origSoulLinkDamageShare = config.soulLinkDamageShare;
+        final int origSoulLinkDamageSharePercent = config.soulLinkDamageSharePercent;
         final boolean origSoulLinkRandomPartner = config.soulLinkRandomPartner;
-        final boolean origSoulLinkTotemSavesAll = config.soulLinkTotemSavesAll;
+        final boolean origSoulLinkTotemSavesPartner = config.soulLinkTotemSavesPartner;
         final boolean origEnableSharedHealth = config.enableSharedHealth;
-        final double origSharedHealthDamagePercent = config.sharedHealthDamagePercent;
+        final int origSharedHealthDamagePercent = config.sharedHealthDamagePercent;
         final boolean origSharedHealthTotemSavesAll = config.sharedHealthTotemSavesAll;
         final boolean origEnableMercyCooldown = config.enableMercyCooldown;
         final int origMercyPlaytimeHours = config.mercyPlaytimeHours;
         final int origMercyMovementBlocks = config.mercyMovementBlocks;
         final int origMercyBlockInteractions = config.mercyBlockInteractions;
         final int origMercyCheckIntervalMinutes = config.mercyCheckIntervalMinutes;
-        final double origPvpBanMultiplier = config.pvpBanMultiplier;
-        final double origPveBanMultiplier = config.pveBanMultiplier;
+        final int origPvpBanMultiplierPercent = config.pvpBanMultiplierPercent;
+        final int origPveBanMultiplierPercent = config.pveBanMultiplierPercent;
         final boolean origEnableResurrectionAltar = config.enableResurrectionAltar;
         
         ConfigBuilder builder = ConfigBuilder.create()
@@ -83,14 +83,14 @@ public class ClothConfigScreen {
                     if (ClientPlayNetworking.canSend(ConfigSyncPayload.ID)) {
                         ClientPlayNetworking.send(new ConfigSyncPayload(
                             config.baseBanMinutes,
-                            config.banMultiplier,
+                            config.banMultiplierPercent,
                             config.maxBanTier,
                             config.exponentialBanMode,
                             config.enableGhostEcho,
                             config.enableSoulLink,
-                            config.soulLinkDamageShare,
+                            config.soulLinkDamageSharePercent,
                             config.soulLinkRandomPartner,
-                            config.soulLinkTotemSavesAll,
+                            config.soulLinkTotemSavesPartner,
                             config.enableSharedHealth,
                             config.sharedHealthDamagePercent,
                             config.sharedHealthTotemSavesAll,
@@ -99,8 +99,8 @@ public class ClothConfigScreen {
                             config.mercyMovementBlocks,
                             config.mercyBlockInteractions,
                             config.mercyCheckIntervalMinutes,
-                            config.pvpBanMultiplier,
-                            config.pveBanMultiplier,
+                            config.pvpBanMultiplierPercent,
+                            config.pveBanMultiplierPercent,
                             config.enableResurrectionAltar
                         ));
                         LOGGER.info("Sent config update to server");
@@ -108,14 +108,14 @@ public class ClothConfigScreen {
                 } else {
                     // Revert all changes for non-operators
                     config.baseBanMinutes = origBaseBanMinutes;
-                    config.banMultiplier = origBanMultiplier;
+                    config.banMultiplierPercent = origBanMultiplierPercent;
                     config.maxBanTier = origMaxBanTier;
                     config.exponentialBanMode = origExponentialBanMode;
                     config.enableGhostEcho = origEnableGhostEcho;
                     config.enableSoulLink = origEnableSoulLink;
-                    config.soulLinkDamageShare = origSoulLinkDamageShare;
+                    config.soulLinkDamageSharePercent = origSoulLinkDamageSharePercent;
                     config.soulLinkRandomPartner = origSoulLinkRandomPartner;
-                    config.soulLinkTotemSavesAll = origSoulLinkTotemSavesAll;
+                    config.soulLinkTotemSavesPartner = origSoulLinkTotemSavesPartner;
                     config.enableSharedHealth = origEnableSharedHealth;
                     config.sharedHealthDamagePercent = origSharedHealthDamagePercent;
                     config.sharedHealthTotemSavesAll = origSharedHealthTotemSavesAll;
@@ -124,8 +124,8 @@ public class ClothConfigScreen {
                     config.mercyMovementBlocks = origMercyMovementBlocks;
                     config.mercyBlockInteractions = origMercyBlockInteractions;
                     config.mercyCheckIntervalMinutes = origMercyCheckIntervalMinutes;
-                    config.pvpBanMultiplier = origPvpBanMultiplier;
-                    config.pveBanMultiplier = origPveBanMultiplier;
+                    config.pvpBanMultiplierPercent = origPvpBanMultiplierPercent;
+                    config.pveBanMultiplierPercent = origPveBanMultiplierPercent;
                     config.enableResurrectionAltar = origEnableResurrectionAltar;
                     
                     if (client.player != null) {
@@ -162,25 +162,21 @@ public class ClothConfigScreen {
             .build());
         
         // Ban Multiplier as percentage slider (10-1000%, where 100% = 1.0x)
-        int banMultPercent = (int) Math.round(config.banMultiplier * 100);
-        if (banMultPercent < 10) banMultPercent = 10;
-        if (banMultPercent > 1000) banMultPercent = 1000;
         general.addEntry(entryBuilder.startIntSlider(
-                Text.translatable("config.simpledeathbans.banMultiplier"), banMultPercent, 10, 1000)
+                Text.translatable("config.simpledeathbans.banMultiplier"), config.banMultiplierPercent, 10, 1000)
             .setDefaultValue(100)
             .setTextGetter(val -> Text.literal(val + "%"))
             .setTooltip(Text.literal("Multiplier for ban time. 100% = 1x. Range: 10%-1000%. Default: 100%"))
-            .setSaveConsumer(val -> config.banMultiplier = val / 100.0)
+            .setSaveConsumer(val -> config.banMultiplierPercent = val)
             .build());
         
         // Display max tier as slider: -1 = infinite, 1-100 = actual tiers
-        int displayMaxTier = config.maxBanTier < 0 || config.maxBanTier > 100 ? -1 : config.maxBanTier;
         general.addEntry(entryBuilder.startIntSlider(
-                Text.translatable("config.simpledeathbans.maxBanTier"), displayMaxTier, -1, 100)
+                Text.translatable("config.simpledeathbans.maxBanTier"), config.maxBanTier, -1, 100)
             .setDefaultValue(-1)
             .setTextGetter(val -> val == -1 ? Text.literal("Infinite") : Text.literal(String.valueOf(val)))
             .setTooltip(Text.literal("Maximum ban tier. -1 = Infinite. Range: -1 to 100. Default: Infinite"))
-            .setSaveConsumer(val -> config.maxBanTier = val == -1 ? Integer.MAX_VALUE : val)
+            .setSaveConsumer(val -> config.maxBanTier = val)
             .build());
         
         general.addEntry(entryBuilder.startBooleanToggle(
@@ -203,27 +199,21 @@ public class ClothConfigScreen {
         ).build());
         
         // PvP Ban Multiplier as percentage slider (0-500%)
-        int pvpMultPercent = (int) Math.round(config.pvpBanMultiplier * 100);
-        if (pvpMultPercent < 0) pvpMultPercent = 0;
-        if (pvpMultPercent > 500) pvpMultPercent = 500;
         general.addEntry(entryBuilder.startIntSlider(
-                Text.translatable("config.simpledeathbans.pvpBanMultiplier"), pvpMultPercent, 0, 500)
+                Text.translatable("config.simpledeathbans.pvpBanMultiplier"), config.pvpBanMultiplierPercent, 0, 500)
             .setDefaultValue(50)
             .setTextGetter(val -> Text.literal(val + "%"))
             .setTooltip(Text.literal("Ban time multiplier for PvP deaths. 50% = half ban time. Default: 50%"))
-            .setSaveConsumer(val -> config.pvpBanMultiplier = val / 100.0)
+            .setSaveConsumer(val -> config.pvpBanMultiplierPercent = val)
             .build());
         
         // PvE Ban Multiplier as percentage slider (0-500%)
-        int pveMultPercent = (int) Math.round(config.pveBanMultiplier * 100);
-        if (pveMultPercent < 0) pveMultPercent = 0;
-        if (pveMultPercent > 500) pveMultPercent = 500;
         general.addEntry(entryBuilder.startIntSlider(
-                Text.literal("PvE Ban Multiplier"), pveMultPercent, 0, 500)
+                Text.literal("PvE Ban Multiplier"), config.pveBanMultiplierPercent, 0, 500)
             .setDefaultValue(100)
             .setTextGetter(val -> Text.literal(val + "%"))
             .setTooltip(Text.literal("Ban time multiplier for PvE deaths. 100% = normal ban time. Default: 100%"))
-            .setSaveConsumer(val -> config.pveBanMultiplier = val / 100.0)
+            .setSaveConsumer(val -> config.pveBanMultiplierPercent = val)
             .build());
         
         // --- Altar of Resurrection Header ---
@@ -256,11 +246,8 @@ public class ClothConfigScreen {
             .build());
         
         // Soul Link Damage Share as percentage slider (0-200%, where 100% = 1:1 ratio)
-        int damageSharePercent = (int) Math.round(config.soulLinkDamageShare * 100);
-        if (damageSharePercent < 0) damageSharePercent = 0;
-        if (damageSharePercent > 200) damageSharePercent = 200;
         soulLinkHealth.addEntry(entryBuilder.startIntSlider(
-                Text.translatable("config.simpledeathbans.soulLinkDamageShare"), damageSharePercent, 0, 200)
+                Text.translatable("config.simpledeathbans.soulLinkDamageShare"), config.soulLinkDamageSharePercent, 0, 200)
             .setDefaultValue(100)
             .setTextGetter(val -> Text.literal(val + "%"))
             .setTooltip(
@@ -268,7 +255,7 @@ public class ClothConfigScreen {
                 Text.literal("100% = 1:1 ratio (take 2 hearts, partner takes 2 hearts)").formatted(Formatting.GRAY),
                 Text.literal("50% = half damage, 200% = double damage").formatted(Formatting.GRAY),
                 Text.literal("Default: 100%").formatted(Formatting.GRAY))
-            .setSaveConsumer(val -> config.soulLinkDamageShare = val / 100.0)
+            .setSaveConsumer(val -> config.soulLinkDamageSharePercent = val)
             .build());
         
         soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
@@ -279,10 +266,10 @@ public class ClothConfigScreen {
             .build());
         
         soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
-                Text.literal("Totem Saves Partner"), config.soulLinkTotemSavesAll)
+                Text.literal("Totem Saves Partner"), config.soulLinkTotemSavesPartner)
             .setDefaultValue(true)
             .setTooltip(Text.literal("If your partner uses a totem, you are also saved from death. Default: ON"))
-            .setSaveConsumer(val -> config.soulLinkTotemSavesAll = val)
+            .setSaveConsumer(val -> config.soulLinkTotemSavesPartner = val)
             .build());
         
         // --- Shared Health Header ---
@@ -298,15 +285,12 @@ public class ClothConfigScreen {
             .build());
         
         // Shared Damage Percent as slider (0-200%)
-        int sharedPercent = (int) Math.round(config.sharedHealthDamagePercent * 100);
-        if (sharedPercent < 0) sharedPercent = 0;
-        if (sharedPercent > 200) sharedPercent = 200;
         soulLinkHealth.addEntry(entryBuilder.startIntSlider(
-                Text.literal("Shared Damage Percent"), sharedPercent, 0, 200)
+                Text.literal("Shared Damage Percent"), config.sharedHealthDamagePercent, 0, 200)
             .setDefaultValue(100)
             .setTextGetter(val -> Text.literal(val + "%"))
             .setTooltip(Text.literal("Percent of damage shared to all players. 100% = full damage. Default: 100%"))
-            .setSaveConsumer(val -> config.sharedHealthDamagePercent = val / 100.0)
+            .setSaveConsumer(val -> config.sharedHealthDamagePercent = val)
             .build());
         
         soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(

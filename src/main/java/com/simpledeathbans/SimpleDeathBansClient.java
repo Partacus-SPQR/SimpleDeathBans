@@ -53,14 +53,14 @@ public class SimpleDeathBansClient implements ClientModInitializer {
                 if (config != null) {
                     // Update local config with server's values
                     config.baseBanMinutes = payload.baseBanMinutes();
-                    config.banMultiplier = payload.banMultiplier();
+                    config.banMultiplierPercent = payload.banMultiplierPercent();
                     config.maxBanTier = payload.maxBanTier();
                     config.exponentialBanMode = payload.exponentialBanMode();
                     config.enableGhostEcho = payload.enableGhostEcho();
                     config.enableSoulLink = payload.enableSoulLink();
-                    config.soulLinkDamageShare = payload.soulLinkDamageShare();
+                    config.soulLinkDamageSharePercent = payload.soulLinkDamageSharePercent();
                     config.soulLinkRandomPartner = payload.soulLinkRandomPartner();
-                    config.soulLinkTotemSavesAll = payload.soulLinkTotemSavesAll();
+                    config.soulLinkTotemSavesPartner = payload.soulLinkTotemSavesPartner();
                     config.enableSharedHealth = payload.enableSharedHealth();
                     config.sharedHealthDamagePercent = payload.sharedHealthDamagePercent();
                     config.sharedHealthTotemSavesAll = payload.sharedHealthTotemSavesAll();
@@ -69,8 +69,8 @@ public class SimpleDeathBansClient implements ClientModInitializer {
                     config.mercyMovementBlocks = payload.mercyMovementBlocks();
                     config.mercyBlockInteractions = payload.mercyBlockInteractions();
                     config.mercyCheckIntervalMinutes = payload.mercyCheckIntervalMinutes();
-                    config.pvpBanMultiplier = payload.pvpBanMultiplier();
-                    config.pveBanMultiplier = payload.pveBanMultiplier();
+                    config.pvpBanMultiplierPercent = payload.pvpBanMultiplierPercent();
+                    config.pveBanMultiplierPercent = payload.pveBanMultiplierPercent();
                     config.enableResurrectionAltar = payload.enableResurrectionAltar();
                     
                     LOGGER.info("Received config update from server - enableSoulLink: {}, enableSharedHealth: {}, enableMercyCooldown: {}",

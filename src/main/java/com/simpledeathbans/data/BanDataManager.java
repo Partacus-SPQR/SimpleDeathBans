@@ -246,17 +246,17 @@ public class BanDataManager {
         int tier = tierHistory.getOrDefault(playerId, 0) + 1;
         var config = SimpleDeathBans.getInstance().getConfig();
         
-        double pvpPveMultiplier = isPvP ? config.pvpBanMultiplier : config.pveBanMultiplier;
+        double pvpPveMultiplier = isPvP ? config.pvpBanMultiplierPercent / 100.0 : config.pveBanMultiplierPercent / 100.0;
         
         double banTime;
         if (config.exponentialBanMode) {
             // Exponential: 1, 2, 4, 8, 16, 32... (2^(tier-1))
             // Cap at tier 30 to prevent overflow (2^30 = ~1 billion minutes)
             int cappedTier = Math.min(tier, 30);
-            banTime = config.baseBanMinutes * Math.pow(2, cappedTier - 1) * config.banMultiplier * pvpPveMultiplier;
+            banTime = config.baseBanMinutes * Math.pow(2, cappedTier - 1) * (config.banMultiplierPercent / 100.0) * pvpPveMultiplier;
         } else {
             // Linear: 1, 2, 3, 4, 5...
-            banTime = config.baseBanMinutes * tier * config.banMultiplier * pvpPveMultiplier;
+            banTime = config.baseBanMinutes * tier * (config.banMultiplierPercent / 100.0) * pvpPveMultiplier;
         }
         
         return (int) Math.ceil(banTime);

@@ -67,7 +67,7 @@ public class SoulLinkEventHandler {
             // TOTEM CHECK: If this damage would be lethal and someone has a totem,
             // the totem will save both players (via LivingEntityMixin), so DON'T share damage
             float currentHealth = player.getHealth();
-            if (amount >= currentHealth && config.soulLinkTotemSavesAll) {
+            if (amount >= currentHealth && config.soulLinkTotemSavesPartner) {
                 // This would be lethal - check if either player has a totem
                 boolean hasTotem = player.getStackInHand(Hand.MAIN_HAND).isOf(Items.TOTEM_OF_UNDYING) ||
                                    player.getStackInHand(Hand.OFF_HAND).isOf(Items.TOTEM_OF_UNDYING);
@@ -96,8 +96,8 @@ public class SoulLinkEventHandler {
             }
             
             // Share damage to partner (non-lethal or no totem protection)
-            // soulLinkDamageShare is a multiplier: 1.0 = 100% of damage shared (1:1 ratio)
-            float sharedDamage = (float) (amount * config.soulLinkDamageShare);
+            // soulLinkDamageSharePercent: 100 = 100% of damage shared (1:1 ratio)
+            float sharedDamage = (float) (amount * config.soulLinkDamageSharePercent / 100.0);
             shareDamageToPartner(player, soulLinkManager, sharedDamage);
             
             return true; // Allow original damage

@@ -29,12 +29,12 @@ import java.util.UUID;
 /**
  * Mixin to intercept Totem of Undying usage and apply "Totem Saves Partner" feature.
  * 
- * Totem Save Logic (when soulLinkTotemSavesAll is enabled):
+ * Totem Save Logic (when soulLinkTotemSavesPartner is enabled):
  * - If Player A (totem holder) takes lethal damage: A saved by totem, B also saved
- * - If Player B (no totem) takes lethal damage: Check if Partner A has totem → if yes, B is saved (no totem consumed from A)
+ * - If Player B (no totem) takes lethal damage: Check if Partner A has totem → if yes, B is saved (A's totem consumed)
  * - If both have totems: Each only consumes their own totem when THEY take lethal damage
  * 
- * When soulLinkTotemSavesAll is disabled:
+ * When soulLinkTotemSavesPartner is disabled:
  * - If Player A (totem) takes lethal damage: Only A is saved
  * - If Player B (no totem) takes lethal damage: B dies, soul link death pact may kill A too
  */
@@ -89,9 +89,9 @@ public abstract class LivingEntityMixin {
         boolean hasTotem = player.getStackInHand(Hand.MAIN_HAND).isOf(Items.TOTEM_OF_UNDYING) ||
                           player.getStackInHand(Hand.OFF_HAND).isOf(Items.TOTEM_OF_UNDYING);
         
-        // CASE 1: Player HAS a totem and soulLinkTotemSavesAll is enabled
+        // CASE 1: Player HAS a totem and soulLinkTotemSavesPartner is enabled
         // → Vanilla will save this player, we schedule saving their partner
-        if (hasTotem && config.soulLinkTotemSavesAll) {
+        if (hasTotem && config.soulLinkTotemSavesPartner) {
             soulLinkManager.getPartner(playerId).ifPresent(partnerUuid -> {
                 ServerPlayerEntity partner = world.getServer().getPlayerManager().getPlayer(partnerUuid);
                 
@@ -108,9 +108,9 @@ public abstract class LivingEntityMixin {
             return; // Let vanilla handle the totem for this player
         }
         
-        // CASE 2: Player does NOT have a totem but soulLinkTotemSavesAll is enabled
+        // CASE 2: Player does NOT have a totem but soulLinkTotemSavesPartner is enabled
         // → Check if partner has a totem → if yes, save this player
-        if (!hasTotem && config.soulLinkTotemSavesAll) {
+        if (!hasTotem && config.soulLinkTotemSavesPartner) {
             soulLinkManager.getPartner(playerId).ifPresent(partnerUuid -> {
                 ServerPlayerEntity partner = world.getServer().getPlayerManager().getPlayer(partnerUuid);
                 
@@ -158,7 +158,7 @@ public abstract class LivingEntityMixin {
             });
         }
         
-        // CASE 3: soulLinkTotemSavesAll is disabled OR player has no partner
+        // CASE 3: soulLinkTotemSavesPartner is disabled OR player has no partner
         // → Let vanilla handle everything normally
     }
     

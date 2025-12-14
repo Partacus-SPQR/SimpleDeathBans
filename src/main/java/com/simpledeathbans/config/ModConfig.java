@@ -15,19 +15,19 @@ public class ModConfig {
     
     // General Settings
     public int baseBanMinutes = 1;
-    public double banMultiplier = 1.0;
-    public int maxBanTier = Integer.MAX_VALUE; // Essentially infinite - tiers keep growing
+    public int banMultiplierPercent = 100; // 100 = 1.0x, stored as percentage
+    public int maxBanTier = -1; // -1 = infinite, 1-100 = actual max tier
     public boolean exponentialBanMode = false; // If true: 1, 2, 4, 8, 16... (doubles each death)
     
     // Soul Link Settings (Operator Level 4 only)
     public boolean enableSoulLink = false;
-    public double soulLinkDamageShare = 1.0; // 0.5 hearts = 1.0 damage
+    public int soulLinkDamageSharePercent = 100; // 100 = 100% = 1:1 ratio
     public boolean soulLinkRandomPartner = true; // If true: auto-random pairing, if false: shift+right-click to choose
-    public boolean soulLinkTotemSavesAll = true; // If partner uses totem, both players are saved
+    public boolean soulLinkTotemSavesPartner = true; // If partner uses totem, both players are saved
     
     // Shared Health Settings (Server-wide damage sharing)
     public boolean enableSharedHealth = false; // Server-wide health pool
-    public double sharedHealthDamagePercent = 1.0; // 100% of damage shared to all players
+    public int sharedHealthDamagePercent = 100; // 100 = 100% of damage shared to all players
     public boolean sharedHealthTotemSavesAll = true; // Any player's totem can save everyone
     
     // Mercy Cooldown Settings
@@ -38,8 +38,8 @@ public class ModConfig {
     public int mercyCheckIntervalMinutes = 15;
     
     // PvP Settings
-    public double pvpBanMultiplier = 0.5;
-    public double pveBanMultiplier = 1.0;
+    public int pvpBanMultiplierPercent = 50; // 50 = 0.5x
+    public int pveBanMultiplierPercent = 100; // 100 = 1.0x
     
     // Ghost Echo Settings
     public boolean enableGhostEcho = true;
@@ -74,21 +74,18 @@ public class ModConfig {
      * Validate and clamp config values to valid ranges to prevent slider issues.
      */
     private void validateAndClamp() {
-        // Clamp values to valid slider ranges
+        // Clamp values to valid slider ranges (all integers now!)
         baseBanMinutes = Math.max(1, Math.min(60, baseBanMinutes));
-        banMultiplier = Math.max(0.1, Math.min(10.0, banMultiplier));
-        // maxBanTier: -1 to 100 in UI, but stored as Integer.MAX_VALUE for infinite
-        if (maxBanTier != Integer.MAX_VALUE && (maxBanTier < 1 || maxBanTier > 100)) {
-            maxBanTier = Integer.MAX_VALUE; // Default to infinite
-        }
-        soulLinkDamageShare = Math.max(0.0, Math.min(10.0, soulLinkDamageShare));
-        sharedHealthDamagePercent = Math.max(0.0, Math.min(2.0, sharedHealthDamagePercent));
+        banMultiplierPercent = Math.max(10, Math.min(1000, banMultiplierPercent));
+        maxBanTier = Math.max(-1, Math.min(100, maxBanTier));
+        soulLinkDamageSharePercent = Math.max(0, Math.min(200, soulLinkDamageSharePercent));
+        sharedHealthDamagePercent = Math.max(0, Math.min(200, sharedHealthDamagePercent));
         mercyPlaytimeHours = Math.max(1, Math.min(168, mercyPlaytimeHours));
         mercyMovementBlocks = Math.max(0, Math.min(500, mercyMovementBlocks));
         mercyBlockInteractions = Math.max(0, Math.min(200, mercyBlockInteractions));
         mercyCheckIntervalMinutes = Math.max(1, Math.min(60, mercyCheckIntervalMinutes));
-        pvpBanMultiplier = Math.max(0.0, Math.min(5.0, pvpBanMultiplier));
-        pveBanMultiplier = Math.max(0.0, Math.min(5.0, pveBanMultiplier));
+        pvpBanMultiplierPercent = Math.max(0, Math.min(500, pvpBanMultiplierPercent));
+        pveBanMultiplierPercent = Math.max(0, Math.min(500, pveBanMultiplierPercent));
     }
     
     public void save() {
@@ -118,8 +115,9 @@ public class ModConfig {
      */
     public long calculateBanMinutes(int tier, boolean isPvP) {
         double baseTime = baseBanMinutes * tier;
-        double multiplier = isPvP ? pvpBanMultiplier : pveBanMultiplier;
-        return Math.round(baseTime * banMultiplier * multiplier);
+        double banMult = banMultiplierPercent / 100.0;
+        double pvpPveMult = isPvP ? (pvpBanMultiplierPercent / 100.0) : (pveBanMultiplierPercent / 100.0);
+        return Math.round(baseTime * banMult * pvpPveMult);
     }
     
     /**
