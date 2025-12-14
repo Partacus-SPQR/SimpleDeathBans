@@ -3,6 +3,7 @@ package com.simpledeathbans.event;
 import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.config.ModConfig;
 import com.simpledeathbans.damage.SoulSeverDamageSource;
+import com.simpledeathbans.util.DamageShareTracker;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
@@ -21,7 +22,6 @@ import net.minecraft.util.Hand;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Handles server-wide shared health mechanics.
@@ -29,9 +29,6 @@ import java.util.concurrent.ConcurrentHashMap;
  * If any player has a Totem of Undying in their offhand, it can save the entire team.
  */
 public class SharedHealthHandler {
-    
-    // Track players currently being damaged to prevent infinite recursion
-    private static final ConcurrentHashMap<UUID, Boolean> processingSharedDamage = new ConcurrentHashMap<>();
     
     // Damage source name for shared damage
     private static final String SHARED_DAMAGE_ID = "simpledeathbans.shared_health";
@@ -51,14 +48,20 @@ public class SharedHealthHandler {
                 return true;
             }
             
+            // SINGLE-PLAYER: Skip shared health (no other players)
+            ServerWorld world = (ServerWorld) player.getEntityWorld();
+            if (world.getServer().isSingleplayer()) {
+                return true;
+            }
+            
             // Don't share soul sever damage or shared damage (prevents infinite loops)
             if (SoulSeverDamageSource.isSoulSever(source)) {
                 return true;
             }
             
-            // Check if this is already shared damage (prevent recursion)
+            // Check GLOBAL tracker to prevent cross-handler recursion with SoulLink
             UUID playerId = player.getUuid();
-            if (processingSharedDamage.containsKey(playerId)) {
+            if (DamageShareTracker.isProcessing(playerId)) {
                 return true;
             }
             
@@ -116,13 +119,13 @@ public class SharedHealthHandler {
         for (ServerPlayerEntity player : allPlayers) {
             UUID playerId = player.getUuid();
             
-            // Mark as processing to prevent recursion
-            processingSharedDamage.put(playerId, true);
+            // Mark as processing GLOBALLY to prevent cross-handler recursion
+            DamageShareTracker.markProcessing(playerId);
             try {
                 ServerWorld world = (ServerWorld) player.getEntityWorld();
                 player.damage(world, world.getDamageSources().magic(), damage);
             } finally {
-                processingSharedDamage.remove(playerId);
+                DamageShareTracker.clearProcessing(playerId);
             }
         }
     }

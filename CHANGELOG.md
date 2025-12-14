@@ -5,6 +5,36 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2025-12-13
+
+### Added
+- **Soul Link Totem** - New craftable item for manual soul linking (4 Amethyst Shards + 1 Echo Shard)
+- **Manual Soul Linking** - Shift+right-click another player to request a soul link (requires mutual consent)
+- **Pending Link Requests** - Both players must accept for a soul link to form
+- **Soul Link Status Messages** - Context-aware feedback when interacting with linked/unlinked players
+- **Config Validation** - Automatic clamping of config values to valid slider ranges
+- **Network Packet System** - Client-server communication for keybind actions
+
+### Fixed
+- **Single-Player Death Handling** - Now properly saves world and returns to title screen instead of allowing respawn
+- **Soul Link Totem Partner Protection** - Totem now correctly saves your partner from death (not yourself)
+- **Stack Overflow Crash** - Fixed infinite recursion in cross-handler damage sharing
+- **Command Permissions** - All commands now properly require OP Level 4
+- **Fallback Config Keybinds Button** - Now navigates directly to KeybindsScreen
+- **Max Ban Tier Slider** - Now uses -1 = Infinite (matching Cloth Config behavior)
+- **Config Slider Corruption** - Values outside slider ranges no longer break the UI
+
+### Changed
+- **Soul Link Manual Mode** - Now requires mutual consent (both players must shift+click each other)
+- **Damage Share Tracking** - Added DamageShareTracker utility to prevent recursive damage loops
+- **SimpleFallbackConfigScreen** - Complete overhaul with improved slider handling and navigation
+
+### Technical
+- Added LivingEntityMixin for soul link totem interception
+- Added DamageShareTracker utility class
+- Added ModNetworking for client-server packet handling
+- Improved SoulLinkManager with pending request system
+
 ## [1.0.0] - 2025-12-13
 
 ### Added

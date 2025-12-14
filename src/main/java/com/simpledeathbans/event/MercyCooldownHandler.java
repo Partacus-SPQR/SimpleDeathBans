@@ -36,6 +36,9 @@ public class MercyCooldownHandler {
         
         if (config == null || playerDataManager == null || banDataManager == null) return;
         
+        // Check if Mercy Cooldown system is enabled
+        if (!config.enableMercyCooldown) return;
+        
         long currentTime = System.currentTimeMillis();
         
         // Increment playtime for all online players every tick

@@ -11,7 +11,7 @@ Thank you for your interest in contributing to Simple Death Bans.
 
 ### Setup
 1. Fork the repository
-2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/SimpleDeathBan.git`
+2. Clone your fork: `git clone https://github.com/YOUR_USERNAME/SimpleDeathBans.git`
 3. Import as a Gradle project in your IDE
 4. Run `./gradlew genSources` to generate Minecraft sources
 5. Run `./gradlew build` to verify setup

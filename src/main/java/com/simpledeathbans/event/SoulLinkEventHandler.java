@@ -4,29 +4,29 @@ import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.config.ModConfig;
 import com.simpledeathbans.damage.SoulSeverDamageSource;
 import com.simpledeathbans.data.SoulLinkManager;
+import com.simpledeathbans.util.DamageShareTracker;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Hand;
 
 import java.util.Optional;
 import java.util.UUID;
 
 /**
  * Handles Soul Link mechanics:
- * - Auto-assignment of partners on join
+ * - Auto-assignment of partners on join (if random partner mode)
+ * - Manual partner selection via shift+right-click (if not random mode)
  * - Damage sharing between linked players
- * - Death pact notifications
+ * - Totem saves partner feature
  */
 public class SoulLinkEventHandler {
-    
-    // Track to prevent infinite damage loops
-    private static final java.util.Set<UUID> processingDamage = java.util.Collections.newSetFromMap(
-        new java.util.concurrent.ConcurrentHashMap<>()
-    );
     
     public static void register() {
         // Register damage event for soul link damage sharing
@@ -45,14 +45,20 @@ public class SoulLinkEventHandler {
                 return true;
             }
             
+            // SINGLE-PLAYER: Skip soul link entirely (no other players possible)
+            ServerWorld world = (ServerWorld) player.getEntityWorld();
+            if (world.getServer().isSingleplayer()) {
+                return true;
+            }
+            
             // Don't share soul sever damage (prevents infinite loops)
             if (SoulSeverDamageSource.isSoulSever(source)) {
                 return true;
             }
             
-            // Prevent recursive damage sharing
+            // Prevent recursive damage sharing (GLOBAL check across all damage share handlers)
             UUID playerId = player.getUuid();
-            if (processingDamage.contains(playerId)) {
+            if (DamageShareTracker.isProcessing(playerId)) {
                 return true;
             }
             
@@ -61,10 +67,149 @@ public class SoulLinkEventHandler {
             
             return true; // Allow original damage
         });
+        
+        // Register shift+right-click on player for manual soul linking
+        UseEntityCallback.EVENT.register((player, world, hand, entity, hitResult) -> {
+            if (world.isClient() || hand != Hand.MAIN_HAND) {
+                return ActionResult.PASS;
+            }
+            
+            if (!(player instanceof ServerPlayerEntity serverPlayer)) {
+                return ActionResult.PASS;
+            }
+            
+            if (!(entity instanceof ServerPlayerEntity targetPlayer)) {
+                return ActionResult.PASS;
+            }
+            
+            // Check if shift+right-clicking
+            if (!player.isSneaking()) {
+                return ActionResult.PASS;
+            }
+            
+            SimpleDeathBans mod = SimpleDeathBans.getInstance();
+            if (mod == null) return ActionResult.PASS;
+            
+            ModConfig config = mod.getConfig();
+            SoulLinkManager soulLinkManager = mod.getSoulLinkManager();
+            
+            // Only works if soul link is enabled AND random partner is OFF
+            if (config == null || !config.enableSoulLink || config.soulLinkRandomPartner || soulLinkManager == null) {
+                return ActionResult.PASS;
+            }
+            
+            UUID playerId = serverPlayer.getUuid();
+            UUID targetId = targetPlayer.getUuid();
+            String playerName = serverPlayer.getName().getString();
+            String targetName = targetPlayer.getName().getString();
+            
+            // CASE 1: Check if player already has a partner
+            if (soulLinkManager.hasPartner(playerId)) {
+                Optional<UUID> partnerUuid = soulLinkManager.getPartner(playerId);
+                
+                // Check if clicking on their existing partner - show status
+                if (partnerUuid.isPresent() && partnerUuid.get().equals(targetId)) {
+                    serverPlayer.sendMessage(
+                        Text.literal("You are soul-linked with ")
+                            .append(Text.literal(targetName).formatted(Formatting.GOLD))
+                            .formatted(Formatting.DARK_PURPLE),
+                        false
+                    );
+                    return ActionResult.SUCCESS;
+                }
+                
+                // Clicking on someone else - show who they're bound to
+                String partnerName = partnerUuid.map(uuid -> {
+                    ServerPlayerEntity p = world.getServer().getPlayerManager().getPlayer(uuid);
+                    return p != null ? p.getName().getString() : "unknown";
+                }).orElse("unknown");
+                
+                serverPlayer.sendMessage(
+                    Text.literal("Your soul is already bound to ")
+                        .append(Text.literal(partnerName).formatted(Formatting.GOLD))
+                        .append(Text.literal("."))
+                        .formatted(Formatting.RED),
+                    false
+                );
+                return ActionResult.FAIL;
+            }
+            
+            // CASE 2: Check if target already has a partner (and it's not us)
+            if (soulLinkManager.hasPartner(targetId)) {
+                serverPlayer.sendMessage(
+                    Text.literal(targetName + "'s soul is already bound to another.").formatted(Formatting.RED),
+                    false
+                );
+                return ActionResult.FAIL;
+            }
+            
+            // CASE 3: Check if target has already sent us a request (mutual consent!)
+            if (soulLinkManager.hasPendingRequest(targetId, playerId)) {
+                // They requested us, we're accepting - CREATE THE LINK!
+                soulLinkManager.removePendingRequest(targetId);
+                soulLinkManager.removePendingRequest(playerId);
+                soulLinkManager.createLink(playerId, targetId);
+                
+                // Notify both players
+                Text linkMessage1 = Text.literal("Your soul has been bound to ")
+                    .append(Text.literal(targetName).formatted(Formatting.GOLD))
+                    .formatted(Formatting.DARK_PURPLE);
+                Text linkMessage2 = Text.literal("Your soul has been bound to ")
+                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
+                    .formatted(Formatting.DARK_PURPLE);
+                
+                serverPlayer.sendMessage(linkMessage1, false);
+                targetPlayer.sendMessage(linkMessage2, false);
+                
+                // Play binding sound to both
+                ServerWorld serverWorld = (ServerWorld) world;
+                serverWorld.playSound(null, serverPlayer.getX(), serverPlayer.getY(), serverPlayer.getZ(),
+                    SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.PLAYERS, 1.0f, 0.8f);
+                serverWorld.playSound(null, targetPlayer.getX(), targetPlayer.getY(), targetPlayer.getZ(),
+                    SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.PLAYERS, 1.0f, 0.8f);
+                
+                SimpleDeathBans.LOGGER.info("Soul link manually created (mutual consent): {} <-> {}", playerName, targetName);
+                
+                return ActionResult.SUCCESS;
+            }
+            
+            // CASE 4: Send a link request to target
+            soulLinkManager.addPendingRequest(playerId, targetId);
+            
+            // Notify player that request was sent
+            serverPlayer.sendMessage(
+                Text.literal("Soul link request sent to ")
+                    .append(Text.literal(targetName).formatted(Formatting.GOLD))
+                    .append(Text.literal(". They must Shift+Right-click you to accept."))
+                    .formatted(Formatting.DARK_PURPLE),
+                false
+            );
+            
+            // Notify target that they received a request
+            targetPlayer.sendMessage(
+                Text.literal("")
+                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
+                    .append(Text.literal(" wants to bind souls with you! "))
+                    .append(Text.literal("Shift+Right-click").formatted(Formatting.GOLD, Formatting.BOLD))
+                    .append(Text.literal(" them to accept."))
+                    .formatted(Formatting.DARK_PURPLE),
+                false
+            );
+            
+            // Play subtle sound to indicate request sent
+            ServerWorld serverWorld = (ServerWorld) world;
+            serverWorld.playSound(null, targetPlayer.getX(), targetPlayer.getY(), targetPlayer.getZ(),
+                SoundEvents.BLOCK_ENCHANTMENT_TABLE_USE, SoundCategory.PLAYERS, 0.8f, 1.2f);
+            
+            SimpleDeathBans.LOGGER.info("Soul link request: {} -> {}", playerName, targetName);
+            
+            return ActionResult.SUCCESS;
+        });
     }
     
     /**
      * Share damage to soul-linked partner.
+     * Only shares to partner if they're online, alive, and in a different position.
      */
     private static void shareDamageToPartner(ServerPlayerEntity damagedPlayer, 
                                               SoulLinkManager soulLinkManager, 
@@ -72,18 +217,24 @@ public class SoulLinkEventHandler {
         UUID playerId = damagedPlayer.getUuid();
         
         soulLinkManager.getPartner(playerId).ifPresent(partnerUuid -> {
+            // Prevent self-link damage (safety check)
+            if (playerId.equals(partnerUuid)) {
+                SimpleDeathBans.LOGGER.warn("Player {} is linked to themselves - skipping damage share", damagedPlayer.getName().getString());
+                return;
+            }
+            
             ServerWorld world = (ServerWorld) damagedPlayer.getEntityWorld();
             ServerPlayerEntity partner = world.getServer().getPlayerManager().getPlayer(partnerUuid);
             
             if (partner != null && partner.isAlive()) {
-                // Mark as processing to prevent infinite loops
-                processingDamage.add(partnerUuid);
+                // Mark as processing GLOBALLY to prevent cross-handler recursion
+                DamageShareTracker.markProcessing(partnerUuid);
                 try {
                     ServerWorld partnerWorld = (ServerWorld) partner.getEntityWorld();
                     // Use magic damage for soul link damage sharing (0.5 hearts = 1.0 damage)
                     partner.damage(partnerWorld, partnerWorld.getDamageSources().magic(), (float) damageAmount);
                 } finally {
-                    processingDamage.remove(partnerUuid);
+                    DamageShareTracker.clearProcessing(partnerUuid);
                 }
             }
         });
@@ -91,11 +242,21 @@ public class SoulLinkEventHandler {
     
     /**
      * Called when a player joins to:
-     * 1. Auto-assign a soul partner if none exists
+     * 1. Auto-assign a soul partner if none exists (if random partner mode)
      * 2. Notify them of active soul link
+     * 3. Tell them to shift+right-click to bind (if manual partner mode)
      */
     public static void onPlayerJoin(ServerPlayerEntity player, SoulLinkManager soulLinkManager) {
         if (soulLinkManager == null) return;
+        
+        SimpleDeathBans mod = SimpleDeathBans.getInstance();
+        ModConfig config = mod != null ? mod.getConfig() : null;
+        
+        // Skip soul link messages in single-player (no other players possible)
+        ServerWorld world = (ServerWorld) player.getEntityWorld();
+        if (world.getServer().isSingleplayer()) {
+            return; // Soul link is meaningless in single-player
+        }
         
         UUID playerId = player.getUuid();
         
@@ -104,7 +265,6 @@ public class SoulLinkEventHandler {
             // Notify of existing link
             soulLinkManager.getPartner(playerId).ifPresent(partnerUuid -> {
                 // Get partner name if online
-                ServerWorld world = (ServerWorld) player.getEntityWorld();
                 ServerPlayerEntity partner = world.getServer().getPlayerManager().getPlayer(partnerUuid);
                 String partnerName = partner != null ? partner.getName().getString() : "unknown";
                 
@@ -122,43 +282,55 @@ public class SoulLinkEventHandler {
             return;
         }
         
-        // Try to auto-assign a partner from the waiting pool
-        Optional<UUID> assignedPartner = soulLinkManager.tryAssignPartner(playerId);
+        // Check if random partner mode is enabled
+        boolean randomMode = config == null || config.soulLinkRandomPartner;
         
-        if (assignedPartner.isPresent()) {
-            // Successfully paired!
-            ServerWorld world = (ServerWorld) player.getEntityWorld();
-            ServerPlayerEntity partner = world.getServer().getPlayerManager().getPlayer(assignedPartner.get());
+        if (randomMode) {
+            // Try to auto-assign a partner from the waiting pool
+            Optional<UUID> assignedPartner = soulLinkManager.tryAssignPartner(playerId);
             
-            if (partner != null) {
-                String partnerName = partner.getName().getString();
-                String playerName = player.getName().getString();
+            if (assignedPartner.isPresent()) {
+                // Successfully paired!
+                ServerPlayerEntity partner = world.getServer().getPlayerManager().getPlayer(assignedPartner.get());
                 
-                // Notify both players
-                Text linkMessage1 = Text.literal("Your soul has been bound to ")
-                    .append(Text.literal(partnerName).formatted(Formatting.GOLD))
-                    .formatted(Formatting.DARK_PURPLE);
-                Text linkMessage2 = Text.literal("Your soul has been bound to ")
-                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
-                    .formatted(Formatting.DARK_PURPLE);
-                
-                player.sendMessage(linkMessage1, false);
-                partner.sendMessage(linkMessage2, false);
-                
-                // Play binding sound to both
-                world.playSound(null, player.getX(), player.getY(), player.getZ(),
-                    SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.PLAYERS, 1.0f, 0.8f);
-                
-                ServerWorld partnerWorld = (ServerWorld) partner.getEntityWorld();
-                partnerWorld.playSound(null, partner.getX(), partner.getY(), partner.getZ(),
-                    SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.PLAYERS, 1.0f, 0.8f);
-                
-                SimpleDeathBans.LOGGER.info("Soul link auto-assigned: {} <-> {}", playerName, partnerName);
+                if (partner != null) {
+                    String partnerName = partner.getName().getString();
+                    String playerName = player.getName().getString();
+                    
+                    // Notify both players
+                    Text linkMessage1 = Text.literal("Your soul has been bound to ")
+                        .append(Text.literal(partnerName).formatted(Formatting.GOLD))
+                        .formatted(Formatting.DARK_PURPLE);
+                    Text linkMessage2 = Text.literal("Your soul has been bound to ")
+                        .append(Text.literal(playerName).formatted(Formatting.GOLD))
+                        .formatted(Formatting.DARK_PURPLE);
+                    
+                    player.sendMessage(linkMessage1, false);
+                    partner.sendMessage(linkMessage2, false);
+                    
+                    // Play binding sound to both
+                    world.playSound(null, player.getX(), player.getY(), player.getZ(),
+                        SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.PLAYERS, 1.0f, 0.8f);
+                    
+                    ServerWorld partnerWorld = (ServerWorld) partner.getEntityWorld();
+                    partnerWorld.playSound(null, partner.getX(), partner.getY(), partner.getZ(),
+                        SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.PLAYERS, 1.0f, 0.8f);
+                    
+                    SimpleDeathBans.LOGGER.info("Soul link auto-assigned: {} <-> {}", playerName, partnerName);
+                }
+            } else {
+                // Added to waiting pool
+                player.sendMessage(
+                    Text.literal("You await a soul partner...").formatted(Formatting.GRAY, Formatting.ITALIC),
+                    false
+                );
             }
         } else {
-            // Added to waiting pool
+            // Manual partner mode - tell player how to link
             player.sendMessage(
-                Text.literal("You await a soul partner...").formatted(Formatting.GRAY, Formatting.ITALIC),
+                Text.literal("Soul Link: ").formatted(Formatting.DARK_PURPLE)
+                    .append(Text.literal("Shift+Right-click").formatted(Formatting.GOLD, Formatting.BOLD))
+                    .append(Text.literal(" a player to bind your souls together.").formatted(Formatting.GRAY)),
                 false
             );
         }

@@ -105,10 +105,11 @@ public class BanDataManager {
             // Player had a ban that expired - announce their return!
             String playerName = player.getName().getString();
             
-            Text returnMessage = Text.literal("✦ ")
+            // Dark purple styled return message to match ban message theme
+            Text returnMessage = Text.empty()
+                .append(Text.literal("✦ ").formatted(Formatting.DARK_PURPLE))
                 .append(Text.literal(playerName).formatted(Formatting.GOLD))
-                .append(Text.literal(" has found their way back from the void!"))
-                .formatted(Formatting.GRAY, Formatting.ITALIC);
+                .append(Text.literal(" has found their way back from the void!").formatted(Formatting.DARK_PURPLE));
             
             server.getPlayerManager().broadcast(returnMessage, false);
             

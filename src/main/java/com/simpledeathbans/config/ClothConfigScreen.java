@@ -1,17 +1,30 @@
 package com.simpledeathbans.config;
 
 import com.simpledeathbans.SimpleDeathBans;
+import com.simpledeathbans.SimpleDeathBansClient;
+import com.simpledeathbans.network.ConfigSyncPayload;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
+//? if >=1.21.11
+import net.minecraft.command.permission.Permission;
+//? if >=1.21.11
+import net.minecraft.command.permission.PermissionLevel;
 import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Cloth Config screen implementation.
  * This class is only loaded when Cloth Config is available.
+ * Server-affecting settings require Operator Level 4.
  */
 public class ClothConfigScreen {
+    private static final Logger LOGGER = LoggerFactory.getLogger("SimpleDeathBans-ClothConfig");
     
     public static Screen create(Screen parent) {
         ModConfig config;
@@ -21,22 +34,129 @@ public class ClothConfigScreen {
             config = ModConfig.load();
         }
         
+        // Check operator permissions
+        MinecraftClient client = MinecraftClient.getInstance();
+        boolean isSingleplayer = client.isInSingleplayer();
+        boolean isOperator = false;
+        if (client.player != null) {
+            //? if >=1.21.11 {
+            isOperator = client.player.getPermissions().hasPermission(new Permission.Level(PermissionLevel.OWNERS));
+            //?} else {
+            /*// Pre-1.21.11: Use networkHandler permission level (level 4 = op)
+            isOperator = client.player.networkHandler.getCommandSource().hasPermissionLevel(4);
+            *///?}
+        }
+        boolean canEdit = isSingleplayer || isOperator;
+        
+        // Store original values for reverting non-operator changes
+        final int origBaseBanMinutes = config.baseBanMinutes;
+        final double origBanMultiplier = config.banMultiplier;
+        final int origMaxBanTier = config.maxBanTier;
+        final boolean origExponentialBanMode = config.exponentialBanMode;
+        final boolean origEnableGhostEcho = config.enableGhostEcho;
+        final boolean origEnableSoulLink = config.enableSoulLink;
+        final double origSoulLinkDamageShare = config.soulLinkDamageShare;
+        final boolean origSoulLinkRandomPartner = config.soulLinkRandomPartner;
+        final boolean origSoulLinkTotemSavesAll = config.soulLinkTotemSavesAll;
+        final boolean origEnableSharedHealth = config.enableSharedHealth;
+        final double origSharedHealthDamagePercent = config.sharedHealthDamagePercent;
+        final boolean origSharedHealthTotemSavesAll = config.sharedHealthTotemSavesAll;
+        final boolean origEnableMercyCooldown = config.enableMercyCooldown;
+        final int origMercyPlaytimeHours = config.mercyPlaytimeHours;
+        final int origMercyMovementBlocks = config.mercyMovementBlocks;
+        final int origMercyBlockInteractions = config.mercyBlockInteractions;
+        final int origMercyCheckIntervalMinutes = config.mercyCheckIntervalMinutes;
+        final double origPvpBanMultiplier = config.pvpBanMultiplier;
+        final double origPveBanMultiplier = config.pveBanMultiplier;
+        final boolean origEnableResurrectionAltar = config.enableResurrectionAltar;
+        
         ConfigBuilder builder = ConfigBuilder.create()
             .setParentScreen(parent)
             .setTitle(Text.translatable("config.simpledeathbans.title"))
-            .setSavingRunnable(config::save);
+            .setEditable(canEdit) // Disable all inputs for non-operators
+            .setSavingRunnable(() -> {
+                if (canEdit) {
+                    config.save();
+                    LOGGER.info("Config saved via Cloth Config screen");
+                    
+                    // Send config to server for validation and sync
+                    if (ClientPlayNetworking.canSend(ConfigSyncPayload.ID)) {
+                        ClientPlayNetworking.send(new ConfigSyncPayload(
+                            config.baseBanMinutes,
+                            config.banMultiplier,
+                            config.maxBanTier,
+                            config.exponentialBanMode,
+                            config.enableGhostEcho,
+                            config.enableSoulLink,
+                            config.soulLinkDamageShare,
+                            config.soulLinkRandomPartner,
+                            config.soulLinkTotemSavesAll,
+                            config.enableSharedHealth,
+                            config.sharedHealthDamagePercent,
+                            config.sharedHealthTotemSavesAll,
+                            config.enableMercyCooldown,
+                            config.mercyPlaytimeHours,
+                            config.mercyMovementBlocks,
+                            config.mercyBlockInteractions,
+                            config.mercyCheckIntervalMinutes,
+                            config.pvpBanMultiplier,
+                            config.pveBanMultiplier,
+                            config.enableResurrectionAltar
+                        ));
+                        LOGGER.info("Sent config update to server");
+                    }
+                } else {
+                    // Revert all changes for non-operators
+                    config.baseBanMinutes = origBaseBanMinutes;
+                    config.banMultiplier = origBanMultiplier;
+                    config.maxBanTier = origMaxBanTier;
+                    config.exponentialBanMode = origExponentialBanMode;
+                    config.enableGhostEcho = origEnableGhostEcho;
+                    config.enableSoulLink = origEnableSoulLink;
+                    config.soulLinkDamageShare = origSoulLinkDamageShare;
+                    config.soulLinkRandomPartner = origSoulLinkRandomPartner;
+                    config.soulLinkTotemSavesAll = origSoulLinkTotemSavesAll;
+                    config.enableSharedHealth = origEnableSharedHealth;
+                    config.sharedHealthDamagePercent = origSharedHealthDamagePercent;
+                    config.sharedHealthTotemSavesAll = origSharedHealthTotemSavesAll;
+                    config.enableMercyCooldown = origEnableMercyCooldown;
+                    config.mercyPlaytimeHours = origMercyPlaytimeHours;
+                    config.mercyMovementBlocks = origMercyMovementBlocks;
+                    config.mercyBlockInteractions = origMercyBlockInteractions;
+                    config.mercyCheckIntervalMinutes = origMercyCheckIntervalMinutes;
+                    config.pvpBanMultiplier = origPvpBanMultiplier;
+                    config.pveBanMultiplier = origPveBanMultiplier;
+                    config.enableResurrectionAltar = origEnableResurrectionAltar;
+                    
+                    if (client.player != null) {
+                        client.player.sendMessage(
+                            Text.literal("✖ Must be Operator level 4 in order to make changes.")
+                                .formatted(Formatting.RED),
+                            false
+                        );
+                    }
+                }
+            });
         
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
         
-        // General Settings Category
+        // ============================================
+        // CATEGORY: General Settings
+        // ============================================
         ConfigCategory general = builder.getOrCreateCategory(Text.translatable("config.simpledeathbans.general"));
         
-        general.addEntry(entryBuilder.startIntField(
-                Text.translatable("config.simpledeathbans.baseBanMinutes"), config.baseBanMinutes)
+        // Permission notice for non-operators
+        if (!canEdit) {
+            general.addEntry(entryBuilder.startTextDescription(
+                Text.literal("⚠ Viewing only - Operator level 4 required to edit.")
+                    .formatted(Formatting.GOLD)
+            ).build());
+        }
+        
+        general.addEntry(entryBuilder.startIntSlider(
+                Text.translatable("config.simpledeathbans.baseBanMinutes"), config.baseBanMinutes, 1, 60)
             .setDefaultValue(1)
-            .setMin(1)
-            .setMax(60)
-            .setTooltip(Text.literal("Base ban time in minutes per tier. Default: 1"))
+            .setTooltip(Text.literal("Base ban time in minutes per tier. Range: 1-60. Default: 1"))
             .setSaveConsumer(val -> config.baseBanMinutes = val)
             .build());
         
@@ -45,17 +165,18 @@ public class ClothConfigScreen {
             .setDefaultValue(1.0)
             .setMin(0.1)
             .setMax(10.0)
-            .setTooltip(Text.literal("Multiplier for ban time. Default: 1.0"))
+            .setTooltip(Text.literal("Multiplier for ban time. Range: 0.1-10.0. Default: 1.0"))
             .setSaveConsumer(val -> config.banMultiplier = val)
             .build());
         
-        // Display max tier as slider with 100 = infinite
-        int displayMaxTier = config.maxBanTier >= 100 ? 100 : config.maxBanTier;
+        // Display max tier as slider: -1 = infinite, 1-100 = actual tiers
+        int displayMaxTier = config.maxBanTier < 0 || config.maxBanTier > 100 ? -1 : config.maxBanTier;
         general.addEntry(entryBuilder.startIntSlider(
-                Text.translatable("config.simpledeathbans.maxBanTier"), displayMaxTier, 1, 100)
-            .setDefaultValue(100)
-            .setTooltip(Text.literal("Max tier (100 = infinite). Default: Infinite"))
-            .setSaveConsumer(val -> config.maxBanTier = val >= 100 ? Integer.MAX_VALUE : val)
+                Text.translatable("config.simpledeathbans.maxBanTier"), displayMaxTier, -1, 100)
+            .setDefaultValue(-1)
+            .setTextGetter(val -> val == -1 ? Text.literal("Infinite") : Text.literal(String.valueOf(val)))
+            .setTooltip(Text.literal("Maximum ban tier. -1 = Infinite. Range: -1 to 100. Default: Infinite"))
+            .setSaveConsumer(val -> config.maxBanTier = val == -1 ? Integer.MAX_VALUE : val)
             .build());
         
         general.addEntry(entryBuilder.startBooleanToggle(
@@ -72,17 +193,59 @@ public class ClothConfigScreen {
             .setSaveConsumer(val -> config.enableGhostEcho = val)
             .build());
         
-        // Soul Link Settings Category
-        ConfigCategory soulLink = builder.getOrCreateCategory(Text.translatable("config.simpledeathbans.soullink"));
+        // --- PvP Settings Header ---
+        general.addEntry(entryBuilder.startTextDescription(
+            Text.literal("═══ PvP Settings ═══").formatted(Formatting.GOLD)
+        ).build());
         
-        soulLink.addEntry(entryBuilder.startBooleanToggle(
+        general.addEntry(entryBuilder.startDoubleField(
+                Text.translatable("config.simpledeathbans.pvpBanMultiplier"), config.pvpBanMultiplier)
+            .setDefaultValue(0.5)
+            .setMin(0.0)
+            .setMax(5.0)
+            .setTooltip(Text.literal("Ban time multiplier for PvP deaths. Range: 0.0-5.0. Default: 0.5"))
+            .setSaveConsumer(val -> config.pvpBanMultiplier = val)
+            .build());
+        
+        general.addEntry(entryBuilder.startDoubleField(
+                Text.literal("PvE Ban Multiplier"), config.pveBanMultiplier)
+            .setDefaultValue(1.0)
+            .setMin(0.0)
+            .setMax(5.0)
+            .setTooltip(Text.literal("Ban time multiplier for PvE deaths. Range: 0.0-5.0. Default: 1.0"))
+            .setSaveConsumer(val -> config.pveBanMultiplier = val)
+            .build());
+        
+        // --- Altar of Resurrection Header ---
+        general.addEntry(entryBuilder.startTextDescription(
+            Text.literal("═══ Altar of Resurrection ═══").formatted(Formatting.GOLD)
+        ).build());
+        
+        general.addEntry(entryBuilder.startBooleanToggle(
+                Text.translatable("config.simpledeathbans.enableResurrectionAltar"), config.enableResurrectionAltar)
+            .setDefaultValue(true)
+            .setTooltip(Text.literal("Enable Resurrection Altar feature. Default: ON"))
+            .setSaveConsumer(val -> config.enableResurrectionAltar = val)
+            .build());
+        
+        // ============================================
+        // CATEGORY: Soul Link/Health Settings
+        // ============================================
+        ConfigCategory soulLinkHealth = builder.getOrCreateCategory(Text.literal("Soul Link/Health Settings"));
+        
+        // --- Soul Link Header ---
+        soulLinkHealth.addEntry(entryBuilder.startTextDescription(
+            Text.literal("═══ Soul Link ═══").formatted(Formatting.GOLD)
+        ).build());
+        
+        soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
                 Text.translatable("config.simpledeathbans.enableSoulLink"), config.enableSoulLink)
             .setDefaultValue(false)
             .setTooltip(Text.literal("Enable Soul Link feature. Default: OFF"))
             .setSaveConsumer(val -> config.enableSoulLink = val)
             .build());
         
-        soulLink.addEntry(entryBuilder.startDoubleField(
+        soulLinkHealth.addEntry(entryBuilder.startDoubleField(
                 Text.translatable("config.simpledeathbans.soulLinkDamageShare"), config.soulLinkDamageShare)
             .setDefaultValue(1.0)
             .setMin(0.0)
@@ -91,17 +254,33 @@ public class ClothConfigScreen {
             .setSaveConsumer(val -> config.soulLinkDamageShare = val)
             .build());
         
-        // Shared Health Settings Category
-        ConfigCategory sharedHealth = builder.getOrCreateCategory(Text.literal("Shared Health Settings"));
+        soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
+                Text.literal("Random Partner Assignment"), config.soulLinkRandomPartner)
+            .setDefaultValue(true)
+            .setTooltip(Text.literal("ON: Auto-pair with random player on join. OFF: Shift+right-click player to link. Default: ON"))
+            .setSaveConsumer(val -> config.soulLinkRandomPartner = val)
+            .build());
         
-        sharedHealth.addEntry(entryBuilder.startBooleanToggle(
+        soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
+                Text.literal("Totem Saves Partner"), config.soulLinkTotemSavesAll)
+            .setDefaultValue(true)
+            .setTooltip(Text.literal("If your partner uses a totem, you are also saved from death. Default: ON"))
+            .setSaveConsumer(val -> config.soulLinkTotemSavesAll = val)
+            .build());
+        
+        // --- Shared Health Header ---
+        soulLinkHealth.addEntry(entryBuilder.startTextDescription(
+            Text.literal("═══ Shared Health ═══").formatted(Formatting.GOLD)
+        ).build());
+        
+        soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
                 Text.literal("Enable Shared Health"), config.enableSharedHealth)
             .setDefaultValue(false)
             .setTooltip(Text.literal("Server-wide damage sharing (all players share health). Default: OFF"))
             .setSaveConsumer(val -> config.enableSharedHealth = val)
             .build());
         
-        sharedHealth.addEntry(entryBuilder.startDoubleField(
+        soulLinkHealth.addEntry(entryBuilder.startDoubleField(
                 Text.literal("Shared Damage Percent"), config.sharedHealthDamagePercent)
             .setDefaultValue(1.0)
             .setMin(0.0)
@@ -110,81 +289,62 @@ public class ClothConfigScreen {
             .setSaveConsumer(val -> config.sharedHealthDamagePercent = val)
             .build());
         
-        sharedHealth.addEntry(entryBuilder.startBooleanToggle(
+        soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
                 Text.literal("Totem Saves All"), config.sharedHealthTotemSavesAll)
             .setDefaultValue(true)
             .setTooltip(Text.literal("Any player's totem can save all players from death. Default: ON"))
             .setSaveConsumer(val -> config.sharedHealthTotemSavesAll = val)
             .build());
         
-        // Mercy Cooldown Settings Category
+        // ============================================
+        // CATEGORY: Mercy Cooldown Settings
+        // ============================================
         ConfigCategory mercy = builder.getOrCreateCategory(Text.translatable("config.simpledeathbans.mercy"));
         
-        mercy.addEntry(entryBuilder.startIntField(
-                Text.translatable("config.simpledeathbans.mercyPlaytimeHours"), config.mercyPlaytimeHours)
+        mercy.addEntry(entryBuilder.startBooleanToggle(
+                Text.literal("Enable Mercy Cooldown"), config.enableMercyCooldown)
+            .setDefaultValue(true)
+            .setTooltip(Text.literal("Enable Mercy Cooldown system that reduces ban tier over time. Default: ON"))
+            .setSaveConsumer(val -> config.enableMercyCooldown = val)
+            .build());
+        
+        mercy.addEntry(entryBuilder.startIntSlider(
+                Text.translatable("config.simpledeathbans.mercyPlaytimeHours"), config.mercyPlaytimeHours, 1, 168)
             .setDefaultValue(24)
-            .setMin(1)
-            .setMax(2500)
-            .setTooltip(Text.literal("Real playtime hours (not AFK) without deaths to reduce ban tier. Default: 24"))
+            .setTooltip(Text.literal("Real playtime hours (not AFK) without deaths to reduce ban tier. Range: 1-168. Default: 24"))
             .setSaveConsumer(val -> config.mercyPlaytimeHours = val)
             .build());
         
-        mercy.addEntry(entryBuilder.startIntField(
-                Text.translatable("config.simpledeathbans.mercyMovementBlocks"), config.mercyMovementBlocks)
+        mercy.addEntry(entryBuilder.startIntSlider(
+                Text.translatable("config.simpledeathbans.mercyMovementBlocks"), config.mercyMovementBlocks, 0, 500)
             .setDefaultValue(50)
-            .setMin(0)
-            .setMax(1000)
-            .setTooltip(Text.literal("Blocks moved in check interval to count as active. Default: 50"))
+            .setTooltip(Text.literal("Blocks moved in check interval to count as active. Range: 0-500. Default: 50"))
             .setSaveConsumer(val -> config.mercyMovementBlocks = val)
             .build());
         
-        mercy.addEntry(entryBuilder.startIntField(
-                Text.translatable("config.simpledeathbans.mercyBlockInteractions"), config.mercyBlockInteractions)
+        mercy.addEntry(entryBuilder.startIntSlider(
+                Text.translatable("config.simpledeathbans.mercyBlockInteractions"), config.mercyBlockInteractions, 0, 200)
             .setDefaultValue(20)
-            .setMin(0)
-            .setMax(1000)
-            .setTooltip(Text.literal("Block interactions in check interval to count as active. Default: 20"))
+            .setTooltip(Text.literal("Block interactions in check interval to count as active. Range: 0-200. Default: 20"))
             .setSaveConsumer(val -> config.mercyBlockInteractions = val)
             .build());
         
-        mercy.addEntry(entryBuilder.startIntField(
-                Text.literal("Check Interval (minutes)"), config.mercyCheckIntervalMinutes)
+        mercy.addEntry(entryBuilder.startIntSlider(
+                Text.literal("Check Interval (minutes)"), config.mercyCheckIntervalMinutes, 1, 60)
             .setDefaultValue(15)
-            .setMin(1)
-            .setMax(60)
-            .setTooltip(Text.literal("Minutes between activity checks. Default: 15"))
+            .setTooltip(Text.literal("Minutes between activity checks. Range: 1-60. Default: 15"))
             .setSaveConsumer(val -> config.mercyCheckIntervalMinutes = val)
             .build());
         
-        // PvP Settings Category
-        ConfigCategory pvp = builder.getOrCreateCategory(Text.translatable("config.simpledeathbans.pvp"));
+        // ============================================
+        // CATEGORY: Keybinds
+        // ============================================
+        ConfigCategory keybinds = builder.getOrCreateCategory(Text.literal("Keybinds"));
         
-        pvp.addEntry(entryBuilder.startDoubleField(
-                Text.translatable("config.simpledeathbans.pvpBanMultiplier"), config.pvpBanMultiplier)
-            .setDefaultValue(0.5)
-            .setMin(0.0)
-            .setMax(5.0)
-            .setTooltip(Text.literal("Ban time multiplier for PvP deaths. Default: 0.5"))
-            .setSaveConsumer(val -> config.pvpBanMultiplier = val)
-            .build());
-        
-        pvp.addEntry(entryBuilder.startDoubleField(
-                Text.literal("PvE Ban Multiplier"), config.pveBanMultiplier)
-            .setDefaultValue(1.0)
-            .setMin(0.0)
-            .setMax(5.0)
-            .setTooltip(Text.literal("Ban time multiplier for PvE deaths. Default: 1.0"))
-            .setSaveConsumer(val -> config.pveBanMultiplier = val)
-            .build());
-        
-        // Altar Settings Category
-        ConfigCategory altar = builder.getOrCreateCategory(Text.translatable("config.simpledeathbans.altar"));
-        
-        altar.addEntry(entryBuilder.startBooleanToggle(
-                Text.translatable("config.simpledeathbans.enableResurrectionAltar"), config.enableResurrectionAltar)
-            .setDefaultValue(true)
-            .setTooltip(Text.literal("Enable Resurrection Altar feature. Default: ON"))
-            .setSaveConsumer(val -> config.enableResurrectionAltar = val)
+        keybinds.addEntry(entryBuilder.fillKeybindingField(
+                Text.literal("Open Config Screen"),
+                SimpleDeathBansClient.openConfigKeyBinding)
+            .setTooltip(Text.literal("Keybind to open the SimpleDeathBans config screen.\nCan also be changed in: Options → Controls → Key Binds..."))
             .build());
         
         return builder.build();

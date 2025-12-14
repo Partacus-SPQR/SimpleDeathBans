@@ -7,7 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ModMenuIntegration implements ModMenuApi {
-    private static final Logger LOGGER = LoggerFactory.getLogger("SimpleDeathBans");
+    private static final Logger LOGGER = LoggerFactory.getLogger("SimpleDeathBan");
     
     @Override
     public ConfigScreenFactory<?> getModConfigScreenFactory() {
@@ -22,14 +22,15 @@ public class ModMenuIntegration implements ModMenuApi {
         // Try Cloth Config first
         if (isClothConfigAvailable()) {
             try {
+                LOGGER.info("Using Cloth Config screen");
                 return ClothConfigScreen.create(parent);
             } catch (Throwable e) {
                 LOGGER.warn("Failed to create Cloth Config screen, using fallback", e);
             }
         }
         
-        LOGGER.info("Using fallback config screen (Cloth Config unavailable or incompatible)");
-        return new FallbackConfigScreen(parent);
+        LOGGER.info("Using fallback config screen (Cloth Config unavailable)");
+        return new SimpleFallbackConfigScreen(parent);
     }
     
     /**

@@ -3,13 +3,13 @@
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.9--1.21.11-green)](https://minecraft.net)
 [![Fabric](https://img.shields.io/badge/Mod%20Loader-Fabric-blue)](https://fabricmc.net)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.0.0-orange)](https://modrinth.com/mod/simpledeathban)
+[![Version](https://img.shields.io/badge/Version-1.1.0-orange)](https://modrinth.com/project/simpledeathbans)
 
 A hardcore survival Fabric mod featuring a progressive banning system with Soul Links, Mercy Cooldowns, and Resurrection Rituals.
 
 **Author:** Partacus-SPQR  
-**Source:** [GitHub](https://github.com/Partacus-SPQR/SimpleDeathBan)  
-**Download:** [Modrinth](https://modrinth.com/mod/simpledeathban)
+**Source:** [GitHub](https://github.com/Partacus-SPQR/SimpleDeathBans)  
+**Download:** [Modrinth](https://modrinth.com/project/simpledeathbans)
 
 ## Features
 
@@ -17,14 +17,24 @@ A hardcore survival Fabric mod featuring a progressive banning system with Soul 
 - Death results in a temporary server ban
 - Ban time increases with each death (tier system)
 - Base ban time: 1 minute × tier × multiplier
-- Maximum tier configurable (default: 10)
+- Maximum tier configurable (default: 10, or -1 for infinite)
 
-### 2. The Life Link ("Soulbound")
+### 2. The Soul Link ("Soulbound")
 - **Togglable** (OP Level 4 only, default: OFF)
-- Players are automatically paired with "Soul Partners" on login
+- **Automatic Mode**: Players are automatically paired with "Soul Partners" on login
+- **Manual Mode**: Players can craft a **Soul Link Totem** and shift+right-click another player
+  - Requires **mutual consent** - both players must shift+right-click each other
 - Damage sharing: When Player A takes damage, Player B takes 0.5 hearts
 - **Death Pact**: If one partner dies, the other dies instantly
+- **Soul Link Totem Protection**: If you die while holding a Soul Link Totem, your partner is saved instead of dying
 - Both players hear the Wither spawn sound and receive the message "Your soul has been severed"
+
+#### Soul Link Totem Recipe (Shapeless):
+```
+[Amethyst Shard] [Amethyst Shard]
+[  Echo Shard ] [Amethyst Shard]
+[Amethyst Shard]
+```
 
 ### 3. The Mercy Cooldown (Survival Reward)
 - Reduces ban tier over time for active players
@@ -143,7 +153,8 @@ Config file: `config/simpledeathbans.json`
 
 ## Single-Player Note
 
-This mod works in single-player worlds with some limitations:
+This mod works in single-player worlds with modified behavior:
+- **Death Handling** - On death, the world saves and you're returned to the title screen (simulates ban)
 - **Progressive Bans, Mercy Cooldown, Ghost Echo** - Work as expected
 - **Soul Link** - No effect (requires multiple players)
 - **Altar of Resurrection** - Can be completed solo, but cannot unban yourself while banned

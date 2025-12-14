@@ -9,6 +9,10 @@ import com.simpledeathbans.data.BanDataManager;
 import com.simpledeathbans.data.SoulLinkManager;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.minecraft.command.argument.EntityArgumentType;
+//? if >=1.21.11
+import net.minecraft.command.permission.Permission;
+//? if >=1.21.11
+import net.minecraft.command.permission.PermissionLevel;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -88,30 +92,18 @@ public class ModCommands {
     }
     
     /**
-     * Check if source has operator permission level 4
-     * Uses a simple fallback: console always has permission,
-     * and we let vanilla handle player permission via op list
+     * Check if source has operator permission level 4 (OWNERS level)
+     * Console and command blocks always have permission.
+     * Players must have operator level 4.
      */
     private static boolean hasOperatorPermission(ServerCommandSource source) {
-        try {
-            var entity = source.getEntity();
-            if (entity == null) {
-                // Console or command block - has full permission
-                return true;
-            }
-            if (entity instanceof ServerPlayerEntity) {
-                // In 1.21.11, we rely on vanilla's permission system
-                // The player needs to be op level 4 to use these commands
-                // This is configured in server.properties (op-permission-level)
-                // We return true here and let vanilla's isOp check happen
-                // The actual restriction happens at command execution time
-                // Alternative: always return true and add individual checks in each command
-                return true; // Let vanilla handle via command level requirement
-            }
-            return false;
-        } catch (Exception e) {
-            return true; // Default to console access
-        }
+        //? if >=1.21.11 {
+        // 1.21.11+: Use new Permission/PermissionLevel API
+        return source.getPermissions().hasPermission(new Permission.Level(PermissionLevel.OWNERS));
+        //?} else {
+        /*// Pre-1.21.11: Use hasPermissionLevel(4)
+        return source.hasPermissionLevel(4);
+        *///?}
     }
     
     private static int reloadConfig(CommandContext<ServerCommandSource> context) {

@@ -25,8 +25,11 @@ public class SoulLinkManager {
     // Player UUID -> Partner UUID (bidirectional)
     private final Map<UUID, UUID> soulLinks = new ConcurrentHashMap<>();
     
-    // Pool of online players waiting for a partner
+    // Pool of online players waiting for a partner (random mode)
     private final Set<UUID> waitingPool = Collections.newSetFromMap(new ConcurrentHashMap<>());
+    
+    // Pending link requests: requester UUID -> target UUID (manual mode)
+    private final Map<UUID, UUID> pendingLinkRequests = new ConcurrentHashMap<>();
     
     public SoulLinkManager(MinecraftServer server) {
         this.server = server;
@@ -162,10 +165,11 @@ public class SoulLinkManager {
     }
     
     /**
-     * Handle player disconnect - remove from waiting pool
+     * Handle player disconnect - remove from waiting pool and clear pending requests
      */
     public void onPlayerDisconnect(UUID playerUuid) {
         waitingPool.remove(playerUuid);
+        clearPendingRequestsFor(playerUuid);
         // Note: We don't break soul links on disconnect, only on death
     }
     
@@ -174,5 +178,36 @@ public class SoulLinkManager {
      */
     public Map<UUID, UUID> getAllLinks() {
         return new HashMap<>(soulLinks);
+    }
+    
+    /**
+     * Check if there's a pending link request from one player to another
+     */
+    public boolean hasPendingRequest(UUID requester, UUID target) {
+        UUID pendingTarget = pendingLinkRequests.get(requester);
+        return target.equals(pendingTarget);
+    }
+    
+    /**
+     * Add a pending link request
+     */
+    public void addPendingRequest(UUID requester, UUID target) {
+        pendingLinkRequests.put(requester, target);
+    }
+    
+    /**
+     * Remove a pending link request
+     */
+    public void removePendingRequest(UUID requester) {
+        pendingLinkRequests.remove(requester);
+    }
+    
+    /**
+     * Clear all pending requests involving a player (when they link or disconnect)
+     */
+    public void clearPendingRequestsFor(UUID player) {
+        pendingLinkRequests.remove(player);
+        // Also remove any requests TO this player
+        pendingLinkRequests.entrySet().removeIf(entry -> entry.getValue().equals(player));
     }
 }

@@ -50,8 +50,9 @@ public class DeathEventHandler {
             return;
         }
         
-        // Check for soul link death pact
-        if (config.enableSoulLink && soulLinkManager != null) {
+        // Check for soul link death pact (MULTIPLAYER ONLY)
+        ServerWorld world = (ServerWorld) player.getEntityWorld();
+        if (config.enableSoulLink && soulLinkManager != null && !world.getServer().isSingleplayer()) {
             handleSoulLinkDeath(player, soulLinkManager);
         }
         
@@ -133,10 +134,45 @@ public class DeathEventHandler {
             performGhostEcho(player, banEntry);
         }
         
-        // Disconnect player
-        Text kickMessage = Text.translatable("simpledeathbans.banned", banEntry.getRemainingTimeFormatted())
-            .setStyle(Style.EMPTY.withColor(Formatting.RED));
-        player.networkHandler.disconnect(kickMessage);
+        // Build kick message
+        int tier = banManager.getTier(player.getUuid());
+        String timeRemaining = banEntry.getRemainingTimeFormatted();
+        
+        Text kickMessage = Text.empty()
+            .append(Text.literal("§c§k><§r §4§lBANNED §c§k><§r\n\n"))
+            .append(Text.literal("§5You have been claimed by the void.\n\n"))
+            .append(Text.literal("§7Time remaining: §c" + timeRemaining + "§r\n"))
+            .append(Text.literal("§7Ban Tier: §c" + tier + "§r\n\n"))
+            .append(Text.literal("§8Death results in temporary bans.\n"))
+            .append(Text.literal("§8Your ban tier increases with each death."));
+        
+        ServerWorld world = (ServerWorld) player.getEntityWorld();
+        
+        // SINGLE-PLAYER: Send them back to title screen properly
+        // We schedule this to run after the death is processed to avoid corruption
+        if (world.getServer().isSingleplayer()) {
+            SimpleDeathBans.LOGGER.info("Single-player death: Ban recorded for {} ({} minutes, tier {}). Saving and exiting world.", 
+                player.getName().getString(), banMinutes, tier);
+            
+            // Schedule the disconnect to happen after the current tick to avoid issues
+            world.getServer().execute(() -> {
+                // Show the ban message first
+                player.sendMessage(kickMessage, false);
+                
+                // Delay slightly then save and quit to title
+                // We use the server's stop method which properly saves everything
+                world.getServer().execute(() -> {
+                    // Stop the integrated server - this saves the world and returns to title screen
+                    world.getServer().stop(false);
+                });
+            });
+            return;
+        }
+        
+        // MULTIPLAYER: Disconnect the player
+        world.getServer().execute(() -> {
+            player.networkHandler.disconnect(kickMessage);
+        });
     }
     
     private static void performGhostEcho(ServerPlayerEntity player, BanDataManager.BanEntry banEntry) {
@@ -148,11 +184,15 @@ public class DeathEventHandler {
         lightning.setCosmetic(true); // No damage, no fire
         world.spawnEntity(lightning);
         
-        // Broadcast custom death message in gray italics
-        // This replaces the standard death/disconnect message
+        // Broadcast custom death message with styled formatting
+        // §k = obfuscated, §4 = dark red, §5 = dark purple, §c = red
         String banTime = banEntry.getRemainingTimeFormatted();
-        Text deathMessage = Text.literal(player.getName().getString() + " has been lost to the void for " + banTime + ".")
-            .setStyle(Style.EMPTY.withColor(Formatting.GRAY).withItalic(true));
+        Text deathMessage = Text.empty()
+            .append(Text.literal("§c§k><§r "))
+            .append(Text.literal(player.getName().getString()).formatted(Formatting.DARK_PURPLE))
+            .append(Text.literal(" has been lost to the void for ").formatted(Formatting.DARK_PURPLE))
+            .append(Text.literal(banTime).formatted(Formatting.RED))
+            .append(Text.literal(" §c§k><§r"));
         
         world.getServer().getPlayerManager().broadcast(deathMessage, false);
     }

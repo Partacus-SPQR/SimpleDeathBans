@@ -22,6 +22,8 @@ public class ModConfig {
     // Soul Link Settings (Operator Level 4 only)
     public boolean enableSoulLink = false;
     public double soulLinkDamageShare = 1.0; // 0.5 hearts = 1.0 damage
+    public boolean soulLinkRandomPartner = true; // If true: auto-random pairing, if false: shift+right-click to choose
+    public boolean soulLinkTotemSavesAll = true; // If partner uses totem, both players are saved
     
     // Shared Health Settings (Server-wide damage sharing)
     public boolean enableSharedHealth = false; // Server-wide health pool
@@ -29,6 +31,7 @@ public class ModConfig {
     public boolean sharedHealthTotemSavesAll = true; // Any player's totem can save everyone
     
     // Mercy Cooldown Settings
+    public boolean enableMercyCooldown = true; // Enable mercy cooldown system
     public int mercyPlaytimeHours = 24; // 1 real day of playtime
     public int mercyMovementBlocks = 50;
     public int mercyBlockInteractions = 20;
@@ -53,6 +56,7 @@ public class ModConfig {
                 String json = Files.readString(CONFIG_PATH);
                 ModConfig config = GSON.fromJson(json, ModConfig.class);
                 if (config != null) {
+                    config.validateAndClamp();
                     SimpleDeathBans.LOGGER.info("Configuration loaded from {}", CONFIG_PATH);
                     return config;
                 }
@@ -64,6 +68,27 @@ public class ModConfig {
         ModConfig config = new ModConfig();
         config.save();
         return config;
+    }
+    
+    /**
+     * Validate and clamp config values to valid ranges to prevent slider issues.
+     */
+    private void validateAndClamp() {
+        // Clamp values to valid slider ranges
+        baseBanMinutes = Math.max(1, Math.min(60, baseBanMinutes));
+        banMultiplier = Math.max(0.1, Math.min(10.0, banMultiplier));
+        // maxBanTier: -1 to 100 in UI, but stored as Integer.MAX_VALUE for infinite
+        if (maxBanTier != Integer.MAX_VALUE && (maxBanTier < 1 || maxBanTier > 100)) {
+            maxBanTier = Integer.MAX_VALUE; // Default to infinite
+        }
+        soulLinkDamageShare = Math.max(0.0, Math.min(10.0, soulLinkDamageShare));
+        sharedHealthDamagePercent = Math.max(0.0, Math.min(2.0, sharedHealthDamagePercent));
+        mercyPlaytimeHours = Math.max(1, Math.min(168, mercyPlaytimeHours));
+        mercyMovementBlocks = Math.max(0, Math.min(500, mercyMovementBlocks));
+        mercyBlockInteractions = Math.max(0, Math.min(200, mercyBlockInteractions));
+        mercyCheckIntervalMinutes = Math.max(1, Math.min(60, mercyCheckIntervalMinutes));
+        pvpBanMultiplier = Math.max(0.0, Math.min(5.0, pvpBanMultiplier));
+        pveBanMultiplier = Math.max(0.0, Math.min(5.0, pveBanMultiplier));
     }
     
     public void save() {
