@@ -27,16 +27,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.UUID;
 
 /**
- * Mixin to intercept Totem of Undying usage and apply "Totem Saves Partner" feature.
+ * Mixin to intercept lethal damage and handle Soul Link totem mechanics.
  * 
- * Totem Save Logic (when soulLinkTotemSavesPartner is enabled):
- * - If Player A (totem holder) takes lethal damage: A saved by totem, B also saved
- * - If Player B (no totem) takes lethal damage: Check if Partner A has totem → if yes, B is saved (A's totem consumed)
- * - If both have totems: Each only consumes their own totem when THEY take lethal damage
+ * SOUL LINK DEATH FLOW:
  * 
- * When soulLinkTotemSavesPartner is disabled:
- * - If Player A (totem) takes lethal damage: Only A is saved
- * - If Player B (no totem) takes lethal damage: B dies, soul link death pact may kill A too
+ * When soulLinkTotemSavesPartner = ENABLED:
+ * - Both have totems: Both totems consumed, both live
+ * - One has totem: That totem saves BOTH (one totem consumed)
+ * - Neither has totem: Both die (handled by DeathEventHandler)
+ * 
+ * When soulLinkTotemSavesPartner = DISABLED:
+ * - Both have totems: Both totems consumed, both live
+ * - One has totem: Only totem holder saved, partner dies
+ * - Neither has totem: Both die
  */
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin {
@@ -44,16 +47,14 @@ public abstract class LivingEntityMixin {
     @Shadow public abstract ItemStack getStackInHand(Hand hand);
 
     /**
-     * Intercept damage method to:
-     * 1. When totem holder takes lethal damage: save their partner too (if enabled)
-     * 2. When non-totem player takes lethal damage: check if partner has totem, save this player (if enabled)
+     * Intercept damage method to handle Soul Link totem scenarios.
      */
     @Inject(
         method = "damage",
         at = @At("HEAD"),
         cancellable = true
     )
-    private void onDamageHead(ServerWorld world, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
+    private void onDamageForSoulLink(ServerWorld world, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
         LivingEntity self = (LivingEntity) (Object) this;
         
         // Only for server-side players
@@ -61,7 +62,7 @@ public abstract class LivingEntityMixin {
             return;
         }
         
-        // Skip in single-player (no soul link mechanics)
+        // Skip in single-player
         if (world.getServer().isSingleplayer()) {
             return;
         }
@@ -69,7 +70,7 @@ public abstract class LivingEntityMixin {
         // Check if this damage would be lethal
         float currentHealth = player.getHealth();
         if (amount < currentHealth) {
-            return; // Not lethal, don't interfere
+            return; // Not lethal, let vanilla handle it
         }
         
         SimpleDeathBans mod = SimpleDeathBans.getInstance();
@@ -85,86 +86,192 @@ public abstract class LivingEntityMixin {
         
         UUID playerId = player.getUuid();
         
-        // Check if player has a totem
-        boolean hasTotem = player.getStackInHand(Hand.MAIN_HAND).isOf(Items.TOTEM_OF_UNDYING) ||
-                          player.getStackInHand(Hand.OFF_HAND).isOf(Items.TOTEM_OF_UNDYING);
-        
-        // CASE 1: Player HAS a totem and soulLinkTotemSavesPartner is enabled
-        // → Vanilla will save this player, we schedule saving their partner
-        if (hasTotem && config.soulLinkTotemSavesPartner) {
-            soulLinkManager.getPartner(playerId).ifPresent(partnerUuid -> {
-                ServerPlayerEntity partner = world.getServer().getPlayerManager().getPlayer(partnerUuid);
-                
-                if (partner != null && partner.isAlive()) {
-                    // Schedule partner save after vanilla totem effect
-                    world.getServer().execute(() -> {
-                        // Verify totem was used (player survived with regeneration)
-                        if (player.isAlive() && player.hasStatusEffect(StatusEffects.REGENERATION)) {
-                            saveSoulLinkedPlayer(player, partner, world, false);
-                        }
-                    });
-                }
-            });
-            return; // Let vanilla handle the totem for this player
+        // Check if player has a soul link partner
+        if (!soulLinkManager.hasPartner(playerId)) {
+            return; // No partner, vanilla behavior
         }
         
-        // CASE 2: Player does NOT have a totem but soulLinkTotemSavesPartner is enabled
-        // → Check if partner has a totem → if yes, save this player
-        if (!hasTotem && config.soulLinkTotemSavesPartner) {
-            soulLinkManager.getPartner(playerId).ifPresent(partnerUuid -> {
-                ServerPlayerEntity partner = world.getServer().getPlayerManager().getPlayer(partnerUuid);
-                
-                if (partner != null && partner.isAlive()) {
-                    boolean partnerHasTotem = partner.getStackInHand(Hand.MAIN_HAND).isOf(Items.TOTEM_OF_UNDYING) ||
-                                               partner.getStackInHand(Hand.OFF_HAND).isOf(Items.TOTEM_OF_UNDYING);
-                    
-                    if (partnerHasTotem) {
-                        // Partner has a totem! Consume it and save BOTH players
-                        SimpleDeathBans.LOGGER.info("Soul link totem save: Partner {} has totem, consuming it to save {} from lethal damage", 
-                            partner.getName().getString(), player.getName().getString());
-                        
-                        // CONSUME the partner's totem
-                        ItemStack mainHand = partner.getStackInHand(Hand.MAIN_HAND);
-                        ItemStack offHand = partner.getStackInHand(Hand.OFF_HAND);
-                        if (mainHand.isOf(Items.TOTEM_OF_UNDYING)) {
-                            mainHand.decrement(1);
-                        } else if (offHand.isOf(Items.TOTEM_OF_UNDYING)) {
-                            offHand.decrement(1);
-                        }
-                        
-                        // Apply totem effects to BOTH players (since totem holder is also protected)
-                        applyTotemEffects(player, world);
-                        applyTotemEffects(partner, (ServerWorld) partner.getEntityWorld());
-                        
-                        // Notify both players
-                        player.sendMessage(
-                            Text.literal("Your partner's Totem of Undying saved you both from death!")
-                                .formatted(Formatting.GOLD, Formatting.BOLD),
-                            false
-                        );
-                        
-                        partner.sendMessage(
-                            Text.literal("Your Totem of Undying saved both you and ")
-                                .append(Text.literal(player.getName().getString()).formatted(Formatting.GOLD))
-                                .append(Text.literal(" from death!"))
-                                .formatted(Formatting.DARK_PURPLE, Formatting.BOLD),
-                            false
-                        );
-                        
-                        // Cancel the damage
-                        cir.setReturnValue(false);
-                    }
-                }
-            });
+        ServerPlayerEntity partner = soulLinkManager.getPartner(playerId)
+            .map(uuid -> world.getServer().getPlayerManager().getPlayer(uuid))
+            .orElse(null);
+        
+        if (partner == null || !partner.isAlive()) {
+            return; // Partner offline or dead, vanilla behavior
         }
         
-        // CASE 3: soulLinkTotemSavesPartner is disabled OR player has no partner
-        // → Let vanilla handle everything normally
+        // Check totem status for both players
+        boolean playerHasTotem = hasTotemOfUndying(player);
+        boolean partnerHasTotem = hasTotemOfUndying(partner);
+        
+        String playerName = player.getName().getString();
+        String partnerName = partner.getName().getString();
+        
+        // SCENARIO 1: BOTH have totems
+        if (playerHasTotem && partnerHasTotem) {
+            // Both consume their own totems, both live
+            consumeTotem(player);
+            consumeTotem(partner);
+            
+            applyTotemEffects(player, world);
+            applyTotemEffects(partner, (ServerWorld) partner.getEntityWorld());
+            
+            // Notifications (obfuscation + purple)
+            Text bothSavedMsg = Text.literal("§k><§r ")
+                .append(Text.literal("You have both avoided the pull from the void!").formatted(Formatting.DARK_PURPLE))
+                .append(Text.literal(" §k><§r"));
+            
+            player.sendMessage(bothSavedMsg, false);
+            partner.sendMessage(bothSavedMsg, false);
+            
+            // Server-wide notification
+            Text serverMsg = Text.literal("§k><§r ")
+                .append(Text.literal(playerName).formatted(Formatting.GOLD))
+                .append(Text.literal(" and ").formatted(Formatting.DARK_PURPLE))
+                .append(Text.literal(partnerName).formatted(Formatting.GOLD))
+                .append(Text.literal(" have avoided the grasp of the void!").formatted(Formatting.DARK_PURPLE))
+                .append(Text.literal(" §k><§r"));
+            
+            world.getServer().getPlayerManager().broadcast(serverMsg, false);
+            
+            SimpleDeathBans.LOGGER.info("Soul Link: Both {} and {} used totems to survive", playerName, partnerName);
+            
+            cir.setReturnValue(false); // Cancel damage
+            return;
+        }
+        
+        // SCENARIO 2: Only THIS PLAYER has a totem
+        if (playerHasTotem && !partnerHasTotem) {
+            consumeTotem(player);
+            applyTotemEffects(player, world);
+            
+            if (config.soulLinkTotemSavesPartner) {
+                // Totem saves BOTH
+                applyTotemEffects(partner, (ServerWorld) partner.getEntityWorld());
+                
+                // Player notification (obfuscation + purple)
+                Text playerMsg = Text.literal("§k><§r ")
+                    .append(Text.literal("Your totem has saved both yourself and ").formatted(Formatting.DARK_PURPLE))
+                    .append(Text.literal(partnerName).formatted(Formatting.GOLD))
+                    .append(Text.literal(" from the void!").formatted(Formatting.DARK_PURPLE))
+                    .append(Text.literal(" §k><§r"));
+                player.sendMessage(playerMsg, false);
+                
+                // Partner notification
+                Text partnerMsg = Text.literal("§k><§r ")
+                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
+                    .append(Text.literal(" has saved you both from the void with their totem!").formatted(Formatting.DARK_PURPLE))
+                    .append(Text.literal(" §k><§r"));
+                partner.sendMessage(partnerMsg, false);
+                
+                // Server-wide notification
+                Text serverMsg = Text.literal("§k><§r ")
+                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
+                    .append(Text.literal(" has saved ").formatted(Formatting.DARK_PURPLE))
+                    .append(Text.literal(partnerName).formatted(Formatting.GOLD))
+                    .append(Text.literal(" from the grasp of the void!").formatted(Formatting.DARK_PURPLE))
+                    .append(Text.literal(" §k><§r"));
+                world.getServer().getPlayerManager().broadcast(serverMsg, false);
+                
+                SimpleDeathBans.LOGGER.info("Soul Link: {} totem saved both players (TotemSavesPartner=ON)", playerName);
+            } else {
+                // Totem saves ONLY the holder, partner will die via death pact
+                Text playerMsg = Text.literal("§k><§r ")
+                    .append(Text.literal("Your totem has saved you from the void!").formatted(Formatting.DARK_PURPLE))
+                    .append(Text.literal(" §k><§r"));
+                player.sendMessage(playerMsg, false);
+                
+                SimpleDeathBans.LOGGER.info("Soul Link: {} totem saved only themselves (TotemSavesPartner=OFF), partner {} will die", 
+                    playerName, partnerName);
+            }
+            
+            cir.setReturnValue(false); // Cancel damage for this player
+            return;
+        }
+        
+        // SCENARIO 3: Only PARTNER has a totem (this player has none)
+        if (!playerHasTotem && partnerHasTotem) {
+            if (config.soulLinkTotemSavesPartner) {
+                // Partner's totem saves BOTH
+                consumeTotem(partner);
+                applyTotemEffects(player, world);
+                applyTotemEffects(partner, (ServerWorld) partner.getEntityWorld());
+                
+                // Player notification (obfuscation + purple)
+                Text playerMsg = Text.literal("§k><§r ")
+                    .append(Text.literal(partnerName).formatted(Formatting.GOLD))
+                    .append(Text.literal(" has saved you both from the void with their totem!").formatted(Formatting.DARK_PURPLE))
+                    .append(Text.literal(" §k><§r"));
+                player.sendMessage(playerMsg, false);
+                
+                // Partner notification
+                Text partnerMsg = Text.literal("§k><§r ")
+                    .append(Text.literal("Your totem has saved both yourself and ").formatted(Formatting.DARK_PURPLE))
+                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
+                    .append(Text.literal(" from the void!").formatted(Formatting.DARK_PURPLE))
+                    .append(Text.literal(" §k><§r"));
+                partner.sendMessage(partnerMsg, false);
+                
+                // Server-wide notification
+                Text serverMsg = Text.literal("§k><§r ")
+                    .append(Text.literal(partnerName).formatted(Formatting.GOLD))
+                    .append(Text.literal(" has saved ").formatted(Formatting.DARK_PURPLE))
+                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
+                    .append(Text.literal(" from the grasp of the void!").formatted(Formatting.DARK_PURPLE))
+                    .append(Text.literal(" §k><§r"));
+                world.getServer().getPlayerManager().broadcast(serverMsg, false);
+                
+                SimpleDeathBans.LOGGER.info("Soul Link: {} totem saved both players (TotemSavesPartner=ON)", partnerName);
+                
+                cir.setReturnValue(false); // Cancel damage
+                return;
+            }
+            // If TotemSavesPartner=OFF, this player dies, vanilla handles it
+            // Partner keeps their totem, but will die from death pact anyway
+        }
+        
+        // SCENARIO 4: NEITHER has a totem
+        // Both will die - send special notification before death
+        if (!playerHasTotem && !partnerHasTotem) {
+            // Send "pull from the void" notification to both
+            Text voidPullMsg = Text.literal("§k><§r ")
+                .append(Text.literal("You both feel the pull from the void!").formatted(Formatting.DARK_PURPLE))
+                .append(Text.literal(" §k><§r"));
+            
+            player.sendMessage(voidPullMsg, false);
+            partner.sendMessage(voidPullMsg, false);
+            
+            SimpleDeathBans.LOGGER.info("Soul Link: Neither {} nor {} have totems - both will die", playerName, partnerName);
+            
+            // Let vanilla handle the death, DeathEventHandler will do death pact
+        }
     }
     
     /**
-     * Apply totem effects without consuming a totem.
-     * Used when partner's totem grants protection.
+     * Check if player has a Totem of Undying in either hand.
+     */
+    @Unique
+    private boolean hasTotemOfUndying(ServerPlayerEntity player) {
+        return player.getStackInHand(Hand.MAIN_HAND).isOf(Items.TOTEM_OF_UNDYING) ||
+               player.getStackInHand(Hand.OFF_HAND).isOf(Items.TOTEM_OF_UNDYING);
+    }
+    
+    /**
+     * Consume totem from player's hand.
+     */
+    @Unique
+    private void consumeTotem(ServerPlayerEntity player) {
+        ItemStack mainHand = player.getStackInHand(Hand.MAIN_HAND);
+        ItemStack offHand = player.getStackInHand(Hand.OFF_HAND);
+        
+        if (mainHand.isOf(Items.TOTEM_OF_UNDYING)) {
+            mainHand.decrement(1);
+        } else if (offHand.isOf(Items.TOTEM_OF_UNDYING)) {
+            offHand.decrement(1);
+        }
+    }
+    
+    /**
+     * Apply totem effects to a player.
      */
     @Unique
     private void applyTotemEffects(ServerPlayerEntity player, ServerWorld world) {
@@ -185,51 +292,6 @@ public abstract class LivingEntityMixin {
         
         // Spawn totem particles
         spawnTotemParticles(world, player);
-    }
-    
-    /**
-     * Save a soul-linked player when their partner used a totem.
-     * @param totemUser The player who used the totem
-     * @param savedPlayer The partner being saved
-     * @param world The server world
-     * @param consumeTotem Whether to consume a totem from the saved player
-     */
-    @Unique
-    private void saveSoulLinkedPlayer(ServerPlayerEntity totemUser, ServerPlayerEntity savedPlayer, ServerWorld world, boolean consumeTotem) {
-        String totemUserName = totemUser.getName().getString();
-        String savedPlayerName = savedPlayer.getName().getString();
-        
-        // Apply regeneration, absorption, and fire resistance like vanilla totem
-        savedPlayer.setHealth(Math.max(1.0F, savedPlayer.getHealth()));
-        savedPlayer.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, 900, 1));
-        savedPlayer.addStatusEffect(new StatusEffectInstance(StatusEffects.ABSORPTION, 100, 1));
-        savedPlayer.addStatusEffect(new StatusEffectInstance(StatusEffects.FIRE_RESISTANCE, 800, 0));
-        
-        // Play totem animation and sound for saved player
-        ServerWorld savedPlayerWorld = (ServerWorld) savedPlayer.getEntityWorld();
-        savedPlayerWorld.playSound(null, savedPlayer.getX(), savedPlayer.getY(), savedPlayer.getZ(),
-            SoundEvents.ITEM_TOTEM_USE, SoundCategory.PLAYERS, 1.0f, 1.0f);
-        
-        // Spawn totem particles around saved player
-        spawnTotemParticles(savedPlayerWorld, savedPlayer);
-        
-        // Notify both players
-        savedPlayer.sendMessage(
-            Text.literal("Your partner's Totem of Undying granted you protection!")
-                .formatted(Formatting.GOLD, Formatting.BOLD),
-            false
-        );
-        
-        totemUser.sendMessage(
-            Text.literal("Your Totem of Undying also protected ")
-                .append(Text.literal(savedPlayerName).formatted(Formatting.GOLD))
-                .append(Text.literal("!"))
-                .formatted(Formatting.DARK_PURPLE),
-            false
-        );
-        
-        SimpleDeathBans.LOGGER.info("Soul link totem save: {} granted protection to partner {}", 
-            totemUserName, savedPlayerName);
     }
 
     /**
