@@ -16,6 +16,8 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Hand;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -27,6 +29,10 @@ import java.util.UUID;
  * - Totem saves partner feature
  */
 public class SoulLinkEventHandler {
+    
+    // Cooldown tracker to prevent duplicate interactions (player UUID -> last interaction time)
+    private static final Map<UUID, Long> interactionCooldowns = new HashMap<>();
+    private static final long INTERACTION_COOLDOWN_MS = 500; // 500ms cooldown
     
     public static void register() {
         // Register damage event for soul link damage sharing
@@ -89,6 +95,15 @@ public class SoulLinkEventHandler {
                 return ActionResult.PASS;
             }
             
+            // Cooldown check to prevent duplicate messages
+            UUID playerId = serverPlayer.getUuid();
+            long currentTime = System.currentTimeMillis();
+            Long lastInteraction = interactionCooldowns.get(playerId);
+            if (lastInteraction != null && (currentTime - lastInteraction) < INTERACTION_COOLDOWN_MS) {
+                return ActionResult.SUCCESS; // Still on cooldown, silently ignore
+            }
+            interactionCooldowns.put(playerId, currentTime);
+            
             SimpleDeathBans mod = SimpleDeathBans.getInstance();
             if (mod == null) return ActionResult.PASS;
             
@@ -100,7 +115,6 @@ public class SoulLinkEventHandler {
                 return ActionResult.PASS;
             }
             
-            UUID playerId = serverPlayer.getUuid();
             UUID targetId = targetPlayer.getUuid();
             String playerName = serverPlayer.getName().getString();
             String targetName = targetPlayer.getName().getString();

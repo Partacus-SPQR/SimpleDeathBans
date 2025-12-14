@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2025-12-13
+## [1.2.0] - 2025-12-14
 
 ### Added
 - **Shared Health System** - Server-wide damage sharing (all players share damage)
@@ -20,19 +20,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Soul Link Damage Share** - Now explicitly documented as NON-LETHAL only
 - **Death Pact Clarification** - Lethal damage triggers instant death regardless of damage share %
 - **Cloth Config Tooltips** - Enhanced with multi-line explanations and warnings
+- **Soul Link Manual Mode** - Removed non-existent "Soul Link Totem" item from documentation (shift+click works without any item)
 
 ### Fixed
 - **Shared Health Damage Calculation** - Fixed missing /100.0 in percentage calculation
+- **Duplicate Soul Link Messages** - Added cooldown to prevent double message spam when shift+right-clicking
 
 ### Technical
 - Added SharedHealthMixin for server-wide death pact handling
 - Simplified SharedHealthHandler to only handle non-lethal damage sharing
+- Added interaction cooldown system to SoulLinkEventHandler
 - Updated config documentation in README
 
 ## [1.1.0] - 2025-12-13
 
 ### Added
-- **Soul Link Totem** - New craftable item for manual soul linking (4 Amethyst Shards + 1 Echo Shard)
 - **Manual Soul Linking** - Shift+right-click another player to request a soul link (requires mutual consent)
 - **Pending Link Requests** - Both players must accept for a soul link to form
 - **Soul Link Status Messages** - Context-aware feedback when interacting with linked/unlinked players
@@ -41,7 +43,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Single-Player Death Handling** - Now properly saves world and returns to title screen instead of allowing respawn
-- **Soul Link Totem Partner Protection** - Totem now correctly saves your partner from death (not yourself)
+- **Soul Link Totem Protection** - Totem of Undying now correctly saves your partner from death
 - **Stack Overflow Crash** - Fixed infinite recursion in cross-handler damage sharing
 - **Command Permissions** - All commands now properly require OP Level 4
 - **Fallback Config Keybinds Button** - Now navigates directly to KeybindsScreen

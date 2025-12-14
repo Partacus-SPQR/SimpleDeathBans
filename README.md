@@ -22,7 +22,7 @@ A hardcore survival Fabric mod featuring a progressive banning system with Soul 
 ### 2. The Soul Link ("Soulbound")
 - **Togglable** (OP Level 4 only, default: OFF)
 - **Automatic Mode**: Players are automatically paired with "Soul Partners" on login
-- **Manual Mode**: Players can craft a **Soul Link Totem** and shift+right-click another player
+- **Manual Mode**: Shift+right-click another player to request a soul link
   - Requires **mutual consent** - both players must shift+right-click each other
 - **Damage Sharing**: When Player A takes damage, Player B takes the same damage (configurable %)
   - **Important**: Damage share % only affects NON-LETHAL damage
@@ -33,13 +33,6 @@ A hardcore survival Fabric mod featuring a progressive banning system with Soul 
   - **Totem Saves Partner ON**: Any totem saves BOTH players
   - **Totem Saves Partner OFF**: Totem only saves the holder, partner dies
   - If BOTH have totems: Both totems consumed, both survive
-
-#### Soul Link Totem Recipe (Shapeless):
-```
-[Amethyst Shard] [Amethyst Shard]
-[  Echo Shard ] [Amethyst Shard]
-[Amethyst Shard]
-```
 
 ### 3. Shared Health (Server-Wide Health Pool)
 - **Togglable** (OP Level 4 only, default: OFF)
