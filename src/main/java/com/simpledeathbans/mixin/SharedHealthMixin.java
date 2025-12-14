@@ -41,7 +41,7 @@ import java.util.List;
  * 
  * NOTIFICATIONS (all obfuscated + purple):
  * - TotemSavesAll ON, 1 totem: "[Player]'s totem has saved everyone from the void!"
- * - TotemSavesAll ON, multiple totems: "Multiple people have saved everyone from the voids grasp!"
+ * - TotemSavesAll ON, multiple totems: "Multiple people have saved others from the void!"
  * - TotemSavesAll OFF, 1 survivor: "[Player] is the only one to survive from the void!"
  * - TotemSavesAll OFF, multiple survivors: "Multiple people have survived the voids grasp!"
  * - No totems: All die with default ban logic
@@ -135,7 +135,7 @@ public abstract class SharedHealthMixin {
                 } else {
                     // Multiple totem holders
                     serverMsg = Text.literal("§k><§r ")
-                        .append(Text.literal("Multiple people have saved everyone from the voids grasp!").formatted(Formatting.DARK_PURPLE))
+                        .append(Text.literal("Multiple people have saved others from the void!").formatted(Formatting.DARK_PURPLE))
                         .append(Text.literal(" §k><§r"));
                 }
                 

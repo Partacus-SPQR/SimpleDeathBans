@@ -435,6 +435,16 @@ public class ModCommands {
         // Toggle the setting
         config.enableSharedHealth = !config.enableSharedHealth;
         
+        // MUTUAL EXCLUSIVITY: If enabling Shared Health, disable Soul Link
+        if (config.enableSharedHealth && config.enableSoulLink) {
+            config.enableSoulLink = false;
+            context.getSource().sendFeedback(
+                () -> Text.literal("⚠ Soul Link has been DISABLED - Shared Health takes priority!")
+                    .formatted(Formatting.RED, Formatting.BOLD),
+                true
+            );
+        }
+        
         // Save the config
         SimpleDeathBans.getInstance().saveConfig();
         

@@ -2,6 +2,7 @@ package com.simpledeathbans.mixin;
 
 import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.config.ModConfig;
+import com.simpledeathbans.damage.SoulSeverDamageSource;
 import com.simpledeathbans.data.SoulLinkManager;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
@@ -38,8 +39,17 @@ import java.util.UUID;
  * 
  * When soulLinkTotemSavesPartner = DISABLED:
  * - Both have totems: Both totems consumed, both live
- * - One has totem: Only totem holder saved, partner dies
+ * - One has totem: Only totem holder lives, other dies
  * - Neither has totem: Both die
+ * 
+ * IMPORTANT: This mixin fires for BOTH players during death pact:
+ * 1. First player takes lethal damage → mixin fires
+ * 2. If that player dies, DeathEventHandler sends soul sever to partner
+ * 3. Partner receives soul sever → mixin fires AGAIN for partner
+ * 
+ * So when TotemSavesPartner=OFF:
+ * - Player without totem dies (no totem to save them)
+ * - Partner with totem receives soul sever, their totem saves them
  */
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin {
@@ -84,11 +94,50 @@ public abstract class LivingEntityMixin {
             return;
         }
         
+        // MUTUAL EXCLUSIVITY: If Shared Health is enabled, Soul Link is disabled
+        // (SharedHealthMixin handles lethal damage for the server-wide pool)
+        if (config.enableSharedHealth) {
+            return;
+        }
+        
         UUID playerId = player.getUuid();
         
         // Check if player has a soul link partner
         if (!soulLinkManager.hasPartner(playerId)) {
             return; // No partner, vanilla behavior
+        }
+        
+        // SPECIAL CASE: Soul Sever damage (death pact from partner dying)
+        // When TotemSavesPartner=OFF and partner died, this player receives soul sever damage.
+        // If THIS player has a totem, they should use it to save themselves.
+        if (SoulSeverDamageSource.isSoulSever(source)) {
+            boolean playerHasTotem = hasTotemOfUndying(player);
+            
+            if (playerHasTotem) {
+                // Use totem to save self from soul sever (partner is already dead)
+                consumeTotem(player);
+                applyTotemEffects(player, world);
+                
+                Text savedMsg = Text.literal("§k><§r ")
+                    .append(Text.literal("Your totem has saved you from the void!").formatted(Formatting.DARK_PURPLE))
+                    .append(Text.literal(" §k><§r"));
+                player.sendMessage(savedMsg, false);
+                
+                // Server-wide notification
+                String playerName = player.getName().getString();
+                Text serverMsg = Text.literal("§k><§r ")
+                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
+                    .append(Text.literal(" is the only one to survive from the void!").formatted(Formatting.DARK_PURPLE))
+                    .append(Text.literal(" §k><§r"));
+                world.getServer().getPlayerManager().broadcast(serverMsg, false);
+                
+                SimpleDeathBans.LOGGER.info("Soul Link: {} survived soul sever with totem (partner died)", playerName);
+                
+                cir.setReturnValue(false); // Cancel damage
+                return;
+            }
+            // No totem - let soul sever kill them
+            return;
         }
         
         ServerPlayerEntity partner = soulLinkManager.getPartner(playerId)
@@ -174,13 +223,27 @@ public abstract class LivingEntityMixin {
                 
                 SimpleDeathBans.LOGGER.info("Soul Link: {} totem saved both players (TotemSavesPartner=ON)", playerName);
             } else {
-                // Totem saves ONLY the holder, partner will die via death pact
+                // Totem saves ONLY the holder, partner MUST die via death pact
                 Text playerMsg = Text.literal("§k><§r ")
                     .append(Text.literal("Your totem has saved you from the void!").formatted(Formatting.DARK_PURPLE))
                     .append(Text.literal(" §k><§r"));
                 player.sendMessage(playerMsg, false);
                 
-                SimpleDeathBans.LOGGER.info("Soul Link: {} totem saved only themselves (TotemSavesPartner=OFF), partner {} will die", 
+                // Server-wide notification - this player survived alone
+                Text serverMsg = Text.literal("§k><§r ")
+                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
+                    .append(Text.literal(" is the only one to survive from the void!").formatted(Formatting.DARK_PURPLE))
+                    .append(Text.literal(" §k><§r"));
+                world.getServer().getPlayerManager().broadcast(serverMsg, false);
+                
+                // KILL THE PARTNER - they have no totem and their soulbound partner took lethal damage
+                ServerWorld partnerWorld = (ServerWorld) partner.getEntityWorld();
+                partnerWorld.getServer().execute(() -> {
+                    DamageSource soulSeverDamage = SoulSeverDamageSource.create(partnerWorld, player);
+                    partner.damage(partnerWorld, soulSeverDamage, Float.MAX_VALUE);
+                });
+                
+                SimpleDeathBans.LOGGER.info("Soul Link: {} totem saved only themselves (TotemSavesPartner=OFF), killing partner {}", 
                     playerName, partnerName);
             }
             

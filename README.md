@@ -37,9 +37,9 @@ A hardcore survival Fabric mod featuring a progressive banning system with Soul 
 
 #### Soul Link Totem Recipe (3×3 Shaped):
 ```
-[Amethyst Shard] [Ender Pearl] [Amethyst Shard]
-[  Ender Pearl ] [Totem of Undying] [  Ender Pearl ]
-[Amethyst Shard] [Ender Pearl] [Amethyst Shard]
+[Amethyst Shard] [Eye of Ender] [Amethyst Shard]
+[  Eye of Ender ] [Totem of Undying] [  Eye of Ender ]
+[Amethyst Shard] [Eye of Ender] [Amethyst Shard]
 ```
 *Yields 2 Soul Link Totems*
 
@@ -55,7 +55,7 @@ A hardcore survival Fabric mod featuring a progressive banning system with Soul 
 - **One player has totem**: That player's totem saves EVERYONE
   - Notification: `"§k><§r [Player]'s totem has saved everyone from the void! §k><§r"`
 - **Multiple players have totems**: ALL totems consumed, everyone saved
-  - Notification: `"§k><§r Multiple people have saved everyone from the voids grasp! §k><§r"`
+  - Notification: `"§k><§r Multiple people have saved others from the void! §k><§r"`
 - **No one has totem**: ALL players die with default ban logic
 
 #### Totem Saves All = DISABLED:

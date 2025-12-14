@@ -16,8 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Multi-totem Support** - Handles multiple totem holders with appropriate notifications
 - **Config Tooltips** - Detailed tooltips explaining damage share vs death pact behavior
 - **Soul Link Totem** - New craftable item required for manual soul linking
-  - Recipe: Amethyst Shards + Ender Pearls + Totem of Undying (yields 2)
+  - Recipe: Amethyst Shards + Eye of Enders + Totem of Undying (yields 2)
   - Prevents conflicts with other mods using shift+right-click on players
+- **Mutual Exclusivity** - Shared Health overrides Soul Link when enabled (existing links preserved)
 
 ### Changed
 - **Soul Link Damage Share** - Now explicitly documented as NON-LETHAL only
@@ -28,6 +29,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - **Shared Health Damage Calculation** - Fixed missing /100.0 in percentage calculation
 - **Duplicate Soul Link Messages** - Added cooldown to prevent double message spam when shift+right-clicking
+- **Soul Link Totem Save (TotemSavesPartner=OFF)** - Fixed scenarios where:
+  - Player with totem now survives even if partner (no totem) takes lethal damage
+  - Player without totem now dies if partner (with totem) takes lethal damage
+- **Resurrection Ritual Formatting** - Fixed message box exceeding chat width
+- **Resurrection Ritual Colors** - "Ban tier preserved" now red, "freed from void" now dark purple
 
 ### Technical
 - Added SharedHealthMixin for server-wide death pact handling

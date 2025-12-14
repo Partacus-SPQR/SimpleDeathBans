@@ -53,6 +53,11 @@ public class SoulLinkEventHandler {
                 return true;
             }
             
+            // MUTUAL EXCLUSIVITY: If Shared Health is enabled, Soul Link damage sharing is disabled
+            if (config.enableSharedHealth) {
+                return true; // Let SharedHealthHandler handle all damage sharing
+            }
+            
             // SINGLE-PLAYER: Skip soul link entirely (no other players possible)
             ServerWorld world = (ServerWorld) player.getEntityWorld();
             if (world.getServer().isSingleplayer()) {

@@ -245,13 +245,13 @@ public class ResurrectionRitualManager {
         
         // Broadcast success message
         server.getPlayerManager().broadcast(Text.literal(""), false);
-        server.getPlayerManager().broadcast(Text.literal("§d§l═══════════════════════════════════════"), false);
+        server.getPlayerManager().broadcast(Text.literal("§d§l════════════════════════════════"), false);
         server.getPlayerManager().broadcast(Text.literal("§d§l✦ THE RITUAL IS COMPLETE! ✦"), false);
         server.getPlayerManager().broadcast(Text.literal(""), false);
         server.getPlayerManager().broadcast(Text.literal(String.format("§b§l%s §fhas been resurrected!", bannedPlayer.playerName())), false);
-        server.getPlayerManager().broadcast(Text.literal("§7Their soul has been freed from the void."), false);
-        server.getPlayerManager().broadcast(Text.literal(String.format("§8(Ban tier %d preserved)", bannedPlayer.banTier())), false);
-        server.getPlayerManager().broadcast(Text.literal("§d§l═══════════════════════════════════════"), false);
+        server.getPlayerManager().broadcast(Text.literal("§5Their soul has been freed from the void."), false);
+        server.getPlayerManager().broadcast(Text.literal(String.format("§c(Ban tier %d preserved)", bannedPlayer.banTier())), false);
+        server.getPlayerManager().broadcast(Text.literal("§d§l════════════════════════════════"), false);
         server.getPlayerManager().broadcast(Text.literal(""), false);
         
         SimpleDeathBans.LOGGER.info("Resurrection ritual completed! {} has been resurrected.", bannedPlayer.playerName());

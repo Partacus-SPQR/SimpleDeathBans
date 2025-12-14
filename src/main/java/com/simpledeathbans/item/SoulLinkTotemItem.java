@@ -12,9 +12,9 @@ import net.minecraft.item.ItemStack;
  * - Once both players consent, their souls are bound together
  * 
  * Recipe (3x3 shaped):
- * - Row 1: Amethyst Shard | Ender Pearl | Amethyst Shard
- * - Row 2: Ender Pearl | Totem of Undying | Ender Pearl
- * - Row 3: Amethyst Shard | Ender Pearl | Amethyst Shard
+ * - Row 1: Amethyst Shard | Eye of Ender | Amethyst Shard
+ * - Row 2: Eye of Ender | Totem of Undying | Eye of Ender
+ * - Row 3: Amethyst Shard | Eye of Ender | Amethyst Shard
  */
 public class SoulLinkTotemItem extends Item {
     
