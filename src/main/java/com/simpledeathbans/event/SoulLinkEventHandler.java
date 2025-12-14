@@ -7,6 +7,8 @@ import com.simpledeathbans.data.SoulLinkManager;
 import com.simpledeathbans.util.DamageShareTracker;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
+import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -62,8 +64,41 @@ public class SoulLinkEventHandler {
                 return true;
             }
             
-            // Share damage to partner
-            shareDamageToPartner(player, soulLinkManager, config.soulLinkDamageShare);
+            // TOTEM CHECK: If this damage would be lethal and someone has a totem,
+            // the totem will save both players (via LivingEntityMixin), so DON'T share damage
+            float currentHealth = player.getHealth();
+            if (amount >= currentHealth && config.soulLinkTotemSavesAll) {
+                // This would be lethal - check if either player has a totem
+                boolean hasTotem = player.getStackInHand(Hand.MAIN_HAND).isOf(Items.TOTEM_OF_UNDYING) ||
+                                   player.getStackInHand(Hand.OFF_HAND).isOf(Items.TOTEM_OF_UNDYING);
+                
+                if (hasTotem) {
+                    // Player's totem will save both - don't share this damage
+                    // The mixin will handle saving the partner
+                    return true;
+                }
+                
+                // Check if partner has totem (they would save this player)
+                if (soulLinkManager.hasPartner(playerId)) {
+                    Optional<UUID> partnerOpt = soulLinkManager.getPartner(playerId);
+                    if (partnerOpt.isPresent()) {
+                        ServerPlayerEntity partner = world.getServer().getPlayerManager().getPlayer(partnerOpt.get());
+                        if (partner != null && partner.isAlive()) {
+                            boolean partnerHasTotem = partner.getStackInHand(Hand.MAIN_HAND).isOf(Items.TOTEM_OF_UNDYING) ||
+                                                      partner.getStackInHand(Hand.OFF_HAND).isOf(Items.TOTEM_OF_UNDYING);
+                            if (partnerHasTotem) {
+                                // Partner's totem will save both - don't share this damage
+                                return true;
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Share damage to partner (non-lethal or no totem protection)
+            // soulLinkDamageShare is a multiplier: 1.0 = 100% of damage shared (1:1 ratio)
+            float sharedDamage = (float) (amount * config.soulLinkDamageShare);
+            shareDamageToPartner(player, soulLinkManager, sharedDamage);
             
             return true; // Allow original damage
         });

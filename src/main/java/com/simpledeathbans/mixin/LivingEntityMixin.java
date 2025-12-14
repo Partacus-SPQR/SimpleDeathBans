@@ -119,26 +119,35 @@ public abstract class LivingEntityMixin {
                                                partner.getStackInHand(Hand.OFF_HAND).isOf(Items.TOTEM_OF_UNDYING);
                     
                     if (partnerHasTotem) {
-                        // Partner has a totem! Save this player without consuming the totem
-                        // (The partner's totem protects them both - shared protection)
-                        SimpleDeathBans.LOGGER.info("Soul link totem save: Partner {} has totem, saving {} from lethal damage", 
+                        // Partner has a totem! Consume it and save BOTH players
+                        SimpleDeathBans.LOGGER.info("Soul link totem save: Partner {} has totem, consuming it to save {} from lethal damage", 
                             partner.getName().getString(), player.getName().getString());
                         
-                        // Cancel the damage and apply totem effects
+                        // CONSUME the partner's totem
+                        ItemStack mainHand = partner.getStackInHand(Hand.MAIN_HAND);
+                        ItemStack offHand = partner.getStackInHand(Hand.OFF_HAND);
+                        if (mainHand.isOf(Items.TOTEM_OF_UNDYING)) {
+                            mainHand.decrement(1);
+                        } else if (offHand.isOf(Items.TOTEM_OF_UNDYING)) {
+                            offHand.decrement(1);
+                        }
+                        
+                        // Apply totem effects to BOTH players (since totem holder is also protected)
                         applyTotemEffects(player, world);
+                        applyTotemEffects(partner, (ServerWorld) partner.getEntityWorld());
                         
                         // Notify both players
                         player.sendMessage(
-                            Text.literal("Your partner's Totem of Undying saved you from death!")
+                            Text.literal("Your partner's Totem of Undying saved you both from death!")
                                 .formatted(Formatting.GOLD, Formatting.BOLD),
                             false
                         );
                         
                         partner.sendMessage(
-                            Text.literal("Your Totem of Undying protected ")
+                            Text.literal("Your Totem of Undying saved both you and ")
                                 .append(Text.literal(player.getName().getString()).formatted(Formatting.GOLD))
                                 .append(Text.literal(" from death!"))
-                                .formatted(Formatting.DARK_PURPLE),
+                                .formatted(Formatting.DARK_PURPLE, Formatting.BOLD),
                             false
                         );
                         

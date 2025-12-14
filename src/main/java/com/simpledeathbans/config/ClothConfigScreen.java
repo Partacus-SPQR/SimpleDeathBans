@@ -156,17 +156,21 @@ public class ClothConfigScreen {
         general.addEntry(entryBuilder.startIntSlider(
                 Text.translatable("config.simpledeathbans.baseBanMinutes"), config.baseBanMinutes, 1, 60)
             .setDefaultValue(1)
+            .setTextGetter(val -> Text.literal(val + " min"))
             .setTooltip(Text.literal("Base ban time in minutes per tier. Range: 1-60. Default: 1"))
             .setSaveConsumer(val -> config.baseBanMinutes = val)
             .build());
         
-        general.addEntry(entryBuilder.startDoubleField(
-                Text.translatable("config.simpledeathbans.banMultiplier"), config.banMultiplier)
-            .setDefaultValue(1.0)
-            .setMin(0.1)
-            .setMax(10.0)
-            .setTooltip(Text.literal("Multiplier for ban time. Range: 0.1-10.0. Default: 1.0"))
-            .setSaveConsumer(val -> config.banMultiplier = val)
+        // Ban Multiplier as percentage slider (10-1000%, where 100% = 1.0x)
+        int banMultPercent = (int) Math.round(config.banMultiplier * 100);
+        if (banMultPercent < 10) banMultPercent = 10;
+        if (banMultPercent > 1000) banMultPercent = 1000;
+        general.addEntry(entryBuilder.startIntSlider(
+                Text.translatable("config.simpledeathbans.banMultiplier"), banMultPercent, 10, 1000)
+            .setDefaultValue(100)
+            .setTextGetter(val -> Text.literal(val + "%"))
+            .setTooltip(Text.literal("Multiplier for ban time. 100% = 1x. Range: 10%-1000%. Default: 100%"))
+            .setSaveConsumer(val -> config.banMultiplier = val / 100.0)
             .build());
         
         // Display max tier as slider: -1 = infinite, 1-100 = actual tiers
@@ -198,22 +202,28 @@ public class ClothConfigScreen {
             Text.literal("═══ PvP Settings ═══").formatted(Formatting.GOLD)
         ).build());
         
-        general.addEntry(entryBuilder.startDoubleField(
-                Text.translatable("config.simpledeathbans.pvpBanMultiplier"), config.pvpBanMultiplier)
-            .setDefaultValue(0.5)
-            .setMin(0.0)
-            .setMax(5.0)
-            .setTooltip(Text.literal("Ban time multiplier for PvP deaths. Range: 0.0-5.0. Default: 0.5"))
-            .setSaveConsumer(val -> config.pvpBanMultiplier = val)
+        // PvP Ban Multiplier as percentage slider (0-500%)
+        int pvpMultPercent = (int) Math.round(config.pvpBanMultiplier * 100);
+        if (pvpMultPercent < 0) pvpMultPercent = 0;
+        if (pvpMultPercent > 500) pvpMultPercent = 500;
+        general.addEntry(entryBuilder.startIntSlider(
+                Text.translatable("config.simpledeathbans.pvpBanMultiplier"), pvpMultPercent, 0, 500)
+            .setDefaultValue(50)
+            .setTextGetter(val -> Text.literal(val + "%"))
+            .setTooltip(Text.literal("Ban time multiplier for PvP deaths. 50% = half ban time. Default: 50%"))
+            .setSaveConsumer(val -> config.pvpBanMultiplier = val / 100.0)
             .build());
         
-        general.addEntry(entryBuilder.startDoubleField(
-                Text.literal("PvE Ban Multiplier"), config.pveBanMultiplier)
-            .setDefaultValue(1.0)
-            .setMin(0.0)
-            .setMax(5.0)
-            .setTooltip(Text.literal("Ban time multiplier for PvE deaths. Range: 0.0-5.0. Default: 1.0"))
-            .setSaveConsumer(val -> config.pveBanMultiplier = val)
+        // PvE Ban Multiplier as percentage slider (0-500%)
+        int pveMultPercent = (int) Math.round(config.pveBanMultiplier * 100);
+        if (pveMultPercent < 0) pveMultPercent = 0;
+        if (pveMultPercent > 500) pveMultPercent = 500;
+        general.addEntry(entryBuilder.startIntSlider(
+                Text.literal("PvE Ban Multiplier"), pveMultPercent, 0, 500)
+            .setDefaultValue(100)
+            .setTextGetter(val -> Text.literal(val + "%"))
+            .setTooltip(Text.literal("Ban time multiplier for PvE deaths. 100% = normal ban time. Default: 100%"))
+            .setSaveConsumer(val -> config.pveBanMultiplier = val / 100.0)
             .build());
         
         // --- Altar of Resurrection Header ---
@@ -245,13 +255,20 @@ public class ClothConfigScreen {
             .setSaveConsumer(val -> config.enableSoulLink = val)
             .build());
         
-        soulLinkHealth.addEntry(entryBuilder.startDoubleField(
-                Text.translatable("config.simpledeathbans.soulLinkDamageShare"), config.soulLinkDamageShare)
-            .setDefaultValue(1.0)
-            .setMin(0.0)
-            .setMax(10.0)
-            .setTooltip(Text.literal("Damage shared to soul partner (1.0 = 0.5 hearts). Default: 1.0"))
-            .setSaveConsumer(val -> config.soulLinkDamageShare = val)
+        // Soul Link Damage Share as percentage slider (0-200%, where 100% = 1:1 ratio)
+        int damageSharePercent = (int) Math.round(config.soulLinkDamageShare * 100);
+        if (damageSharePercent < 0) damageSharePercent = 0;
+        if (damageSharePercent > 200) damageSharePercent = 200;
+        soulLinkHealth.addEntry(entryBuilder.startIntSlider(
+                Text.translatable("config.simpledeathbans.soulLinkDamageShare"), damageSharePercent, 0, 200)
+            .setDefaultValue(100)
+            .setTextGetter(val -> Text.literal(val + "%"))
+            .setTooltip(
+                Text.literal("Percentage of damage shared to soul partner."),
+                Text.literal("100% = 1:1 ratio (take 2 hearts, partner takes 2 hearts)").formatted(Formatting.GRAY),
+                Text.literal("50% = half damage, 200% = double damage").formatted(Formatting.GRAY),
+                Text.literal("Default: 100%").formatted(Formatting.GRAY))
+            .setSaveConsumer(val -> config.soulLinkDamageShare = val / 100.0)
             .build());
         
         soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
@@ -280,13 +297,16 @@ public class ClothConfigScreen {
             .setSaveConsumer(val -> config.enableSharedHealth = val)
             .build());
         
-        soulLinkHealth.addEntry(entryBuilder.startDoubleField(
-                Text.literal("Shared Damage Percent"), config.sharedHealthDamagePercent)
-            .setDefaultValue(1.0)
-            .setMin(0.0)
-            .setMax(2.0)
-            .setTooltip(Text.literal("Percent of damage shared to all players (1.0 = 100%). Default: 1.0"))
-            .setSaveConsumer(val -> config.sharedHealthDamagePercent = val)
+        // Shared Damage Percent as slider (0-200%)
+        int sharedPercent = (int) Math.round(config.sharedHealthDamagePercent * 100);
+        if (sharedPercent < 0) sharedPercent = 0;
+        if (sharedPercent > 200) sharedPercent = 200;
+        soulLinkHealth.addEntry(entryBuilder.startIntSlider(
+                Text.literal("Shared Damage Percent"), sharedPercent, 0, 200)
+            .setDefaultValue(100)
+            .setTextGetter(val -> Text.literal(val + "%"))
+            .setTooltip(Text.literal("Percent of damage shared to all players. 100% = full damage. Default: 100%"))
+            .setSaveConsumer(val -> config.sharedHealthDamagePercent = val / 100.0)
             .build());
         
         soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(

@@ -24,7 +24,7 @@ A hardcore survival Fabric mod featuring a progressive banning system with Soul 
 - **Automatic Mode**: Players are automatically paired with "Soul Partners" on login
 - **Manual Mode**: Players can craft a **Soul Link Totem** and shift+right-click another player
   - Requires **mutual consent** - both players must shift+right-click each other
-- Damage sharing: When Player A takes damage, Player B takes 0.5 hearts
+- Damage sharing: When Player A takes damage, Player B takes the same damage (configurable)
 - **Death Pact**: If one partner dies, the other dies instantly
 - **Soul Link Totem Protection**: If you die while holding a Soul Link Totem, your partner is saved instead of dying
 - Both players hear the Wither spawn sound and receive the message "Your soul has been severed"
