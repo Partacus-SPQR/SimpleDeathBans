@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2025-12-13
+
+### Added
+- **Shared Health System** - Server-wide damage sharing (all players share damage)
+- **Shared Health Death Pact** - If ANY player takes lethal damage, ALL players die
+- **Shared Health Totem Logic** - Multiple totem scenarios:
+  - Totem Saves All ON: Any totem saves everyone
+  - Totem Saves All OFF: Only totem holders survive
+- **Multi-totem Support** - Handles multiple totem holders with appropriate notifications
+- **Config Tooltips** - Detailed tooltips explaining damage share vs death pact behavior
+
+### Changed
+- **Soul Link Damage Share** - Now explicitly documented as NON-LETHAL only
+- **Death Pact Clarification** - Lethal damage triggers instant death regardless of damage share %
+- **Cloth Config Tooltips** - Enhanced with multi-line explanations and warnings
+
+### Fixed
+- **Shared Health Damage Calculation** - Fixed missing /100.0 in percentage calculation
+
+### Technical
+- Added SharedHealthMixin for server-wide death pact handling
+- Simplified SharedHealthHandler to only handle non-lethal damage sharing
+- Updated config documentation in README
+
 ## [1.1.0] - 2025-12-13
 
 ### Added

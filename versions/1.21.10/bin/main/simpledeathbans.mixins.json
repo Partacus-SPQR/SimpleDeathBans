@@ -6,7 +6,8 @@
     "mixins": [
         "ServerPlayNetworkHandlerMixin",
         "PlayerManagerMixin",
-        "LivingEntityMixin"
+        "LivingEntityMixin",
+        "SharedHealthMixin"
     ],
     "client": [],
     "injectors": {

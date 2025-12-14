@@ -251,9 +251,13 @@ public class ClothConfigScreen {
             .setDefaultValue(100)
             .setTextGetter(val -> Text.literal(val + "%"))
             .setTooltip(
-                Text.literal("Percentage of damage shared to soul partner."),
+                Text.literal("Percentage of damage shared to soul partner.").formatted(Formatting.WHITE),
                 Text.literal("100% = 1:1 ratio (take 2 hearts, partner takes 2 hearts)").formatted(Formatting.GRAY),
                 Text.literal("50% = half damage, 200% = double damage").formatted(Formatting.GRAY),
+                Text.literal("").formatted(Formatting.GRAY),
+                Text.literal("⚠ IMPORTANT: Only affects NON-LETHAL damage!").formatted(Formatting.GOLD),
+                Text.literal("LETHAL damage triggers Death Pact = instant death").formatted(Formatting.RED),
+                Text.literal("for BOTH players regardless of this setting.").formatted(Formatting.RED),
                 Text.literal("Default: 100%").formatted(Formatting.GRAY))
             .setSaveConsumer(val -> config.soulLinkDamageSharePercent = val)
             .build());
@@ -268,7 +272,14 @@ public class ClothConfigScreen {
         soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
                 Text.literal("Totem Saves Partner"), config.soulLinkTotemSavesPartner)
             .setDefaultValue(true)
-            .setTooltip(Text.literal("If your partner uses a totem, you are also saved from death. Default: ON"))
+            .setTooltip(
+                Text.literal("Controls totem behavior for Soul Link Death Pact.").formatted(Formatting.WHITE),
+                Text.literal("").formatted(Formatting.GRAY),
+                Text.literal("ON: Any totem saves BOTH players").formatted(Formatting.GREEN),
+                Text.literal("OFF: Totem only saves holder, partner dies").formatted(Formatting.RED),
+                Text.literal("").formatted(Formatting.GRAY),
+                Text.literal("If BOTH have totems: Both consumed, both live").formatted(Formatting.GRAY),
+                Text.literal("Default: ON").formatted(Formatting.GRAY))
             .setSaveConsumer(val -> config.soulLinkTotemSavesPartner = val)
             .build());
         
@@ -280,7 +291,13 @@ public class ClothConfigScreen {
         soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
                 Text.literal("Enable Shared Health"), config.enableSharedHealth)
             .setDefaultValue(false)
-            .setTooltip(Text.literal("Server-wide damage sharing (all players share health). Default: OFF"))
+            .setTooltip(
+                Text.literal("SERVER-WIDE damage sharing!").formatted(Formatting.WHITE),
+                Text.literal("ALL players share damage - if one takes damage, everyone does.").formatted(Formatting.GRAY),
+                Text.literal("").formatted(Formatting.GRAY),
+                Text.literal("⚠ Death Pact: If ANY player takes lethal damage,").formatted(Formatting.RED),
+                Text.literal("ALL players die instantly (unless someone has a totem).").formatted(Formatting.RED),
+                Text.literal("Default: OFF").formatted(Formatting.GRAY))
             .setSaveConsumer(val -> config.enableSharedHealth = val)
             .build());
         
@@ -289,14 +306,28 @@ public class ClothConfigScreen {
                 Text.literal("Shared Damage Percent"), config.sharedHealthDamagePercent, 0, 200)
             .setDefaultValue(100)
             .setTextGetter(val -> Text.literal(val + "%"))
-            .setTooltip(Text.literal("Percent of damage shared to all players. 100% = full damage. Default: 100%"))
+            .setTooltip(
+                Text.literal("Percent of damage shared to ALL players.").formatted(Formatting.WHITE),
+                Text.literal("100% = full damage (1:1), 50% = half damage").formatted(Formatting.GRAY),
+                Text.literal("").formatted(Formatting.GRAY),
+                Text.literal("⚠ IMPORTANT: Only affects NON-LETHAL damage!").formatted(Formatting.GOLD),
+                Text.literal("LETHAL damage triggers Death Pact = everyone dies").formatted(Formatting.RED),
+                Text.literal("regardless of this setting.").formatted(Formatting.RED),
+                Text.literal("Default: 100%").formatted(Formatting.GRAY))
             .setSaveConsumer(val -> config.sharedHealthDamagePercent = val)
             .build());
         
         soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
                 Text.literal("Totem Saves All"), config.sharedHealthTotemSavesAll)
             .setDefaultValue(true)
-            .setTooltip(Text.literal("Any player's totem can save all players from death. Default: ON"))
+            .setTooltip(
+                Text.literal("Controls totem behavior for Shared Health Death Pact.").formatted(Formatting.WHITE),
+                Text.literal("").formatted(Formatting.GRAY),
+                Text.literal("ON: Any player's totem saves EVERYONE").formatted(Formatting.GREEN),
+                Text.literal("OFF: Only totem holders survive, others die").formatted(Formatting.RED),
+                Text.literal("").formatted(Formatting.GRAY),
+                Text.literal("Multiple totems: All consumed, all holders notified").formatted(Formatting.GRAY),
+                Text.literal("Default: ON").formatted(Formatting.GRAY))
             .setSaveConsumer(val -> config.sharedHealthTotemSavesAll = val)
             .build());
         
