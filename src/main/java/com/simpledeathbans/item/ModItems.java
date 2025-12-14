@@ -19,7 +19,11 @@ public class ModItems {
     public static final Identifier RESURRECTION_TOTEM_ID = Identifier.of(SimpleDeathBans.MOD_ID, "resurrection_totem");
     public static final RegistryKey<Item> RESURRECTION_TOTEM_KEY = RegistryKey.of(RegistryKeys.ITEM, RESURRECTION_TOTEM_ID);
     
+    public static final Identifier SOUL_LINK_TOTEM_ID = Identifier.of(SimpleDeathBans.MOD_ID, "soul_link_totem");
+    public static final RegistryKey<Item> SOUL_LINK_TOTEM_KEY = RegistryKey.of(RegistryKeys.ITEM, SOUL_LINK_TOTEM_ID);
+    
     public static Item RESURRECTION_TOTEM;
+    public static Item SOUL_LINK_TOTEM;
     
     public static void register() {
         // Register Resurrection Totem
@@ -32,9 +36,20 @@ public class ModItems {
                 .rarity(Rarity.EPIC))
         );
         
+        // Register Soul Link Totem
+        SOUL_LINK_TOTEM = Registry.register(
+            Registries.ITEM,
+            SOUL_LINK_TOTEM_ID,
+            new SoulLinkTotemItem(new Item.Settings()
+                .registryKey(SOUL_LINK_TOTEM_KEY)
+                .maxCount(1)
+                .rarity(Rarity.RARE))
+        );
+        
         // Add to creative tab
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> {
             content.add(RESURRECTION_TOTEM);
+            content.add(SOUL_LINK_TOTEM);
         });
         
         // Register recipes

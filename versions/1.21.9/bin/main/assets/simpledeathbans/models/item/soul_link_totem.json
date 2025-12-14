@@ -1,0 +1,6 @@
+{
+    "parent": "minecraft:item/generated",
+    "textures": {
+        "layer0": "simpledeathbans:item/soul_link_totem"
+    }
+}

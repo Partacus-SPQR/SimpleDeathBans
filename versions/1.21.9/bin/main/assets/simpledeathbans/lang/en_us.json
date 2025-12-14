@@ -4,6 +4,9 @@
     "item.simpledeathbans.resurrection_totem": "Resurrection Totem",
     "item.simpledeathbans.resurrection_totem.tooltip": "Use on a powered Netherite Beacon while crouching to finalize the Resurrection Ritual",
     
+    "item.simpledeathbans.soul_link_totem": "Soul Link Totem",
+    "item.simpledeathbans.soul_link_totem.tooltip": "Hold and Shift+Right-click another player to request a soul link",
+    
     "key.simpledeathbans.config": "Open Config Screen",
     "key.categories.simpledeathbans": "SimpleDeathBans",
     "category.simpledeathbans.category": "SimpleDeathBans",

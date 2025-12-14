@@ -15,12 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Totem Saves All OFF: Only totem holders survive
 - **Multi-totem Support** - Handles multiple totem holders with appropriate notifications
 - **Config Tooltips** - Detailed tooltips explaining damage share vs death pact behavior
+- **Soul Link Totem** - New craftable item required for manual soul linking
+  - Recipe: Amethyst Shards + Ender Pearls + Totem of Undying (yields 2)
+  - Prevents conflicts with other mods using shift+right-click on players
 
 ### Changed
 - **Soul Link Damage Share** - Now explicitly documented as NON-LETHAL only
 - **Death Pact Clarification** - Lethal damage triggers instant death regardless of damage share %
 - **Cloth Config Tooltips** - Enhanced with multi-line explanations and warnings
-- **Soul Link Manual Mode** - Removed non-existent "Soul Link Totem" item from documentation (shift+click works without any item)
+- **Soul Link Manual Mode** - Now requires holding Soul Link Totem (avoids mod conflicts)
 
 ### Fixed
 - **Shared Health Damage Calculation** - Fixed missing /100.0 in percentage calculation

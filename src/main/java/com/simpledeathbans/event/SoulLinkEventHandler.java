@@ -4,9 +4,11 @@ import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.config.ModConfig;
 import com.simpledeathbans.damage.SoulSeverDamageSource;
 import com.simpledeathbans.data.SoulLinkManager;
+import com.simpledeathbans.item.ModItems;
 import com.simpledeathbans.util.DamageShareTracker;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.event.player.UseEntityCallback;
+import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
@@ -113,6 +115,12 @@ public class SoulLinkEventHandler {
             // Only works if soul link is enabled AND random partner is OFF
             if (config == null || !config.enableSoulLink || config.soulLinkRandomPartner || soulLinkManager == null) {
                 return ActionResult.PASS;
+            }
+            
+            // REQUIRE Soul Link Totem item to be held in main hand
+            ItemStack heldItem = serverPlayer.getMainHandStack();
+            if (!heldItem.isOf(ModItems.SOUL_LINK_TOTEM)) {
+                return ActionResult.PASS; // Not holding Soul Link Totem, let other mods handle this
             }
             
             UUID targetId = targetPlayer.getUuid();
