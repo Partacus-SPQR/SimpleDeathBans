@@ -45,6 +45,7 @@ java {
 
 tasks {
     processResources {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
         inputs.property("id", project.property("mod.id"))
         inputs.property("name", project.property("mod.name"))
         inputs.property("version", project.property("mod.version"))
@@ -58,6 +59,10 @@ tasks {
         )
 
         filesMatching("fabric.mod.json") { expand(props) }
+    }
+    
+    withType<Jar> {
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
     }
 
     // Builds all versions into a shared folder
