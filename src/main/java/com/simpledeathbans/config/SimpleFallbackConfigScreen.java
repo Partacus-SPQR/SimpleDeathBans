@@ -107,8 +107,8 @@ public class SimpleFallbackConfigScreen extends Screen {
             //? if >=1.21.11 {
             op = client.player.getPermissions().hasPermission(new Permission.Level(PermissionLevel.OWNERS));
             //?} else {
-            /*// Pre-1.21.11: Use networkHandler permission level (level 4 = op)
-            op = client.player.networkHandler.getCommandSource().hasPermissionLevel(4);
+            /*// Pre-1.21.11: Use player's hasPermissionLevel directly
+            op = client.player.hasPermissionLevel(4);
             *///?}
         }
         this.isOperator = op;

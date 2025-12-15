@@ -42,8 +42,8 @@ public class ClothConfigScreen {
             //? if >=1.21.11 {
             isOperator = client.player.getPermissions().hasPermission(new Permission.Level(PermissionLevel.OWNERS));
             //?} else {
-            /*// Pre-1.21.11: Use networkHandler permission level (level 4 = op)
-            isOperator = client.player.networkHandler.getCommandSource().hasPermissionLevel(4);
+            /*// Pre-1.21.11: Use player's hasPermissionLevel directly
+            isOperator = client.player.hasPermissionLevel(4);
             *///?}
         }
         boolean canEdit = isSingleplayer || isOperator;
