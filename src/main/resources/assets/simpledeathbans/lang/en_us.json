@@ -7,6 +7,9 @@
     "item.simpledeathbans.soul_link_totem": "Soul Link Totem",
     "item.simpledeathbans.soul_link_totem.tooltip": "Hold and Shift+Right-click another player to request a soul link",
     
+    "item.simpledeathbans.void_crystal": "Void Crystal",
+    "item.simpledeathbans.void_crystal.tooltip": "Shatters your soul bond, but at what cost?",
+    
     "key.simpledeathbans.config": "Open Config Screen",
     "key.categories.simpledeathbans": "SimpleDeathBans",
     "category.simpledeathbans.category": "SimpleDeathBans",

@@ -16,8 +16,11 @@ dependencies {
     modImplementation("net.fabricmc:fabric-loader:${property("deps.fabric_loader")}")
     modImplementation("net.fabricmc.fabric-api:fabric-api:${property("deps.fabric_api")}")
     
-    // OPTIONAL - Cloth Config (compile only, not bundled)
+    // OPTIONAL - Cloth Config (compile only for release, runtime for dev testing)
     modCompileOnly("me.shedaniel.cloth:cloth-config-fabric:${property("deps.cloth_config")}") {
+        exclude(group = "net.fabricmc.fabric-api")
+    }
+    modRuntimeOnly("me.shedaniel.cloth:cloth-config-fabric:${property("deps.cloth_config")}") {
         exclude(group = "net.fabricmc.fabric-api")
     }
     

@@ -3,8 +3,8 @@
 	"credit": "Made with Blockbench",
 	"texture_size": [64, 64],
 	"textures": {
-		"0": "resurrection_totem",
-		"particle": "resurrection_totem"
+		"0": "simpledeathbans:item/resurrection_totem",
+		"particle": "simpledeathbans:item/resurrection_totem"
 	},
 	"elements": [
 		{
@@ -433,14 +433,18 @@
 		},
 		"firstperson_righthand": {
 			"rotation": [-31, -103, -5.67],
-			"translation": [-6, 4.75, 0]
+			"translation": [-6, 2.25, 0]
 		},
 		"firstperson_lefthand": {
 			"rotation": [-31, -103, -5.67],
-			"translation": [-6, 4.75, 0]
+			"translation": [-6, 2.25, 0]
 		},
 		"ground": {
 			"translation": [0, 2.5, 0]
+		},
+		"gui": {
+			"translation": [0, -0.5, 0],
+			"scale": [1.38, 1.13, 1]
 		},
 		"head": {
 			"translation": [0, 12, 6]

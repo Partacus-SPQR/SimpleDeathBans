@@ -160,8 +160,33 @@ public class SimpleFallbackConfigScreen extends Screen {
             config.baseBanMinutes = 1;
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
-            Text.literal("Base ban time in minutes per tier."),
-            Text.literal("Default: 1").formatted(Formatting.GRAY));
+            Text.literal("Base ban duration per tier (in minutes)."),
+            Text.literal("Formula: baseBan × tier × multiplier").formatted(Formatting.GRAY),
+            Text.literal("Range: 1-60 | Default: 1").formatted(Formatting.DARK_GRAY));
+        y += ROW_HEIGHT;
+        
+        // Ban Multiplier (10-1000%)
+        IntSlider banMultiplierSlider = new IntSlider(widgetX, y, WIDGET_WIDTH, 20,
+            Text.literal("Ban Multiplier: " + config.banMultiplierPercent + "%"),
+            config.banMultiplierPercent, 10, 1000) {
+            @Override
+            protected void updateMessage() {
+                setMessage(Text.literal("Ban Multiplier: " + getValue() + "%"));
+            }
+            @Override
+            protected void applyValue() {
+                if (canEdit) config.banMultiplierPercent = getValue();
+            }
+        };
+        addScrollableWidget(banMultiplierSlider, y);
+        addResetButton(resetX, y, () -> {
+            banMultiplierSlider.setValue(100, 10, 1000);
+            config.banMultiplierPercent = 100;
+        });
+        addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
+            Text.literal("Global ban time multiplier (percentage)."),
+            Text.literal("100 = normal, 200 = double, 50 = half").formatted(Formatting.GRAY),
+            Text.literal("Range: 10-1000 | Default: 100").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // Max Ban Tier (-1 = infinite, 1-100 = actual tiers)
@@ -184,8 +209,9 @@ public class SimpleFallbackConfigScreen extends Screen {
             config.maxBanTier = Integer.MAX_VALUE;
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
-            Text.literal("Maximum ban tier. -1 = Infinite."),
-            Text.literal("Range: -1 to 100. Default: Infinite").formatted(Formatting.GRAY));
+            Text.literal("Maximum ban tier a player can reach."),
+            Text.literal("-1 = No limit (infinite scaling)").formatted(Formatting.YELLOW),
+            Text.literal("Range: -1 to 100 | Default: -1").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // Exponential Ban Mode
@@ -206,8 +232,10 @@ public class SimpleFallbackConfigScreen extends Screen {
             exponentialModeToggle.setMessage(Text.literal("Exponential Mode: OFF"));
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
-            Text.literal("Use doubling formula (1,2,4,8,16...) instead of linear."),
-            Text.literal("Default: OFF").formatted(Formatting.GRAY));
+            Text.literal("Changes ban time calculation formula."),
+            Text.literal("OFF: Linear (1, 2, 3, 4, 5...)").formatted(Formatting.GREEN),
+            Text.literal("ON: Doubling (1, 2, 4, 8, 16...)").formatted(Formatting.RED),
+            Text.literal("Default: OFF").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // Ghost Echo
@@ -228,8 +256,58 @@ public class SimpleFallbackConfigScreen extends Screen {
             ghostEchoToggle.setMessage(Text.literal("Ghost Echo: ON"));
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
-            Text.literal("Lightning strike and custom death message on ban."),
-            Text.literal("Default: ON").formatted(Formatting.GRAY));
+            Text.literal("Cosmetic effects when a player is banned."),
+            Text.literal("• Lightning strike at death location").formatted(Formatting.GRAY),
+            Text.literal("• Custom message: 'lost to the void'").formatted(Formatting.GRAY),
+            Text.literal("Default: ON").formatted(Formatting.DARK_GRAY));
+        y += ROW_HEIGHT;
+        
+        // PvP Ban Multiplier (0-500%)
+        IntSlider pvpMultiplierSlider = new IntSlider(widgetX, y, WIDGET_WIDTH, 20,
+            Text.literal("PvP Ban Multiplier: " + config.pvpBanMultiplierPercent + "%"),
+            config.pvpBanMultiplierPercent, 0, 500) {
+            @Override
+            protected void updateMessage() {
+                setMessage(Text.literal("PvP Ban Multiplier: " + getValue() + "%"));
+            }
+            @Override
+            protected void applyValue() {
+                if (canEdit) config.pvpBanMultiplierPercent = getValue();
+            }
+        };
+        addScrollableWidget(pvpMultiplierSlider, y);
+        addResetButton(resetX, y, () -> {
+            pvpMultiplierSlider.setValue(50, 0, 500);
+            config.pvpBanMultiplierPercent = 50;
+        });
+        addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
+            Text.literal("Ban time modifier for player-caused deaths."),
+            Text.literal("50 = half ban, 0 = no ban for PvP").formatted(Formatting.GRAY),
+            Text.literal("Range: 0-500 | Default: 50").formatted(Formatting.DARK_GRAY));
+        y += ROW_HEIGHT;
+        
+        // PvE Ban Multiplier (0-500%)
+        IntSlider pveMultiplierSlider = new IntSlider(widgetX, y, WIDGET_WIDTH, 20,
+            Text.literal("PvE Ban Multiplier: " + config.pveBanMultiplierPercent + "%"),
+            config.pveBanMultiplierPercent, 0, 500) {
+            @Override
+            protected void updateMessage() {
+                setMessage(Text.literal("PvE Ban Multiplier: " + getValue() + "%"));
+            }
+            @Override
+            protected void applyValue() {
+                if (canEdit) config.pveBanMultiplierPercent = getValue();
+            }
+        };
+        addScrollableWidget(pveMultiplierSlider, y);
+        addResetButton(resetX, y, () -> {
+            pveMultiplierSlider.setValue(100, 0, 500);
+            config.pveBanMultiplierPercent = 100;
+        });
+        addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
+            Text.literal("Ban time modifier for environment deaths."),
+            Text.literal("Mobs, fall damage, lava, void, etc.").formatted(Formatting.GRAY),
+            Text.literal("Range: 0-500 | Default: 100").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // ============================================
@@ -255,8 +333,35 @@ public class SimpleFallbackConfigScreen extends Screen {
             soulLinkToggle.setMessage(Text.literal("Soul Link: OFF"));
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
-            Text.literal("Pair players - when one dies, both die."),
-            Text.literal("Default: OFF").formatted(Formatting.GRAY));
+            Text.literal("Pairs players together as Soul Partners."),
+            Text.literal("Partners share damage and have a Death Pact.").formatted(Formatting.GRAY),
+            Text.literal("LETHAL damage kills BOTH partners!").formatted(Formatting.RED),
+            Text.literal("Default: OFF").formatted(Formatting.DARK_GRAY));
+        y += ROW_HEIGHT;
+        
+        // Soul Link Damage Share (0-200%)
+        IntSlider soulLinkDamageSlider = new IntSlider(widgetX, y, WIDGET_WIDTH, 20,
+            Text.literal("Soul Damage Share: " + config.soulLinkDamageSharePercent + "%"),
+            config.soulLinkDamageSharePercent, 0, 200) {
+            @Override
+            protected void updateMessage() {
+                setMessage(Text.literal("Soul Damage Share: " + getValue() + "%"));
+            }
+            @Override
+            protected void applyValue() {
+                if (canEdit) config.soulLinkDamageSharePercent = getValue();
+            }
+        };
+        addScrollableWidget(soulLinkDamageSlider, y);
+        addResetButton(resetX, y, () -> {
+            soulLinkDamageSlider.setValue(100, 0, 200);
+            config.soulLinkDamageSharePercent = 100;
+        });
+        addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
+            Text.literal("Damage transferred to your soul partner."),
+            Text.literal("Only affects NON-LETHAL hits!").formatted(Formatting.YELLOW),
+            Text.literal("Lethal damage = Death Pact (both die)").formatted(Formatting.RED),
+            Text.literal("Range: 0-200 | Default: 100").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // Soul Link Random Partner
@@ -277,8 +382,10 @@ public class SimpleFallbackConfigScreen extends Screen {
             soulLinkRandomPartnerToggle.setMessage(Text.literal("Random Partner: ON"));
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
-            Text.literal("ON: Auto-pair with random player on join."),
-            Text.literal("OFF: Shift+right-click player to link.").formatted(Formatting.GRAY));
+            Text.literal("How players get paired with partners."),
+            Text.literal("ON: Auto-paired randomly on join").formatted(Formatting.GREEN),
+            Text.literal("OFF: Manual - Sneak+click with Soul Link Totem").formatted(Formatting.YELLOW),
+            Text.literal("Default: ON").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // Soul Link Totem Saves Partner
@@ -299,8 +406,188 @@ public class SimpleFallbackConfigScreen extends Screen {
             soulLinkTotemSavesToggle.setMessage(Text.literal("Totem Saves Partner: ON"));
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
-            Text.literal("If partner uses a totem, you are also saved."),
-            Text.literal("Default: ON").formatted(Formatting.GRAY));
+            Text.literal("Totem of Undying behavior for Soul Links."),
+            Text.literal("ON: One totem saves BOTH partners").formatted(Formatting.GREEN),
+            Text.literal("OFF: Only the holder survives").formatted(Formatting.RED),
+            Text.literal("Default: ON").formatted(Formatting.DARK_GRAY));
+        y += ROW_HEIGHT;
+        
+        // ============================================
+        // SECTION: Soul Link Sever/Cooldown Settings
+        // ============================================
+        y += ROW_HEIGHT / 2;
+        
+        // Sever Cooldown (minutes)
+        IntSlider severCooldownSlider = new IntSlider(widgetX, y, WIDGET_WIDTH, 20,
+            Text.literal("Sever Cooldown: " + config.soulLinkSeverCooldownMinutes + " min"),
+            config.soulLinkSeverCooldownMinutes, 0, 120) {
+            @Override
+            protected void updateMessage() {
+                setMessage(Text.literal("Sever Cooldown: " + getValue() + " min"));
+            }
+            @Override
+            protected void applyValue() {
+                if (canEdit) config.soulLinkSeverCooldownMinutes = getValue();
+            }
+        };
+        addScrollableWidget(severCooldownSlider, y);
+        addResetButton(resetX, y, () -> {
+            severCooldownSlider.setValue(30, 0, 120);
+            config.soulLinkSeverCooldownMinutes = 30;
+        });
+        addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
+            Text.literal("Cooldown after breaking a soul link."),
+            Text.literal("Cannot link with ANY player during this time.").formatted(Formatting.GRAY),
+            Text.literal("Range: 0-120 | Default: 30").formatted(Formatting.DARK_GRAY));
+        y += ROW_HEIGHT;
+        
+        // Sever Ban Tier Penalty
+        IntSlider severPenaltySlider = new IntSlider(widgetX, y, WIDGET_WIDTH, 20,
+            Text.literal("Sever Penalty: +" + config.soulLinkSeverBanTierIncrease + " tier"),
+            config.soulLinkSeverBanTierIncrease, 0, 10) {
+            @Override
+            protected void updateMessage() {
+                setMessage(Text.literal("Sever Penalty: +" + getValue() + " tier"));
+            }
+            @Override
+            protected void applyValue() {
+                if (canEdit) config.soulLinkSeverBanTierIncrease = getValue();
+            }
+        };
+        addScrollableWidget(severPenaltySlider, y);
+        addResetButton(resetX, y, () -> {
+            severPenaltySlider.setValue(1, 0, 10);
+            config.soulLinkSeverBanTierIncrease = 1;
+        });
+        addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
+            Text.literal("Punishment for breaking a soul link."),
+            Text.literal("Your ban tier increases by this amount.").formatted(Formatting.GRAY),
+            Text.literal("Range: 0-10 | Default: 1").formatted(Formatting.DARK_GRAY));
+        y += ROW_HEIGHT;
+        
+        // Ex-Partner Cooldown (hours)
+        IntSlider exPartnerCooldownSlider = new IntSlider(widgetX, y, WIDGET_WIDTH, 20,
+            Text.literal("Ex-Partner Cooldown: " + config.soulLinkExPartnerCooldownHours + " hr"),
+            config.soulLinkExPartnerCooldownHours, 0, 168) {
+            @Override
+            protected void updateMessage() {
+                setMessage(Text.literal("Ex-Partner Cooldown: " + getValue() + " hr"));
+            }
+            @Override
+            protected void applyValue() {
+                if (canEdit) config.soulLinkExPartnerCooldownHours = getValue();
+            }
+        };
+        addScrollableWidget(exPartnerCooldownSlider, y);
+        addResetButton(resetX, y, () -> {
+            exPartnerCooldownSlider.setValue(24, 0, 168);
+            config.soulLinkExPartnerCooldownHours = 24;
+        });
+        addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
+            Text.literal("Time before re-linking with an ex-partner."),
+            Text.literal("Prevents quick on/off abuse with same player.").formatted(Formatting.GRAY),
+            Text.literal("Range: 0-168 | Default: 24").formatted(Formatting.DARK_GRAY));
+        y += ROW_HEIGHT;
+        
+        // Random Reassign Cooldown (hours)
+        IntSlider randomReassignSlider = new IntSlider(widgetX, y, WIDGET_WIDTH, 20,
+            Text.literal("Random Reassign: " + config.soulLinkRandomReassignCooldownHours + " hr"),
+            config.soulLinkRandomReassignCooldownHours, 0, 72) {
+            @Override
+            protected void updateMessage() {
+                setMessage(Text.literal("Random Reassign: " + getValue() + " hr"));
+            }
+            @Override
+            protected void applyValue() {
+                if (canEdit) config.soulLinkRandomReassignCooldownHours = getValue();
+            }
+        };
+        addScrollableWidget(randomReassignSlider, y);
+        addResetButton(resetX, y, () -> {
+            randomReassignSlider.setValue(12, 0, 72);
+            config.soulLinkRandomReassignCooldownHours = 12;
+        });
+        addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
+            Text.literal("Grace period before auto-reassignment."),
+            Text.literal("Only applies if Random Assignment is ON.").formatted(Formatting.YELLOW),
+            Text.literal("Range: 0-72 | Default: 12").formatted(Formatting.DARK_GRAY));
+        y += ROW_HEIGHT;
+        
+        // Random Assign Check Interval (minutes)
+        IntSlider randomAssignCheckSlider = new IntSlider(widgetX, y, WIDGET_WIDTH, 20,
+            getIntervalText(config.soulLinkRandomAssignCheckIntervalMinutes),
+            config.soulLinkRandomAssignCheckIntervalMinutes, 1, 1440) {
+            @Override
+            protected void updateMessage() {
+                setMessage(getIntervalText(getValue()));
+            }
+            @Override
+            protected void applyValue() {
+                if (canEdit) config.soulLinkRandomAssignCheckIntervalMinutes = getValue();
+            }
+        };
+        addScrollableWidget(randomAssignCheckSlider, y);
+        addResetButton(resetX, y, () -> {
+            randomAssignCheckSlider.setValue(60, 1, 1440);
+            config.soulLinkRandomAssignCheckIntervalMinutes = 60;
+        });
+        addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
+            Text.literal("How often the server checks for unlinked players."),
+            Text.literal("Lower = faster pairing, more server load.").formatted(Formatting.GRAY),
+            Text.literal("Range: 1-1440 | Default: 60").formatted(Formatting.DARK_GRAY));
+        y += ROW_HEIGHT;
+        
+        // ============================================
+        // SECTION: Soul Compass Settings
+        // ============================================
+        y += ROW_HEIGHT / 2;
+        
+        // Compass Max Uses
+        IntSlider compassUsesSlider = new IntSlider(widgetX, y, WIDGET_WIDTH, 20,
+            Text.literal("Compass Uses: " + config.soulLinkCompassMaxUses),
+            config.soulLinkCompassMaxUses, 1, 100) {
+            @Override
+            protected void updateMessage() {
+                setMessage(Text.literal("Compass Uses: " + getValue()));
+            }
+            @Override
+            protected void applyValue() {
+                if (canEdit) config.soulLinkCompassMaxUses = getValue();
+            }
+        };
+        addScrollableWidget(compassUsesSlider, y);
+        addResetButton(resetX, y, () -> {
+            compassUsesSlider.setValue(10, 1, 100);
+            config.soulLinkCompassMaxUses = 10;
+        });
+        addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
+            Text.literal("Soul Link Totem can track your partner."),
+            Text.literal("Right-click totem to locate partner.").formatted(Formatting.GRAY),
+            Text.literal("Range: 1-100 | Default: 10").formatted(Formatting.DARK_GRAY));
+        y += ROW_HEIGHT;
+        
+        // Compass Cooldown (minutes)
+        IntSlider compassCooldownSlider = new IntSlider(widgetX, y, WIDGET_WIDTH, 20,
+            Text.literal("Compass Cooldown: " + config.soulLinkCompassCooldownMinutes + " min"),
+            config.soulLinkCompassCooldownMinutes, 0, 60) {
+            @Override
+            protected void updateMessage() {
+                setMessage(Text.literal("Compass Cooldown: " + getValue() + " min"));
+            }
+            @Override
+            protected void applyValue() {
+                if (canEdit) config.soulLinkCompassCooldownMinutes = getValue();
+            }
+        };
+        addScrollableWidget(compassCooldownSlider, y);
+        addResetButton(resetX, y, () -> {
+            compassCooldownSlider.setValue(10, 0, 60);
+            config.soulLinkCompassCooldownMinutes = 10;
+        });
+        addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
+            Text.literal("Wait time between tracking uses."),
+            Text.literal("Prevents spam-tracking your partner.").formatted(Formatting.GRAY),
+            Text.literal("Range: 0-60 | Default: 10").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // ============================================
@@ -326,8 +613,35 @@ public class SimpleFallbackConfigScreen extends Screen {
             sharedHealthToggle.setMessage(Text.literal("Shared Health: OFF"));
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
-            Text.literal("Server-wide damage sharing (all players share health)."),
-            Text.literal("Default: OFF").formatted(Formatting.GRAY));
+            Text.literal("⚠ EXTREME MODE - Server-wide health pool!").formatted(Formatting.RED),
+            Text.literal("ALL online players share damage.").formatted(Formatting.YELLOW),
+            Text.literal("If ONE player dies, EVERYONE dies!").formatted(Formatting.RED),
+            Text.literal("Default: OFF").formatted(Formatting.DARK_GRAY));
+        y += ROW_HEIGHT;
+        
+        // Shared Health Damage Percent (0-200%)
+        IntSlider sharedDamageSlider = new IntSlider(widgetX, y, WIDGET_WIDTH, 20,
+            Text.literal("Shared Damage: " + config.sharedHealthDamagePercent + "%"),
+            config.sharedHealthDamagePercent, 0, 200) {
+            @Override
+            protected void updateMessage() {
+                setMessage(Text.literal("Shared Damage: " + getValue() + "%"));
+            }
+            @Override
+            protected void applyValue() {
+                if (canEdit) config.sharedHealthDamagePercent = getValue();
+            }
+        };
+        addScrollableWidget(sharedDamageSlider, y);
+        addResetButton(resetX, y, () -> {
+            sharedDamageSlider.setValue(100, 0, 200);
+            config.sharedHealthDamagePercent = 100;
+        });
+        addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
+            Text.literal("Damage dealt to ALL other players."),
+            Text.literal("Only affects NON-LETHAL damage!").formatted(Formatting.YELLOW),
+            Text.literal("Lethal damage = instant death for ALL").formatted(Formatting.RED),
+            Text.literal("Range: 0-200 | Default: 100").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // Totem Saves All
@@ -348,8 +662,10 @@ public class SimpleFallbackConfigScreen extends Screen {
             totemSavesAllToggle.setMessage(Text.literal("Totem Saves All: ON"));
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
-            Text.literal("Any player's totem can save all from death."),
-            Text.literal("Default: ON").formatted(Formatting.GRAY));
+            Text.literal("Totem of Undying behavior for Shared Health."),
+            Text.literal("ON: One totem saves EVERYONE").formatted(Formatting.GREEN),
+            Text.literal("OFF: Only holders survive, others die").formatted(Formatting.RED),
+            Text.literal("Default: ON").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // ============================================
@@ -375,8 +691,10 @@ public class SimpleFallbackConfigScreen extends Screen {
             enableMercyToggle.setMessage(Text.literal("Enable Mercy Cooldown: ON"));
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
-            Text.literal("Enable Mercy Cooldown system that reduces ban tier over time."),
-            Text.literal("Default: ON").formatted(Formatting.GRAY));
+            Text.literal("Forgiveness system for active players."),
+            Text.literal("Ban tier decreases over time without dying.").formatted(Formatting.GRAY),
+            Text.literal("Requires activity (not AFK) to count.").formatted(Formatting.YELLOW),
+            Text.literal("Default: ON").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // Mercy Playtime Hours
@@ -398,8 +716,9 @@ public class SimpleFallbackConfigScreen extends Screen {
             config.mercyPlaytimeHours = 24;
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
-            Text.literal("Active playtime hours without death to reduce tier."),
-            Text.literal("Default: 24").formatted(Formatting.GRAY));
+            Text.literal("Active playtime needed to reduce ban tier by 1."),
+            Text.literal("Must be ACTIVE time (not AFK). Resets on death.").formatted(Formatting.YELLOW),
+            Text.literal("Range: 1-168 | Default: 24").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // Mercy Movement Blocks
@@ -421,8 +740,9 @@ public class SimpleFallbackConfigScreen extends Screen {
             config.mercyMovementBlocks = 50;
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
-            Text.literal("Blocks moved per check to count as active."),
-            Text.literal("Default: 50").formatted(Formatting.GRAY));
+            Text.literal("Blocks traveled to count as 'active' each check."),
+            Text.literal("Must move this OR interact with blocks.").formatted(Formatting.GRAY),
+            Text.literal("Range: 0-500 | Default: 50").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // Mercy Block Interactions
@@ -444,8 +764,9 @@ public class SimpleFallbackConfigScreen extends Screen {
             config.mercyBlockInteractions = 20;
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
-            Text.literal("Block interactions per check to count as active."),
-            Text.literal("Default: 20").formatted(Formatting.GRAY));
+            Text.literal("Block interactions to count as 'active' each check."),
+            Text.literal("Breaking, placing, using blocks, etc.").formatted(Formatting.GRAY),
+            Text.literal("Range: 0-200 | Default: 20").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // Mercy Check Interval
@@ -467,8 +788,9 @@ public class SimpleFallbackConfigScreen extends Screen {
             config.mercyCheckIntervalMinutes = 15;
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
-            Text.literal("Minutes between activity checks."),
-            Text.literal("Default: 15").formatted(Formatting.GRAY));
+            Text.literal("How often to check if player is active."),
+            Text.literal("Lower = stricter AFK detection.").formatted(Formatting.YELLOW),
+            Text.literal("Range: 1-60 | Default: 15").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // ============================================
@@ -494,8 +816,10 @@ public class SimpleFallbackConfigScreen extends Screen {
             altarToggle.setMessage(Text.literal("Resurrection Altar: ON"));
         });
         addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
-            Text.literal("Enable the Resurrection Altar ritual feature."),
-            Text.literal("Default: ON").formatted(Formatting.GRAY));
+            Text.literal("Endgame feature to unban players."),
+            Text.literal("Requires: Netherite beacon + Resurrection Totem").formatted(Formatting.GRAY),
+            Text.literal("ALL online players must participate!").formatted(Formatting.YELLOW),
+            Text.literal("Default: ON").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // Calculate content height and max scroll
@@ -569,6 +893,18 @@ public class SimpleFallbackConfigScreen extends Screen {
         return Text.literal("Max Ban Tier: " + value);
     }
     
+    private Text getIntervalText(int minutes) {
+        if (minutes >= 60) {
+            int hours = minutes / 60;
+            int mins = minutes % 60;
+            if (mins > 0) {
+                return Text.literal("Check Interval: " + hours + "h " + mins + "m");
+            }
+            return Text.literal("Check Interval: " + hours + " hr");
+        }
+        return Text.literal("Check Interval: " + minutes + " min");
+    }
+    
     private void showPermissionDenied() {
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player != null) {
@@ -598,6 +934,13 @@ public class SimpleFallbackConfigScreen extends Screen {
                     config.soulLinkDamageSharePercent,
                     config.soulLinkRandomPartner,
                     config.soulLinkTotemSavesPartner,
+                    config.soulLinkSeverCooldownMinutes,
+                    config.soulLinkSeverBanTierIncrease,
+                    config.soulLinkExPartnerCooldownHours,
+                    config.soulLinkRandomReassignCooldownHours,
+                    config.soulLinkRandomAssignCheckIntervalMinutes,
+                    config.soulLinkCompassMaxUses,
+                    config.soulLinkCompassCooldownMinutes,
                     config.enableSharedHealth,
                     config.sharedHealthDamagePercent,
                     config.sharedHealthTotemSavesAll,

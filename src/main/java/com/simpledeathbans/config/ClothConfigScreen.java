@@ -48,95 +48,60 @@ public class ClothConfigScreen {
         }
         boolean canEdit = isSingleplayer || isOperator;
         
-        // Store original values for reverting non-operator changes
-        final int origBaseBanMinutes = config.baseBanMinutes;
-        final int origBanMultiplierPercent = config.banMultiplierPercent;
-        final int origMaxBanTier = config.maxBanTier;
-        final boolean origExponentialBanMode = config.exponentialBanMode;
-        final boolean origEnableGhostEcho = config.enableGhostEcho;
-        final boolean origEnableSoulLink = config.enableSoulLink;
-        final int origSoulLinkDamageSharePercent = config.soulLinkDamageSharePercent;
-        final boolean origSoulLinkRandomPartner = config.soulLinkRandomPartner;
-        final boolean origSoulLinkTotemSavesPartner = config.soulLinkTotemSavesPartner;
-        final boolean origEnableSharedHealth = config.enableSharedHealth;
-        final int origSharedHealthDamagePercent = config.sharedHealthDamagePercent;
-        final boolean origSharedHealthTotemSavesAll = config.sharedHealthTotemSavesAll;
-        final boolean origEnableMercyCooldown = config.enableMercyCooldown;
-        final int origMercyPlaytimeHours = config.mercyPlaytimeHours;
-        final int origMercyMovementBlocks = config.mercyMovementBlocks;
-        final int origMercyBlockInteractions = config.mercyBlockInteractions;
-        final int origMercyCheckIntervalMinutes = config.mercyCheckIntervalMinutes;
-        final int origPvpBanMultiplierPercent = config.pvpBanMultiplierPercent;
-        final int origPveBanMultiplierPercent = config.pveBanMultiplierPercent;
-        final boolean origEnableResurrectionAltar = config.enableResurrectionAltar;
-        
         ConfigBuilder builder = ConfigBuilder.create()
-            .setParentScreen(parent)
-            .setTitle(Text.translatable("config.simpledeathbans.title"))
-            .setEditable(canEdit) // Disable all inputs for non-operators
-            .setSavingRunnable(() -> {
-                if (canEdit) {
-                    config.save();
-                    LOGGER.info("Config saved via Cloth Config screen");
-                    
-                    // Send config to server for validation and sync
-                    if (ClientPlayNetworking.canSend(ConfigSyncPayload.ID)) {
-                        ClientPlayNetworking.send(new ConfigSyncPayload(
-                            config.baseBanMinutes,
-                            config.banMultiplierPercent,
-                            config.maxBanTier,
-                            config.exponentialBanMode,
-                            config.enableGhostEcho,
-                            config.enableSoulLink,
-                            config.soulLinkDamageSharePercent,
-                            config.soulLinkRandomPartner,
-                            config.soulLinkTotemSavesPartner,
-                            config.enableSharedHealth,
-                            config.sharedHealthDamagePercent,
-                            config.sharedHealthTotemSavesAll,
-                            config.enableMercyCooldown,
-                            config.mercyPlaytimeHours,
-                            config.mercyMovementBlocks,
-                            config.mercyBlockInteractions,
-                            config.mercyCheckIntervalMinutes,
-                            config.pvpBanMultiplierPercent,
-                            config.pveBanMultiplierPercent,
-                            config.enableResurrectionAltar
-                        ));
-                        LOGGER.info("Sent config update to server");
-                    }
-                } else {
-                    // Revert all changes for non-operators
-                    config.baseBanMinutes = origBaseBanMinutes;
-                    config.banMultiplierPercent = origBanMultiplierPercent;
-                    config.maxBanTier = origMaxBanTier;
-                    config.exponentialBanMode = origExponentialBanMode;
-                    config.enableGhostEcho = origEnableGhostEcho;
-                    config.enableSoulLink = origEnableSoulLink;
-                    config.soulLinkDamageSharePercent = origSoulLinkDamageSharePercent;
-                    config.soulLinkRandomPartner = origSoulLinkRandomPartner;
-                    config.soulLinkTotemSavesPartner = origSoulLinkTotemSavesPartner;
-                    config.enableSharedHealth = origEnableSharedHealth;
-                    config.sharedHealthDamagePercent = origSharedHealthDamagePercent;
-                    config.sharedHealthTotemSavesAll = origSharedHealthTotemSavesAll;
-                    config.enableMercyCooldown = origEnableMercyCooldown;
-                    config.mercyPlaytimeHours = origMercyPlaytimeHours;
-                    config.mercyMovementBlocks = origMercyMovementBlocks;
-                    config.mercyBlockInteractions = origMercyBlockInteractions;
-                    config.mercyCheckIntervalMinutes = origMercyCheckIntervalMinutes;
-                    config.pvpBanMultiplierPercent = origPvpBanMultiplierPercent;
-                    config.pveBanMultiplierPercent = origPveBanMultiplierPercent;
-                    config.enableResurrectionAltar = origEnableResurrectionAltar;
-                    
-                    if (client.player != null) {
-                        client.player.sendMessage(
-                            Text.literal("✖ Must be Operator level 4 in order to make changes.")
-                                .formatted(Formatting.RED),
-                            false
-                        );
-                    }
+                .setParentScreen(parent)
+                .setTitle(Text.translatable("config.simpledeathbans.title"))
+                .setTransparentBackground(true);
+        
+        // Save handler
+        builder.setSavingRunnable(() -> {
+            if (canEdit) {
+                config.save();
+                LOGGER.info("Config saved via Cloth Config screen");
+                
+                // Send config to server for validation and sync
+                if (ClientPlayNetworking.canSend(ConfigSyncPayload.ID)) {
+                    ClientPlayNetworking.send(new ConfigSyncPayload(
+                        config.baseBanMinutes,
+                        config.banMultiplierPercent,
+                        config.maxBanTier,
+                        config.exponentialBanMode,
+                        config.enableGhostEcho,
+                        config.enableSoulLink,
+                        config.soulLinkDamageSharePercent,
+                        config.soulLinkRandomPartner,
+                        config.soulLinkTotemSavesPartner,
+                        config.soulLinkSeverCooldownMinutes,
+                        config.soulLinkSeverBanTierIncrease,
+                        config.soulLinkExPartnerCooldownHours,
+                        config.soulLinkRandomReassignCooldownHours,
+                        config.soulLinkRandomAssignCheckIntervalMinutes,
+                        config.soulLinkCompassMaxUses,
+                        config.soulLinkCompassCooldownMinutes,
+                        config.enableSharedHealth,
+                        config.sharedHealthDamagePercent,
+                        config.sharedHealthTotemSavesAll,
+                        config.enableMercyCooldown,
+                        config.mercyPlaytimeHours,
+                        config.mercyMovementBlocks,
+                        config.mercyBlockInteractions,
+                        config.mercyCheckIntervalMinutes,
+                        config.pvpBanMultiplierPercent,
+                        config.pveBanMultiplierPercent,
+                        config.enableResurrectionAltar
+                    ));
+                    LOGGER.info("Sent config update to server");
                 }
-            });
+            } else {
+                if (client.player != null) {
+                    client.player.sendMessage(
+                        Text.literal("✖ Must be Operator level 4 in order to make changes.")
+                            .formatted(Formatting.RED),
+                        false
+                    );
+                }
+            }
+        });
         
         ConfigEntryBuilder entryBuilder = builder.entryBuilder();
         
@@ -148,85 +113,132 @@ public class ClothConfigScreen {
         // Permission notice for non-operators
         if (!canEdit) {
             general.addEntry(entryBuilder.startTextDescription(
-                Text.literal("⚠ Viewing only - Operator level 4 required to edit.")
-                    .formatted(Formatting.GOLD)
-            ).build());
+                    Text.literal("⚠ Viewing only - Operator level 4 required to edit.")
+                            .formatted(Formatting.GOLD))
+                    .build());
         }
         
-        general.addEntry(entryBuilder.startIntSlider(
-                Text.translatable("config.simpledeathbans.baseBanMinutes"), config.baseBanMinutes, 1, 60)
-            .setDefaultValue(1)
-            .setTextGetter(val -> Text.literal(val + " min"))
-            .setTooltip(Text.literal("Base ban time in minutes per tier. Range: 1-60. Default: 1"))
-            .setSaveConsumer(val -> config.baseBanMinutes = val)
-            .build());
+        // Base Ban Minutes (1-60)
+        general.addEntry(entryBuilder.startIntField(
+                Text.translatable("config.simpledeathbans.baseBanMinutes"),
+                config.baseBanMinutes)
+                .setDefaultValue(1)
+                .setMin(1)
+                .setMax(60)
+                .setTooltip(
+                        Text.literal("Base ban duration per tier (in minutes)."),
+                        Text.literal("Formula: baseBan × tier × multiplier").formatted(Formatting.GRAY),
+                        Text.literal("Range: 1-60 | Default: 1").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.baseBanMinutes = newValue)
+                .build());
         
-        // Ban Multiplier as percentage slider (10-1000%, where 100% = 1.0x)
-        general.addEntry(entryBuilder.startIntSlider(
-                Text.translatable("config.simpledeathbans.banMultiplier"), config.banMultiplierPercent, 10, 1000)
-            .setDefaultValue(100)
-            .setTextGetter(val -> Text.literal(val + "%"))
-            .setTooltip(Text.literal("Multiplier for ban time. 100% = 1x. Range: 10%-1000%. Default: 100%"))
-            .setSaveConsumer(val -> config.banMultiplierPercent = val)
-            .build());
+        // Ban Multiplier (10-1000%)
+        general.addEntry(entryBuilder.startIntField(
+                Text.translatable("config.simpledeathbans.banMultiplier"),
+                config.banMultiplierPercent)
+                .setDefaultValue(100)
+                .setMin(10)
+                .setMax(1000)
+                .setTooltip(
+                        Text.literal("Global ban time multiplier (percentage)."),
+                        Text.literal("100 = normal, 200 = double, 50 = half").formatted(Formatting.GRAY),
+                        Text.literal("Range: 10-1000 | Default: 100").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.banMultiplierPercent = newValue)
+                .build());
         
-        // Display max tier as slider: -1 = infinite, 1-100 = actual tiers
-        general.addEntry(entryBuilder.startIntSlider(
-                Text.translatable("config.simpledeathbans.maxBanTier"), config.maxBanTier, -1, 100)
-            .setDefaultValue(-1)
-            .setTextGetter(val -> val == -1 ? Text.literal("Infinite") : Text.literal(String.valueOf(val)))
-            .setTooltip(Text.literal("Maximum ban tier. -1 = Infinite. Range: -1 to 100. Default: Infinite"))
-            .setSaveConsumer(val -> config.maxBanTier = val)
-            .build());
+        // Max Ban Tier (-1 to 100, where -1 = infinite)
+        general.addEntry(entryBuilder.startIntField(
+                Text.translatable("config.simpledeathbans.maxBanTier"),
+                config.maxBanTier)
+                .setDefaultValue(-1)
+                .setMin(-1)
+                .setMax(100)
+                .setTooltip(
+                        Text.literal("Maximum ban tier a player can reach."),
+                        Text.literal("-1 = No limit (infinite scaling)").formatted(Formatting.YELLOW),
+                        Text.literal("Tier resets via Mercy Cooldown or commands.").formatted(Formatting.GRAY),
+                        Text.literal("Range: -1 to 100 | Default: -1").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.maxBanTier = newValue)
+                .build());
         
+        // Exponential Ban Mode toggle
         general.addEntry(entryBuilder.startBooleanToggle(
-                Text.literal("Exponential Ban Mode"), config.exponentialBanMode)
-            .setDefaultValue(false)
-            .setTooltip(Text.literal("Use doubling formula (1,2,4,8,16...) instead of linear. Default: OFF"))
-            .setSaveConsumer(val -> config.exponentialBanMode = val)
-            .build());
+                Text.literal("Exponential Ban Mode"),
+                config.exponentialBanMode)
+                .setDefaultValue(false)
+                .setTooltip(
+                        Text.literal("Changes ban time calculation formula."),
+                        Text.literal("OFF: Linear (1, 2, 3, 4, 5...)").formatted(Formatting.GREEN),
+                        Text.literal("ON: Doubling (1, 2, 4, 8, 16...)").formatted(Formatting.RED),
+                        Text.literal("Default: OFF").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.exponentialBanMode = newValue)
+                .build());
         
+        // Ghost Echo toggle
         general.addEntry(entryBuilder.startBooleanToggle(
-                Text.translatable("config.simpledeathbans.enableGhostEcho"), config.enableGhostEcho)
-            .setDefaultValue(true)
-            .setTooltip(Text.literal("Enable lightning strike and custom death message on ban. Default: ON"))
-            .setSaveConsumer(val -> config.enableGhostEcho = val)
-            .build());
+                Text.translatable("config.simpledeathbans.enableGhostEcho"),
+                config.enableGhostEcho)
+                .setDefaultValue(true)
+                .setTooltip(
+                        Text.literal("Cosmetic effects when a player is banned."),
+                        Text.literal("• Lightning strike at death location").formatted(Formatting.GRAY),
+                        Text.literal("• Custom message: 'lost to the void'").formatted(Formatting.GRAY),
+                        Text.literal("Default: ON").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.enableGhostEcho = newValue)
+                .build());
         
         // --- PvP Settings Header ---
         general.addEntry(entryBuilder.startTextDescription(
-            Text.literal("═══ PvP Settings ═══").formatted(Formatting.GOLD)
-        ).build());
+                Text.literal("═══ PvP Settings ═══").formatted(Formatting.GOLD))
+                .build());
         
-        // PvP Ban Multiplier as percentage slider (0-500%)
-        general.addEntry(entryBuilder.startIntSlider(
-                Text.translatable("config.simpledeathbans.pvpBanMultiplier"), config.pvpBanMultiplierPercent, 0, 500)
-            .setDefaultValue(50)
-            .setTextGetter(val -> Text.literal(val + "%"))
-            .setTooltip(Text.literal("Ban time multiplier for PvP deaths. 50% = half ban time. Default: 50%"))
-            .setSaveConsumer(val -> config.pvpBanMultiplierPercent = val)
-            .build());
+        // PvP Ban Multiplier (0-500%)
+        general.addEntry(entryBuilder.startIntField(
+                Text.translatable("config.simpledeathbans.pvpBanMultiplier"),
+                config.pvpBanMultiplierPercent)
+                .setDefaultValue(50)
+                .setMin(0)
+                .setMax(500)
+                .setTooltip(
+                        Text.literal("Ban time modifier for player-caused deaths."),
+                        Text.literal("50 = half ban, 0 = no ban for PvP").formatted(Formatting.GRAY),
+                        Text.literal("Includes indirect kills (knockback, etc.)").formatted(Formatting.GRAY),
+                        Text.literal("Range: 0-500 | Default: 50").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.pvpBanMultiplierPercent = newValue)
+                .build());
         
-        // PvE Ban Multiplier as percentage slider (0-500%)
-        general.addEntry(entryBuilder.startIntSlider(
-                Text.literal("PvE Ban Multiplier"), config.pveBanMultiplierPercent, 0, 500)
-            .setDefaultValue(100)
-            .setTextGetter(val -> Text.literal(val + "%"))
-            .setTooltip(Text.literal("Ban time multiplier for PvE deaths. 100% = normal ban time. Default: 100%"))
-            .setSaveConsumer(val -> config.pveBanMultiplierPercent = val)
-            .build());
+        // PvE Ban Multiplier (0-500%)
+        general.addEntry(entryBuilder.startIntField(
+                Text.literal("PvE Ban Multiplier"),
+                config.pveBanMultiplierPercent)
+                .setDefaultValue(100)
+                .setMin(0)
+                .setMax(500)
+                .setTooltip(
+                        Text.literal("Ban time modifier for environment deaths."),
+                        Text.literal("Mobs, fall damage, lava, void, etc.").formatted(Formatting.GRAY),
+                        Text.literal("100 = normal, 0 = no ban for PvE").formatted(Formatting.GRAY),
+                        Text.literal("Range: 0-500 | Default: 100").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.pveBanMultiplierPercent = newValue)
+                .build());
         
         // --- Altar of Resurrection Header ---
         general.addEntry(entryBuilder.startTextDescription(
-            Text.literal("═══ Altar of Resurrection ═══").formatted(Formatting.GOLD)
-        ).build());
+                Text.literal("═══ Altar of Resurrection ═══").formatted(Formatting.GOLD))
+                .build());
         
+        // Resurrection Altar toggle
         general.addEntry(entryBuilder.startBooleanToggle(
-                Text.translatable("config.simpledeathbans.enableResurrectionAltar"), config.enableResurrectionAltar)
-            .setDefaultValue(true)
-            .setTooltip(Text.literal("Enable Resurrection Altar feature. Default: ON"))
-            .setSaveConsumer(val -> config.enableResurrectionAltar = val)
-            .build());
+                Text.translatable("config.simpledeathbans.enableResurrectionAltar"),
+                config.enableResurrectionAltar)
+                .setDefaultValue(true)
+                .setTooltip(
+                        Text.literal("Endgame feature to unban players."),
+                        Text.literal("Requires: Netherite beacon + Resurrection Totem").formatted(Formatting.GRAY),
+                        Text.literal("ALL online players must participate!").formatted(Formatting.YELLOW),
+                        Text.literal("Default: ON").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.enableResurrectionAltar = newValue)
+                .build());
         
         // ============================================
         // CATEGORY: Soul Link/Health Settings
@@ -235,141 +247,307 @@ public class ClothConfigScreen {
         
         // --- Soul Link Header ---
         soulLinkHealth.addEntry(entryBuilder.startTextDescription(
-            Text.literal("═══ Soul Link ═══").formatted(Formatting.GOLD)
-        ).build());
+                Text.literal("═══ Soul Link ═══").formatted(Formatting.GOLD))
+                .build());
         
+        // Enable Soul Link toggle
         soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
-                Text.translatable("config.simpledeathbans.enableSoulLink"), config.enableSoulLink)
-            .setDefaultValue(false)
-            .setTooltip(Text.literal("Enable Soul Link feature. Default: OFF"))
-            .setSaveConsumer(val -> config.enableSoulLink = val)
-            .build());
+                Text.translatable("config.simpledeathbans.enableSoulLink"),
+                config.enableSoulLink)
+                .setDefaultValue(false)
+                .setTooltip(
+                        Text.literal("Pairs players together as Soul Partners."),
+                        Text.literal("Partners share damage and have a Death Pact.").formatted(Formatting.GRAY),
+                        Text.literal("LETHAL damage kills BOTH partners!").formatted(Formatting.RED),
+                        Text.literal("Default: OFF").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.enableSoulLink = newValue)
+                .build());
         
-        // Soul Link Damage Share as percentage slider (0-200%, where 100% = 1:1 ratio)
-        soulLinkHealth.addEntry(entryBuilder.startIntSlider(
-                Text.translatable("config.simpledeathbans.soulLinkDamageShare"), config.soulLinkDamageSharePercent, 0, 200)
-            .setDefaultValue(100)
-            .setTextGetter(val -> Text.literal(val + "%"))
-            .setTooltip(
-                Text.literal("Percentage of damage shared to soul partner.").formatted(Formatting.WHITE),
-                Text.literal("100% = 1:1 ratio (take 2 hearts, partner takes 2 hearts)").formatted(Formatting.GRAY),
-                Text.literal("50% = half damage, 200% = double damage").formatted(Formatting.GRAY),
-                Text.literal("").formatted(Formatting.GRAY),
-                Text.literal("⚠ IMPORTANT: Only affects NON-LETHAL damage!").formatted(Formatting.GOLD),
-                Text.literal("LETHAL damage triggers Death Pact = instant death").formatted(Formatting.RED),
-                Text.literal("for BOTH players regardless of this setting.").formatted(Formatting.RED),
-                Text.literal("Default: 100%").formatted(Formatting.GRAY))
-            .setSaveConsumer(val -> config.soulLinkDamageSharePercent = val)
-            .build());
+        // Soul Link Damage Share (0-200%)
+        soulLinkHealth.addEntry(entryBuilder.startIntField(
+                Text.translatable("config.simpledeathbans.soulLinkDamageShare"),
+                config.soulLinkDamageSharePercent)
+                .setDefaultValue(100)
+                .setMin(0)
+                .setMax(200)
+                .setTooltip(
+                        Text.literal("Damage transferred to your soul partner."),
+                        Text.literal("100 = 1:1, 50 = half, 0 = none").formatted(Formatting.GRAY),
+                        Text.literal("Only affects NON-LETHAL hits!").formatted(Formatting.YELLOW),
+                        Text.literal("Lethal damage = Death Pact (both die)").formatted(Formatting.RED),
+                        Text.literal("Range: 0-200 | Default: 100").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.soulLinkDamageSharePercent = newValue)
+                .build());
         
+        // Random Partner Assignment toggle
         soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
-                Text.literal("Random Partner Assignment"), config.soulLinkRandomPartner)
-            .setDefaultValue(true)
-            .setTooltip(Text.literal("ON: Auto-pair with random player on join. OFF: Shift+right-click player to link. Default: ON"))
-            .setSaveConsumer(val -> config.soulLinkRandomPartner = val)
-            .build());
+                Text.literal("Random Partner Assignment"),
+                config.soulLinkRandomPartner)
+                .setDefaultValue(true)
+                .setTooltip(
+                        Text.literal("How players get paired with partners."),
+                        Text.literal("ON: Auto-paired randomly on join").formatted(Formatting.GREEN),
+                        Text.literal("OFF: Manual - Sneak+click with Soul Link Totem").formatted(Formatting.YELLOW),
+                        Text.literal("Default: ON").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.soulLinkRandomPartner = newValue)
+                .build());
         
+        // Totem Saves Partner toggle
         soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
-                Text.literal("Totem Saves Partner"), config.soulLinkTotemSavesPartner)
-            .setDefaultValue(true)
-            .setTooltip(
-                Text.literal("Controls totem behavior for Soul Link Death Pact.").formatted(Formatting.WHITE),
-                Text.literal("").formatted(Formatting.GRAY),
-                Text.literal("ON: Any totem saves BOTH players").formatted(Formatting.GREEN),
-                Text.literal("OFF: Totem only saves holder, partner dies").formatted(Formatting.RED),
-                Text.literal("").formatted(Formatting.GRAY),
-                Text.literal("If BOTH have totems: Both consumed, both live").formatted(Formatting.GRAY),
-                Text.literal("Default: ON").formatted(Formatting.GRAY))
-            .setSaveConsumer(val -> config.soulLinkTotemSavesPartner = val)
-            .build());
+                Text.literal("Totem Saves Partner"),
+                config.soulLinkTotemSavesPartner)
+                .setDefaultValue(true)
+                .setTooltip(
+                        Text.literal("Totem of Undying behavior for Soul Links."),
+                        Text.literal("ON: One totem saves BOTH partners").formatted(Formatting.GREEN),
+                        Text.literal("OFF: Only the holder survives").formatted(Formatting.RED),
+                        Text.literal("If BOTH have totems: both consumed, both live").formatted(Formatting.GRAY),
+                        Text.literal("Default: ON").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.soulLinkTotemSavesPartner = newValue)
+                .build());
+        
+        // --- Soul Link Sever Settings ---
+        soulLinkHealth.addEntry(entryBuilder.startTextDescription(
+                Text.literal("═══ Soul Link Sever Settings ═══").formatted(Formatting.GOLD))
+                .build());
+        
+        // Sever Cooldown (0-120 min)
+        soulLinkHealth.addEntry(entryBuilder.startIntField(
+                Text.literal("Sever Cooldown (minutes)"),
+                config.soulLinkSeverCooldownMinutes)
+                .setDefaultValue(30)
+                .setMin(0)
+                .setMax(120)
+                .setTooltip(
+                        Text.literal("Cooldown after breaking a soul link."),
+                        Text.literal("Cannot link with ANY player during this time.").formatted(Formatting.GRAY),
+                        Text.literal("Range: 0-120 | Default: 30").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.soulLinkSeverCooldownMinutes = newValue)
+                .build());
+        
+        // Sever Ban Tier Penalty (0-10)
+        soulLinkHealth.addEntry(entryBuilder.startIntField(
+                Text.literal("Sever Ban Tier Penalty"),
+                config.soulLinkSeverBanTierIncrease)
+                .setDefaultValue(1)
+                .setMin(0)
+                .setMax(10)
+                .setTooltip(
+                        Text.literal("Punishment for breaking a soul link."),
+                        Text.literal("Your ban tier increases by this amount.").formatted(Formatting.GRAY),
+                        Text.literal("Set to 0 to disable penalty.").formatted(Formatting.GRAY),
+                        Text.literal("Range: 0-10 | Default: 1").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.soulLinkSeverBanTierIncrease = newValue)
+                .build());
+        
+        // Ex-Partner Cooldown (0-168 hours)
+        soulLinkHealth.addEntry(entryBuilder.startIntField(
+                Text.literal("Ex-Partner Cooldown (hours)"),
+                config.soulLinkExPartnerCooldownHours)
+                .setDefaultValue(24)
+                .setMin(0)
+                .setMax(168)
+                .setTooltip(
+                        Text.literal("Time before re-linking with an ex-partner."),
+                        Text.literal("Prevents quick on/off abuse with same player.").formatted(Formatting.GRAY),
+                        Text.literal("168 hours = 1 week maximum").formatted(Formatting.GRAY),
+                        Text.literal("Range: 0-168 | Default: 24").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.soulLinkExPartnerCooldownHours = newValue)
+                .build());
+        
+        // Random Reassign Cooldown (0-72 hours)
+        soulLinkHealth.addEntry(entryBuilder.startIntField(
+                Text.literal("Random Reassign Cooldown (hours)"),
+                config.soulLinkRandomReassignCooldownHours)
+                .setDefaultValue(12)
+                .setMin(0)
+                .setMax(72)
+                .setTooltip(
+                        Text.literal("Grace period before auto-reassignment."),
+                        Text.literal("After severing, wait this long before").formatted(Formatting.GRAY),
+                        Text.literal("system assigns you a new random partner.").formatted(Formatting.GRAY),
+                        Text.literal("Only applies if Random Assignment is ON.").formatted(Formatting.YELLOW),
+                        Text.literal("Range: 0-72 | Default: 12").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.soulLinkRandomReassignCooldownHours = newValue)
+                .build());
+        
+        // Random Assign Check Interval (1-1440 min)
+        soulLinkHealth.addEntry(entryBuilder.startIntField(
+                Text.literal("Random Assign Check Interval (min)"),
+                config.soulLinkRandomAssignCheckIntervalMinutes)
+                .setDefaultValue(60)
+                .setMin(1)
+                .setMax(1440)
+                .setTooltip(
+                        Text.literal("How often the server checks for unlinked players."),
+                        Text.literal("Lower = faster pairing, more server load.").formatted(Formatting.GRAY),
+                        Text.literal("1440 min = 24 hours maximum").formatted(Formatting.GRAY),
+                        Text.literal("Range: 1-1440 | Default: 60").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.soulLinkRandomAssignCheckIntervalMinutes = newValue)
+                .build());
+        
+        // --- Soul Compass Settings ---
+        soulLinkHealth.addEntry(entryBuilder.startTextDescription(
+                Text.literal("═══ Soul Compass Settings ═══").formatted(Formatting.GOLD))
+                .build());
+        
+        // Compass Max Uses (1-100)
+        soulLinkHealth.addEntry(entryBuilder.startIntField(
+                Text.literal("Compass Max Uses"),
+                config.soulLinkCompassMaxUses)
+                .setDefaultValue(10)
+                .setMin(1)
+                .setMax(100)
+                .setTooltip(
+                        Text.literal("Soul Link Totem can track your partner."),
+                        Text.literal("Right-click totem to locate partner.").formatted(Formatting.GRAY),
+                        Text.literal("Each totem has limited tracking uses.").formatted(Formatting.GRAY),
+                        Text.literal("Range: 1-100 | Default: 10").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.soulLinkCompassMaxUses = newValue)
+                .build());
+        
+        // Compass Cooldown (0-60 min)
+        soulLinkHealth.addEntry(entryBuilder.startIntField(
+                Text.literal("Compass Cooldown (minutes)"),
+                config.soulLinkCompassCooldownMinutes)
+                .setDefaultValue(10)
+                .setMin(0)
+                .setMax(60)
+                .setTooltip(
+                        Text.literal("Wait time between tracking uses."),
+                        Text.literal("Prevents spam-tracking your partner.").formatted(Formatting.GRAY),
+                        Text.literal("Set to 0 for no cooldown.").formatted(Formatting.GRAY),
+                        Text.literal("Range: 0-60 | Default: 10").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.soulLinkCompassCooldownMinutes = newValue)
+                .build());
         
         // --- Shared Health Header ---
         soulLinkHealth.addEntry(entryBuilder.startTextDescription(
-            Text.literal("═══ Shared Health ═══").formatted(Formatting.GOLD)
-        ).build());
+                Text.literal("═══ Shared Health ═══").formatted(Formatting.GOLD))
+                .build());
         
+        // Enable Shared Health toggle
         soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
-                Text.literal("Enable Shared Health"), config.enableSharedHealth)
-            .setDefaultValue(false)
-            .setTooltip(
-                Text.literal("SERVER-WIDE damage sharing!").formatted(Formatting.WHITE),
-                Text.literal("ALL players share damage - if one takes damage, everyone does.").formatted(Formatting.GRAY),
-                Text.literal("").formatted(Formatting.GRAY),
-                Text.literal("⚠ Death Pact: If ANY player takes lethal damage,").formatted(Formatting.RED),
-                Text.literal("ALL players die instantly (unless someone has a totem).").formatted(Formatting.RED),
-                Text.literal("Default: OFF").formatted(Formatting.GRAY))
-            .setSaveConsumer(val -> config.enableSharedHealth = val)
-            .build());
+                Text.literal("Enable Shared Health"),
+                config.enableSharedHealth)
+                .setDefaultValue(false)
+                .setTooltip(
+                        Text.literal("⚠ EXTREME MODE - Server-wide health pool!").formatted(Formatting.RED),
+                        Text.literal("ALL online players share damage.").formatted(Formatting.YELLOW),
+                        Text.literal("If ONE player dies, EVERYONE dies!").formatted(Formatting.RED),
+                        Text.literal("Stacks with Soul Link if both enabled.").formatted(Formatting.GRAY),
+                        Text.literal("Default: OFF").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.enableSharedHealth = newValue)
+                .build());
         
-        // Shared Damage Percent as slider (0-200%)
-        soulLinkHealth.addEntry(entryBuilder.startIntSlider(
-                Text.literal("Shared Damage Percent"), config.sharedHealthDamagePercent, 0, 200)
-            .setDefaultValue(100)
-            .setTextGetter(val -> Text.literal(val + "%"))
-            .setTooltip(
-                Text.literal("Percent of damage shared to ALL players.").formatted(Formatting.WHITE),
-                Text.literal("100% = full damage (1:1), 50% = half damage").formatted(Formatting.GRAY),
-                Text.literal("").formatted(Formatting.GRAY),
-                Text.literal("⚠ IMPORTANT: Only affects NON-LETHAL damage!").formatted(Formatting.GOLD),
-                Text.literal("LETHAL damage triggers Death Pact = everyone dies").formatted(Formatting.RED),
-                Text.literal("regardless of this setting.").formatted(Formatting.RED),
-                Text.literal("Default: 100%").formatted(Formatting.GRAY))
-            .setSaveConsumer(val -> config.sharedHealthDamagePercent = val)
-            .build());
+        // Shared Damage Percent (0-200%)
+        soulLinkHealth.addEntry(entryBuilder.startIntField(
+                Text.literal("Shared Damage Percent"),
+                config.sharedHealthDamagePercent)
+                .setDefaultValue(100)
+                .setMin(0)
+                .setMax(200)
+                .setTooltip(
+                        Text.literal("Damage dealt to ALL other players."),
+                        Text.literal("100 = 1:1, 50 = half, 200 = double").formatted(Formatting.GRAY),
+                        Text.literal("Only affects NON-LETHAL damage!").formatted(Formatting.YELLOW),
+                        Text.literal("Lethal damage = instant death for ALL").formatted(Formatting.RED),
+                        Text.literal("Range: 0-200 | Default: 100").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.sharedHealthDamagePercent = newValue)
+                .build());
         
+        // Totem Saves All toggle
         soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
-                Text.literal("Totem Saves All"), config.sharedHealthTotemSavesAll)
-            .setDefaultValue(true)
-            .setTooltip(
-                Text.literal("Controls totem behavior for Shared Health Death Pact.").formatted(Formatting.WHITE),
-                Text.literal("").formatted(Formatting.GRAY),
-                Text.literal("ON: Any player's totem saves EVERYONE").formatted(Formatting.GREEN),
-                Text.literal("OFF: Only totem holders survive, others die").formatted(Formatting.RED),
-                Text.literal("").formatted(Formatting.GRAY),
-                Text.literal("Multiple totems: All consumed, all holders notified").formatted(Formatting.GRAY),
-                Text.literal("Default: ON").formatted(Formatting.GRAY))
-            .setSaveConsumer(val -> config.sharedHealthTotemSavesAll = val)
-            .build());
+                Text.literal("Totem Saves All"),
+                config.sharedHealthTotemSavesAll)
+                .setDefaultValue(true)
+                .setTooltip(
+                        Text.literal("Totem of Undying behavior for Shared Health."),
+                        Text.literal("ON: One totem saves EVERYONE").formatted(Formatting.GREEN),
+                        Text.literal("OFF: Only holders survive, others die").formatted(Formatting.RED),
+                        Text.literal("Multiple totems = all consumed, all saved").formatted(Formatting.GRAY),
+                        Text.literal("Default: ON").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.sharedHealthTotemSavesAll = newValue)
+                .build());
         
         // ============================================
         // CATEGORY: Mercy Cooldown Settings
         // ============================================
         ConfigCategory mercy = builder.getOrCreateCategory(Text.translatable("config.simpledeathbans.mercy"));
         
+        // Enable Mercy Cooldown toggle
         mercy.addEntry(entryBuilder.startBooleanToggle(
-                Text.literal("Enable Mercy Cooldown"), config.enableMercyCooldown)
-            .setDefaultValue(true)
-            .setTooltip(Text.literal("Enable Mercy Cooldown system that reduces ban tier over time. Default: ON"))
-            .setSaveConsumer(val -> config.enableMercyCooldown = val)
-            .build());
+                Text.literal("Enable Mercy Cooldown"),
+                config.enableMercyCooldown)
+                .setDefaultValue(true)
+                .setTooltip(
+                        Text.literal("Forgiveness system for active players."),
+                        Text.literal("Ban tier decreases over time without dying.").formatted(Formatting.GRAY),
+                        Text.literal("Requires activity (not AFK) to count.").formatted(Formatting.YELLOW),
+                        Text.literal("Default: ON").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.enableMercyCooldown = newValue)
+                .build());
         
-        mercy.addEntry(entryBuilder.startIntSlider(
-                Text.translatable("config.simpledeathbans.mercyPlaytimeHours"), config.mercyPlaytimeHours, 1, 168)
-            .setDefaultValue(24)
-            .setTooltip(Text.literal("Real playtime hours (not AFK) without deaths to reduce ban tier. Range: 1-168. Default: 24"))
-            .setSaveConsumer(val -> config.mercyPlaytimeHours = val)
-            .build());
+        // Mercy Playtime (1-168 hours)
+        mercy.addEntry(entryBuilder.startIntField(
+                Text.translatable("config.simpledeathbans.mercyPlaytimeHours"),
+                config.mercyPlaytimeHours)
+                .setDefaultValue(24)
+                .setMin(1)
+                .setMax(168)
+                .setTooltip(
+                        Text.literal("Active playtime needed to reduce ban tier by 1."),
+                        Text.literal("Must be ACTIVE time (not AFK).").formatted(Formatting.YELLOW),
+                        Text.literal("Resets to 0 on death.").formatted(Formatting.RED),
+                        Text.literal("168 hours = 1 week maximum").formatted(Formatting.GRAY),
+                        Text.literal("Range: 1-168 | Default: 24").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.mercyPlaytimeHours = newValue)
+                .build());
         
-        mercy.addEntry(entryBuilder.startIntSlider(
-                Text.translatable("config.simpledeathbans.mercyMovementBlocks"), config.mercyMovementBlocks, 0, 500)
-            .setDefaultValue(50)
-            .setTooltip(Text.literal("Blocks moved in check interval to count as active. Range: 0-500. Default: 50"))
-            .setSaveConsumer(val -> config.mercyMovementBlocks = val)
-            .build());
+        // Mercy Movement (0-500 blocks)
+        mercy.addEntry(entryBuilder.startIntField(
+                Text.translatable("config.simpledeathbans.mercyMovementBlocks"),
+                config.mercyMovementBlocks)
+                .setDefaultValue(50)
+                .setMin(0)
+                .setMax(500)
+                .setTooltip(
+                        Text.literal("Blocks traveled to count as 'active' each check."),
+                        Text.literal("Must move this OR interact with blocks.").formatted(Formatting.GRAY),
+                        Text.literal("Prevents AFK farming mercy cooldown.").formatted(Formatting.YELLOW),
+                        Text.literal("Range: 0-500 | Default: 50").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.mercyMovementBlocks = newValue)
+                .build());
         
-        mercy.addEntry(entryBuilder.startIntSlider(
-                Text.translatable("config.simpledeathbans.mercyBlockInteractions"), config.mercyBlockInteractions, 0, 200)
-            .setDefaultValue(20)
-            .setTooltip(Text.literal("Block interactions in check interval to count as active. Range: 0-200. Default: 20"))
-            .setSaveConsumer(val -> config.mercyBlockInteractions = val)
-            .build());
+        // Mercy Block Interactions (0-200)
+        mercy.addEntry(entryBuilder.startIntField(
+                Text.translatable("config.simpledeathbans.mercyBlockInteractions"),
+                config.mercyBlockInteractions)
+                .setDefaultValue(20)
+                .setMin(0)
+                .setMax(200)
+                .setTooltip(
+                        Text.literal("Block interactions to count as 'active' each check."),
+                        Text.literal("Breaking, placing, using blocks, etc.").formatted(Formatting.GRAY),
+                        Text.literal("Must interact this OR move enough blocks.").formatted(Formatting.GRAY),
+                        Text.literal("Range: 0-200 | Default: 20").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.mercyBlockInteractions = newValue)
+                .build());
         
-        mercy.addEntry(entryBuilder.startIntSlider(
-                Text.literal("Check Interval (minutes)"), config.mercyCheckIntervalMinutes, 1, 60)
-            .setDefaultValue(15)
-            .setTooltip(Text.literal("Minutes between activity checks. Range: 1-60. Default: 15"))
-            .setSaveConsumer(val -> config.mercyCheckIntervalMinutes = val)
-            .build());
+        // Mercy Check Interval (1-60 min)
+        mercy.addEntry(entryBuilder.startIntField(
+                Text.literal("Check Interval (minutes)"),
+                config.mercyCheckIntervalMinutes)
+                .setDefaultValue(15)
+                .setMin(1)
+                .setMax(60)
+                .setTooltip(
+                        Text.literal("How often to check if player is active."),
+                        Text.literal("Each check, player must meet activity threshold.").formatted(Formatting.GRAY),
+                        Text.literal("Lower = stricter AFK detection.").formatted(Formatting.YELLOW),
+                        Text.literal("Range: 1-60 | Default: 15").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> config.mercyCheckIntervalMinutes = newValue)
+                .build());
         
         // ============================================
         // CATEGORY: Keybinds
@@ -379,8 +557,11 @@ public class ClothConfigScreen {
         keybinds.addEntry(entryBuilder.fillKeybindingField(
                 Text.literal("Open Config Screen"),
                 SimpleDeathBansClient.openConfigKeyBinding)
-            .setTooltip(Text.literal("Keybind to open the SimpleDeathBans config screen.\nCan also be changed in: Options → Controls → Key Binds..."))
-            .build());
+                .setTooltip(
+                        Text.literal("Quick access to this config screen."),
+                        Text.literal("Can also be set in: Options → Controls").formatted(Formatting.GRAY),
+                        Text.literal("Default: Unbound").formatted(Formatting.DARK_GRAY))
+                .build());
         
         return builder.build();
     }

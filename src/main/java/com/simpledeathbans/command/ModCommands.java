@@ -362,11 +362,29 @@ public class ModCommands {
             return 0;
         }
         
+        // Check if trying to enable Soul Link while Shared Health is active
+        if (!config.enableSoulLink && config.enableSharedHealth) {
+            // Broadcast server message
+            Text serverMsg = Text.literal("\u00a7k><\u00a7r ")
+                .append(Text.literal("Must disable Shared Health before enabling Soul Link.").formatted(Formatting.RED))
+                .append(Text.literal(" \u00a7k><\u00a7r"));
+            context.getSource().sendFeedback(() -> serverMsg, true);
+            return 0;
+        }
+        
         // Toggle the setting
         config.enableSoulLink = !config.enableSoulLink;
         
         // Save the config
         SimpleDeathBans.getInstance().saveConfig();
+        
+        // Broadcast server-wide message when Soul Link is enabled
+        if (config.enableSoulLink) {
+            Text serverMsg = Text.literal("\u00a7k><\u00a7r ")
+                .append(Text.literal("Soul Link has been enabled.").formatted(Formatting.GREEN))
+                .append(Text.literal(" \u00a7k><\u00a7r"));
+            context.getSource().getServer().getPlayerManager().broadcast(serverMsg, false);
+        }
         
         String status = config.enableSoulLink ? "ENABLED" : "DISABLED";
         Formatting color = config.enableSoulLink ? Formatting.GREEN : Formatting.RED;
@@ -432,17 +450,31 @@ public class ModCommands {
             return 0;
         }
         
+        boolean wasEnablingSharedHealth = !config.enableSharedHealth;
+        boolean soulLinkWasOn = config.enableSoulLink;
+        
         // Toggle the setting
         config.enableSharedHealth = !config.enableSharedHealth;
         
         // MUTUAL EXCLUSIVITY: If enabling Shared Health, disable Soul Link
-        if (config.enableSharedHealth && config.enableSoulLink) {
+        if (config.enableSharedHealth && soulLinkWasOn) {
             config.enableSoulLink = false;
-            context.getSource().sendFeedback(
-                () -> Text.literal("⚠ Soul Link has been DISABLED - Shared Health takes priority!")
-                    .formatted(Formatting.RED, Formatting.BOLD),
-                true
-            );
+            // Broadcast two separate server-wide messages
+            Text msg1 = Text.literal("\u00a7k><\u00a7r ")
+                .append(Text.literal("Soul Link has been disabled.").formatted(Formatting.RED))
+                .append(Text.literal(" \u00a7k><\u00a7r"));
+            context.getSource().getServer().getPlayerManager().broadcast(msg1, false);
+            
+            Text msg2 = Text.literal("\u00a7k><\u00a7r ")
+                .append(Text.literal("Shared Health has been enabled.").formatted(Formatting.GREEN))
+                .append(Text.literal(" \u00a7k><\u00a7r"));
+            context.getSource().getServer().getPlayerManager().broadcast(msg2, false);
+        } else if (wasEnablingSharedHealth) {
+            // Just enabling Shared Health (Soul Link wasn't on)
+            Text serverMsg = Text.literal("\u00a7k><\u00a7r ")
+                .append(Text.literal("Shared Health has been enabled.").formatted(Formatting.GREEN))
+                .append(Text.literal(" \u00a7k><\u00a7r"));
+            context.getSource().getServer().getPlayerManager().broadcast(serverMsg, false);
         }
         
         // Save the config

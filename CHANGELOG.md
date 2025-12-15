@@ -14,16 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Totem Saves All ON: Any totem saves everyone
   - Totem Saves All OFF: Only totem holders survive
 - **Multi-totem Support** - Handles multiple totem holders with appropriate notifications
-- **Config Tooltips** - Detailed tooltips explaining damage share vs death pact behavior
 - **Soul Link Totem** - New craftable item required for manual soul linking
   - Recipe: Amethyst Shards + Eye of Enders + Totem of Undying (yields 2)
   - Prevents conflicts with other mods using shift+right-click on players
 - **Mutual Exclusivity** - Shared Health overrides Soul Link when enabled (existing links preserved)
 
 ### Changed
+- **Cloth Config UI** - Replaced broken sliders with reliable text fields
+- **Config Tooltips** - Enhanced with multi-line explanations, ranges, and color-coded warnings
+- **Fallback Config UI** - Added missing sliders (Ban Multiplier, PvP/PvE Multipliers, Soul Link Damage Share, Shared Health Damage)
+- **Fallback Tooltips** - Updated all tooltips to match Cloth Config quality with ranges and helpful info
 - **Soul Link Damage Share** - Now explicitly documented as NON-LETHAL only
 - **Death Pact Clarification** - Lethal damage triggers instant death regardless of damage share %
-- **Cloth Config Tooltips** - Enhanced with multi-line explanations and warnings
 - **Soul Link Manual Mode** - Now requires holding Soul Link Totem (avoids mod conflicts)
 
 ### Fixed
@@ -34,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Player without totem now dies if partner (with totem) takes lethal damage
 - **Resurrection Ritual Formatting** - Fixed message box exceeding chat width
 - **Resurrection Ritual Colors** - "Ban tier preserved" now red, "freed from void" now dark purple
+- **Login Message** - Now correctly mentions Soul Link Totem for manual linking
 
 ### Technical
 - Added SharedHealthMixin for server-wide death pact handling

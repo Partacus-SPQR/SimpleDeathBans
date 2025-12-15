@@ -8,6 +8,7 @@ import com.simpledeathbans.event.BlockInteractionHandler;
 import com.simpledeathbans.event.DeathEventHandler;
 import com.simpledeathbans.event.MercyCooldownHandler;
 import com.simpledeathbans.event.SharedHealthHandler;
+import com.simpledeathbans.event.SoulLinkCooldownHandler;
 import com.simpledeathbans.event.SoulLinkEventHandler;
 import com.simpledeathbans.item.ModItems;
 import com.simpledeathbans.command.ModCommands;
@@ -104,6 +105,10 @@ public class SimpleDeathBans implements ModInitializer {
             if (playerDataManager != null && config != null) {
                 MercyCooldownHandler.onServerTick(server);
             }
+            // Check soul link cooldowns for auto-reassignment
+            if (soulLinkManager != null && config != null && config.enableSoulLink) {
+                SoulLinkCooldownHandler.onServerTick(server);
+            }
         });
         
         // Register death event handler
@@ -160,11 +165,61 @@ public class SimpleDeathBans implements ModInitializer {
                     config.maxBanTier = payload.maxBanTier();
                     config.exponentialBanMode = payload.exponentialBanMode();
                     config.enableGhostEcho = payload.enableGhostEcho();
-                    config.enableSoulLink = payload.enableSoulLink();
+                    
+                    // MUTUAL EXCLUSIVITY: Handle Soul Link and Shared Health
+                    // Compare what the user WANTS vs what is CURRENTLY set
+                    boolean wantsSoulLink = payload.enableSoulLink();
+                    boolean wantsSharedHealth = payload.enableSharedHealth();
+                    boolean currentSoulLink = config.enableSoulLink;
+                    boolean currentSharedHealth = config.enableSharedHealth;
+                    
+                    boolean soulLinkBlocked = false;
+                    boolean soulLinkOverridden = false;  // When Shared Health actively disables Soul Link
+                    boolean soulLinkEnabled = false;     // When Soul Link is newly enabled
+                    boolean sharedHealthEnabled = false; // When Shared Health is newly enabled
+                    
+                    // Case 1: User is trying to enable Shared Health (wasn't on before, now wants it on)
+                    if (wantsSharedHealth && !currentSharedHealth) {
+                        config.enableSharedHealth = true;
+                        sharedHealthEnabled = true;
+                        
+                        // If Soul Link was on, it gets overridden
+                        if (currentSoulLink) {
+                            config.enableSoulLink = false;
+                            soulLinkOverridden = true;
+                        } else {
+                            config.enableSoulLink = false; // Can't enable Soul Link with Shared Health
+                        }
+                    }
+                    // Case 2: Shared Health already on, user tries to enable Soul Link
+                    else if (currentSharedHealth && wantsSharedHealth && wantsSoulLink && !currentSoulLink) {
+                        // Block - must disable Shared Health first
+                        config.enableSoulLink = false;
+                        config.enableSharedHealth = true;
+                        soulLinkBlocked = true;
+                    }
+                    // Case 3: User is enabling Soul Link (Shared Health is off)
+                    else if (wantsSoulLink && !currentSoulLink && !wantsSharedHealth && !currentSharedHealth) {
+                        config.enableSoulLink = true;
+                        config.enableSharedHealth = false;
+                        soulLinkEnabled = true;
+                    }
+                    // Case 4: Normal - just apply what user wants
+                    else {
+                        config.enableSoulLink = wantsSoulLink;
+                        config.enableSharedHealth = wantsSharedHealth;
+                    }
+                    
                     config.soulLinkDamageSharePercent = payload.soulLinkDamageSharePercent();
                     config.soulLinkRandomPartner = payload.soulLinkRandomPartner();
                     config.soulLinkTotemSavesPartner = payload.soulLinkTotemSavesPartner();
-                    config.enableSharedHealth = payload.enableSharedHealth();
+                    config.soulLinkSeverCooldownMinutes = payload.soulLinkSeverCooldownMinutes();
+                    config.soulLinkSeverBanTierIncrease = payload.soulLinkSeverBanTierIncrease();
+                    config.soulLinkExPartnerCooldownHours = payload.soulLinkExPartnerCooldownHours();
+                    config.soulLinkRandomReassignCooldownHours = payload.soulLinkRandomReassignCooldownHours();
+                    config.soulLinkRandomAssignCheckIntervalMinutes = payload.soulLinkRandomAssignCheckIntervalMinutes();
+                    config.soulLinkCompassMaxUses = payload.soulLinkCompassMaxUses();
+                    config.soulLinkCompassCooldownMinutes = payload.soulLinkCompassCooldownMinutes();
                     config.sharedHealthDamagePercent = payload.sharedHealthDamagePercent();
                     config.sharedHealthTotemSavesAll = payload.sharedHealthTotemSavesAll();
                     config.enableMercyCooldown = payload.enableMercyCooldown();
@@ -177,6 +232,46 @@ public class SimpleDeathBans implements ModInitializer {
                     config.enableResurrectionAltar = payload.enableResurrectionAltar();
                     
                     config.save();
+                    
+                    // Send mutual exclusivity messages to server
+                    if (soulLinkOverridden) {
+                        // Soul Link was actively disabled by enabling Shared Health
+                        Text msg1 = Text.literal("\u00a7k><\u00a7r ")
+                            .append(Text.literal("Soul Link has been disabled.").formatted(Formatting.RED))
+                            .append(Text.literal(" \u00a7k><\u00a7r"));
+                        context.server().getPlayerManager().broadcast(msg1, false);
+                        
+                        Text msg2 = Text.literal("\u00a7k><\u00a7r ")
+                            .append(Text.literal("Shared Health has been enabled.").formatted(Formatting.GREEN))
+                            .append(Text.literal(" \u00a7k><\u00a7r"));
+                        context.server().getPlayerManager().broadcast(msg2, false);
+                        LOGGER.info("Soul Link disabled, Shared Health enabled by {}", player.getName().getString());
+                    } else if (sharedHealthEnabled) {
+                        // Just Shared Health enabled (Soul Link wasn't on)
+                        Text serverMsg = Text.literal("\u00a7k><\u00a7r ")
+                            .append(Text.literal("Shared Health has been enabled.").formatted(Formatting.GREEN))
+                            .append(Text.literal(" \u00a7k><\u00a7r"));
+                        context.server().getPlayerManager().broadcast(serverMsg, false);
+                        LOGGER.info("Shared Health enabled by {}", player.getName().getString());
+                    }
+                    
+                    if (soulLinkEnabled) {
+                        // Soul Link newly enabled
+                        Text serverMsg = Text.literal("\u00a7k><\u00a7r ")
+                            .append(Text.literal("Soul Link has been enabled.").formatted(Formatting.GREEN))
+                            .append(Text.literal(" \u00a7k><\u00a7r"));
+                        context.server().getPlayerManager().broadcast(serverMsg, false);
+                        LOGGER.info("Soul Link enabled by {}", player.getName().getString());
+                    }
+                    
+                    if (soulLinkBlocked) {
+                        // Tried to enable Soul Link while Shared Health is on - just tell them no
+                        Text serverMsg = Text.literal("\u00a7k><\u00a7r ")
+                            .append(Text.literal("Must disable Shared Health before enabling Soul Link.").formatted(Formatting.RED))
+                            .append(Text.literal(" \u00a7k><\u00a7r"));
+                        player.sendMessage(serverMsg, false);
+                        LOGGER.info("Soul Link enable blocked - Shared Health is active (attempted by {})", player.getName().getString());
+                    }
                     
                     LOGGER.info("Config updated by operator {} - baseBanMinutes: {}, enableSoulLink: {}, enableSharedHealth: {}, enableMercyCooldown: {}",
                         player.getName().getString(),
@@ -196,6 +291,13 @@ public class SimpleDeathBans implements ModInitializer {
                         config.soulLinkDamageSharePercent,
                         config.soulLinkRandomPartner,
                         config.soulLinkTotemSavesPartner,
+                        config.soulLinkSeverCooldownMinutes,
+                        config.soulLinkSeverBanTierIncrease,
+                        config.soulLinkExPartnerCooldownHours,
+                        config.soulLinkRandomReassignCooldownHours,
+                        config.soulLinkRandomAssignCheckIntervalMinutes,
+                        config.soulLinkCompassMaxUses,
+                        config.soulLinkCompassCooldownMinutes,
                         config.enableSharedHealth,
                         config.sharedHealthDamagePercent,
                         config.sharedHealthTotemSavesAll,

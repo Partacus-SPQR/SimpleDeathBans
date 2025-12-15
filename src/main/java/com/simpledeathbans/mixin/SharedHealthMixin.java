@@ -2,6 +2,7 @@ package com.simpledeathbans.mixin;
 
 import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.config.ModConfig;
+import com.simpledeathbans.util.DamageShareTracker;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -68,6 +69,11 @@ public abstract class SharedHealthMixin {
         
         // Skip in single-player
         if (world.getServer().isSingleplayer()) {
+            return;
+        }
+        
+        // CRITICAL: Prevent recursion - check if we're already processing this player
+        if (DamageShareTracker.isProcessing(player.getUuid())) {
             return;
         }
         
@@ -158,10 +164,22 @@ public abstract class SharedHealthMixin {
                 p.sendMessage(voidPullMsg, false);
             }
             
-            // Kill all OTHER players (the original player will die from the damage)
+            // Mark all players as processing to prevent recursion
             for (ServerPlayerEntity p : allPlayers) {
-                if (!p.getUuid().equals(player.getUuid())) {
-                    p.kill(world); // Death pact - everyone dies
+                DamageShareTracker.markProcessing(p.getUuid());
+            }
+            
+            try {
+                // Kill all OTHER players (the original player will die from the damage)
+                for (ServerPlayerEntity p : allPlayers) {
+                    if (!p.getUuid().equals(player.getUuid())) {
+                        p.kill(world); // Death pact - everyone dies
+                    }
+                }
+            } finally {
+                // Clear processing flags
+                for (ServerPlayerEntity p : allPlayers) {
+                    DamageShareTracker.clearProcessing(p.getUuid());
                 }
             }
             
@@ -209,10 +227,22 @@ public abstract class SharedHealthMixin {
                 
                 server.getPlayerManager().broadcast(serverMsg, false);
                 
-                // Kill players without totems
+                // Mark players as processing to prevent recursion
                 for (ServerPlayerEntity p : willDie) {
-                    if (!p.getUuid().equals(player.getUuid())) {
-                        p.kill(world);
+                    DamageShareTracker.markProcessing(p.getUuid());
+                }
+                
+                try {
+                    // Kill players without totems
+                    for (ServerPlayerEntity p : willDie) {
+                        if (!p.getUuid().equals(player.getUuid())) {
+                            p.kill(world);
+                        }
+                    }
+                } finally {
+                    // Clear processing flags
+                    for (ServerPlayerEntity p : willDie) {
+                        DamageShareTracker.clearProcessing(p.getUuid());
                     }
                 }
                 
@@ -236,10 +266,22 @@ public abstract class SharedHealthMixin {
                 p.sendMessage(voidPullMsg, false);
             }
             
-            // Kill all OTHER players
+            // Mark all players as processing to prevent recursion
             for (ServerPlayerEntity p : allPlayers) {
-                if (!p.getUuid().equals(player.getUuid())) {
-                    p.kill(world);
+                DamageShareTracker.markProcessing(p.getUuid());
+            }
+            
+            try {
+                // Kill all OTHER players
+                for (ServerPlayerEntity p : allPlayers) {
+                    if (!p.getUuid().equals(player.getUuid())) {
+                        p.kill(world);
+                    }
+                }
+            } finally {
+                // Clear processing flags
+                for (ServerPlayerEntity p : allPlayers) {
+                    DamageShareTracker.clearProcessing(p.getUuid());
                 }
             }
             

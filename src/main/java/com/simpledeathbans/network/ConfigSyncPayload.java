@@ -19,6 +19,13 @@ public record ConfigSyncPayload(
     int soulLinkDamageSharePercent,
     boolean soulLinkRandomPartner,
     boolean soulLinkTotemSavesPartner,
+    int soulLinkSeverCooldownMinutes,
+    int soulLinkSeverBanTierIncrease,
+    int soulLinkExPartnerCooldownHours,
+    int soulLinkRandomReassignCooldownHours,
+    int soulLinkRandomAssignCheckIntervalMinutes,
+    int soulLinkCompassMaxUses,
+    int soulLinkCompassCooldownMinutes,
     boolean enableSharedHealth,
     int sharedHealthDamagePercent,
     boolean sharedHealthTotemSavesAll,
@@ -49,6 +56,13 @@ public record ConfigSyncPayload(
                     buf.readInt(),        // soulLinkDamageSharePercent
                     buf.readBoolean(),    // soulLinkRandomPartner
                     buf.readBoolean(),    // soulLinkTotemSavesPartner
+                    buf.readInt(),        // soulLinkSeverCooldownMinutes
+                    buf.readInt(),        // soulLinkSeverBanTierIncrease
+                    buf.readInt(),        // soulLinkExPartnerCooldownHours
+                    buf.readInt(),        // soulLinkRandomReassignCooldownHours
+                    buf.readInt(),        // soulLinkRandomAssignCheckIntervalMinutes
+                    buf.readInt(),        // soulLinkCompassMaxUses
+                    buf.readInt(),        // soulLinkCompassCooldownMinutes
                     buf.readBoolean(),    // enableSharedHealth
                     buf.readInt(),        // sharedHealthDamagePercent
                     buf.readBoolean(),    // sharedHealthTotemSavesAll
@@ -74,6 +88,13 @@ public record ConfigSyncPayload(
                 buf.writeInt(payload.soulLinkDamageSharePercent);
                 buf.writeBoolean(payload.soulLinkRandomPartner);
                 buf.writeBoolean(payload.soulLinkTotemSavesPartner);
+                buf.writeInt(payload.soulLinkSeverCooldownMinutes);
+                buf.writeInt(payload.soulLinkSeverBanTierIncrease);
+                buf.writeInt(payload.soulLinkExPartnerCooldownHours);
+                buf.writeInt(payload.soulLinkRandomReassignCooldownHours);
+                buf.writeInt(payload.soulLinkRandomAssignCheckIntervalMinutes);
+                buf.writeInt(payload.soulLinkCompassMaxUses);
+                buf.writeInt(payload.soulLinkCompassCooldownMinutes);
                 buf.writeBoolean(payload.enableSharedHealth);
                 buf.writeInt(payload.sharedHealthDamagePercent);
                 buf.writeBoolean(payload.sharedHealthTotemSavesAll);

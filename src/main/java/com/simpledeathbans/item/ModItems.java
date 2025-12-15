@@ -22,8 +22,12 @@ public class ModItems {
     public static final Identifier SOUL_LINK_TOTEM_ID = Identifier.of(SimpleDeathBans.MOD_ID, "soul_link_totem");
     public static final RegistryKey<Item> SOUL_LINK_TOTEM_KEY = RegistryKey.of(RegistryKeys.ITEM, SOUL_LINK_TOTEM_ID);
     
+    public static final Identifier VOID_CRYSTAL_ID = Identifier.of(SimpleDeathBans.MOD_ID, "void_crystal");
+    public static final RegistryKey<Item> VOID_CRYSTAL_KEY = RegistryKey.of(RegistryKeys.ITEM, VOID_CRYSTAL_ID);
+    
     public static Item RESURRECTION_TOTEM;
     public static Item SOUL_LINK_TOTEM;
+    public static Item VOID_CRYSTAL;
     
     public static void register() {
         // Register Resurrection Totem
@@ -43,13 +47,24 @@ public class ModItems {
             new SoulLinkTotemItem(new Item.Settings()
                 .registryKey(SOUL_LINK_TOTEM_KEY)
                 .maxCount(1)
-                .rarity(Rarity.RARE))
+                .rarity(Rarity.EPIC))
+        );
+        
+        // Register Void Crystal
+        VOID_CRYSTAL = Registry.register(
+            Registries.ITEM,
+            VOID_CRYSTAL_ID,
+            new VoidCrystalItem(new Item.Settings()
+                .registryKey(VOID_CRYSTAL_KEY)
+                .maxCount(1)
+                .rarity(Rarity.EPIC))
         );
         
         // Add to creative tab
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> {
             content.add(RESURRECTION_TOTEM);
             content.add(SOUL_LINK_TOTEM);
+            content.add(VOID_CRYSTAL);
         });
         
         // Register recipes

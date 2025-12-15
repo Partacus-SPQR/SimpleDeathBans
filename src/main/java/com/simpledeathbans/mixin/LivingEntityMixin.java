@@ -110,8 +110,12 @@ public abstract class LivingEntityMixin {
         // SPECIAL CASE: Soul Sever damage (death pact from partner dying)
         // When TotemSavesPartner=OFF and partner died, this player receives soul sever damage.
         // If THIS player has a totem, they should use it to save themselves.
-        if (SoulSeverDamageSource.isSoulSever(source)) {
+        // Use both the flag-based check (reliable) and source-based check (fallback)
+        if (SoulSeverDamageSource.isSoulSeverTarget(playerId) || SoulSeverDamageSource.isSoulSever(source)) {
             boolean playerHasTotem = hasTotemOfUndying(player);
+            
+            SimpleDeathBans.LOGGER.info("Soul Link: {} received soul sever damage, hasTotem={}", 
+                player.getName().getString(), playerHasTotem);
             
             if (playerHasTotem) {
                 // Use totem to save self from soul sever (partner is already dead)
@@ -238,9 +242,15 @@ public abstract class LivingEntityMixin {
                 
                 // KILL THE PARTNER - they have no totem and their soulbound partner took lethal damage
                 ServerWorld partnerWorld = (ServerWorld) partner.getEntityWorld();
+                UUID partnerUuid = partner.getUuid();
+                SoulSeverDamageSource.markSoulSeverTarget(partnerUuid);
                 partnerWorld.getServer().execute(() -> {
-                    DamageSource soulSeverDamage = SoulSeverDamageSource.create(partnerWorld, player);
-                    partner.damage(partnerWorld, soulSeverDamage, Float.MAX_VALUE);
+                    try {
+                        DamageSource soulSeverDamage = SoulSeverDamageSource.create(partnerWorld, player);
+                        partner.damage(partnerWorld, soulSeverDamage, Float.MAX_VALUE);
+                    } finally {
+                        SoulSeverDamageSource.clearSoulSeverTarget(partnerUuid);
+                    }
                 });
                 
                 SimpleDeathBans.LOGGER.info("Soul Link: {} totem saved only themselves (TotemSavesPartner=OFF), killing partner {}", 

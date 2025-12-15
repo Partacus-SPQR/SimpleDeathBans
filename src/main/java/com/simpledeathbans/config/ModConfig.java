@@ -25,6 +25,17 @@ public class ModConfig {
     public boolean soulLinkRandomPartner = true; // If true: auto-random pairing, if false: shift+right-click to choose
     public boolean soulLinkTotemSavesPartner = true; // If partner uses totem, both players are saved
     
+    // Soul Link Sever Settings
+    public int soulLinkSeverCooldownMinutes = 30; // Minutes before can link with ANYONE after severing
+    public int soulLinkSeverBanTierIncrease = 1; // Ban tier increase when severing a link
+    public int soulLinkExPartnerCooldownHours = 24; // Hours before can re-pair with same ex-partner
+    public int soulLinkRandomReassignCooldownHours = 12; // Hours before system randomly assigns after sever cooldown ends
+    public int soulLinkRandomAssignCheckIntervalMinutes = 60; // Minutes between random partner assignment checks (1-1440, default 60 = 1 hour)
+    
+    // Soul Compass Settings (Soul Link Totem feature)
+    public int soulLinkCompassMaxUses = 10; // Max uses per totem
+    public int soulLinkCompassCooldownMinutes = 10; // Minutes between compass uses
+    
     // Shared Health Settings (Server-wide damage sharing)
     public boolean enableSharedHealth = false; // Server-wide health pool
     public int sharedHealthDamagePercent = 100; // 100 = 100% of damage shared to all players
@@ -79,6 +90,13 @@ public class ModConfig {
         banMultiplierPercent = Math.max(10, Math.min(1000, banMultiplierPercent));
         maxBanTier = Math.max(-1, Math.min(100, maxBanTier));
         soulLinkDamageSharePercent = Math.max(0, Math.min(200, soulLinkDamageSharePercent));
+        soulLinkSeverCooldownMinutes = Math.max(0, Math.min(120, soulLinkSeverCooldownMinutes));
+        soulLinkSeverBanTierIncrease = Math.max(0, Math.min(10, soulLinkSeverBanTierIncrease));
+        soulLinkExPartnerCooldownHours = Math.max(0, Math.min(168, soulLinkExPartnerCooldownHours));
+        soulLinkRandomReassignCooldownHours = Math.max(0, Math.min(72, soulLinkRandomReassignCooldownHours));
+        soulLinkRandomAssignCheckIntervalMinutes = Math.max(1, Math.min(1440, soulLinkRandomAssignCheckIntervalMinutes));
+        soulLinkCompassMaxUses = Math.max(1, Math.min(100, soulLinkCompassMaxUses));
+        soulLinkCompassCooldownMinutes = Math.max(0, Math.min(60, soulLinkCompassCooldownMinutes));
         sharedHealthDamagePercent = Math.max(0, Math.min(200, sharedHealthDamagePercent));
         mercyPlaytimeHours = Math.max(1, Math.min(168, mercyPlaytimeHours));
         mercyMovementBlocks = Math.max(0, Math.min(500, mercyMovementBlocks));

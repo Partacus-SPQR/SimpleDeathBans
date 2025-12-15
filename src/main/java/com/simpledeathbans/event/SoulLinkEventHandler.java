@@ -139,9 +139,7 @@ public class SoulLinkEventHandler {
                 // Check if clicking on their existing partner - show status
                 if (partnerUuid.isPresent() && partnerUuid.get().equals(targetId)) {
                     serverPlayer.sendMessage(
-                        Text.literal("You are soul-linked with ")
-                            .append(Text.literal(targetName).formatted(Formatting.GOLD))
-                            .formatted(Formatting.DARK_PURPLE),
+                        Text.literal("§5✦ Your souls are intertwined with §d§l" + targetName + " §5✦"),
                         false
                     );
                     return ActionResult.SUCCESS;
@@ -163,6 +161,34 @@ public class SoulLinkEventHandler {
                 return ActionResult.FAIL;
             }
             
+            // CASE 1.5: Check sever cooldown (cannot link with ANYONE)
+            if (soulLinkManager.isOnSeverCooldown(playerId)) {
+                long remaining = soulLinkManager.getSeverCooldownRemaining(playerId);
+                serverPlayer.sendMessage(
+                    Text.literal("§5✦ §7Your soul is still healing... §c" + remaining + " minutes §7remaining §5✦"),
+                    false
+                );
+                return ActionResult.FAIL;
+            }
+            
+            // CASE 1.6: Check if target is on sever cooldown
+            if (soulLinkManager.isOnSeverCooldown(targetId)) {
+                serverPlayer.sendMessage(
+                    Text.literal("§5✦ §7" + targetName + "'s soul is still healing... §5✦"),
+                    false
+                );
+                return ActionResult.FAIL;
+            }
+            
+            // CASE 1.7: Check ex-partner cooldown
+            if (soulLinkManager.isOnExPartnerCooldown(playerId, targetId)) {
+                serverPlayer.sendMessage(
+                    Text.literal("§5✦ §7The wounds between your souls are still fresh... §5✦"),
+                    false
+                );
+                return ActionResult.FAIL;
+            }
+            
             // CASE 2: Check if target already has a partner (and it's not us)
             if (soulLinkManager.hasPartner(targetId)) {
                 serverPlayer.sendMessage(
@@ -179,16 +205,15 @@ public class SoulLinkEventHandler {
                 soulLinkManager.removePendingRequest(playerId);
                 soulLinkManager.createLink(playerId, targetId);
                 
-                // Notify both players
-                Text linkMessage1 = Text.literal("Your soul has been bound to ")
-                    .append(Text.literal(targetName).formatted(Formatting.GOLD))
-                    .formatted(Formatting.DARK_PURPLE);
-                Text linkMessage2 = Text.literal("Your soul has been bound to ")
-                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
-                    .formatted(Formatting.DARK_PURPLE);
-                
-                serverPlayer.sendMessage(linkMessage1, false);
-                targetPlayer.sendMessage(linkMessage2, false);
+                // Notify both players with new mystical message
+                serverPlayer.sendMessage(
+                    Text.literal("§5✦ Your souls are now intertwined with §d§l" + targetName + " §5✦"),
+                    false
+                );
+                targetPlayer.sendMessage(
+                    Text.literal("§5✦ Your souls are now intertwined with §d§l" + playerName + " §5✦"),
+                    false
+                );
                 
                 // Play binding sound to both
                 ServerWorld serverWorld = (ServerWorld) world;
@@ -291,16 +316,14 @@ public class SoulLinkEventHandler {
         
         // Check if already has a partner
         if (soulLinkManager.hasPartner(playerId)) {
-            // Notify of existing link
+            // Notify of existing link with new mystical message
             soulLinkManager.getPartner(playerId).ifPresent(partnerUuid -> {
                 // Get partner name if online
                 ServerPlayerEntity partner = world.getServer().getPlayerManager().getPlayer(partnerUuid);
                 String partnerName = partner != null ? partner.getName().getString() : "unknown";
                 
                 player.sendMessage(
-                    Text.literal("Your soul is linked to ")
-                        .append(Text.literal(partnerName).formatted(Formatting.GOLD))
-                        .formatted(Formatting.DARK_PURPLE),
+                    Text.literal("§5✦ Your souls are intertwined with §d§l" + partnerName + " §5✦"),
                     false
                 );
                 
@@ -315,6 +338,16 @@ public class SoulLinkEventHandler {
         boolean randomMode = config == null || config.soulLinkRandomPartner;
         
         if (randomMode) {
+            // Check if on cooldown - show message but don't try to assign
+            if (soulLinkManager.isOnSeverCooldown(playerId)) {
+                long remaining = soulLinkManager.getSeverCooldownRemaining(playerId);
+                player.sendMessage(
+                    Text.literal("§5✦ §7Your soul is still healing... §c" + remaining + " minutes §7remaining §5✦"),
+                    false
+                );
+                return;
+            }
+            
             // Try to auto-assign a partner from the waiting pool
             Optional<UUID> assignedPartner = soulLinkManager.tryAssignPartner(playerId);
             
@@ -326,16 +359,15 @@ public class SoulLinkEventHandler {
                     String partnerName = partner.getName().getString();
                     String playerName = player.getName().getString();
                     
-                    // Notify both players
-                    Text linkMessage1 = Text.literal("Your soul has been bound to ")
-                        .append(Text.literal(partnerName).formatted(Formatting.GOLD))
-                        .formatted(Formatting.DARK_PURPLE);
-                    Text linkMessage2 = Text.literal("Your soul has been bound to ")
-                        .append(Text.literal(playerName).formatted(Formatting.GOLD))
-                        .formatted(Formatting.DARK_PURPLE);
-                    
-                    player.sendMessage(linkMessage1, false);
-                    partner.sendMessage(linkMessage2, false);
+                    // Notify both players with new mystical message
+                    player.sendMessage(
+                        Text.literal("§5✦ Your souls are now intertwined with §d§l" + partnerName + " §5✦"),
+                        false
+                    );
+                    partner.sendMessage(
+                        Text.literal("§5✦ Your souls are now intertwined with §d§l" + playerName + " §5✦"),
+                        false
+                    );
                     
                     // Play binding sound to both
                     world.playSound(null, player.getX(), player.getY(), player.getZ(),
@@ -348,18 +380,21 @@ public class SoulLinkEventHandler {
                     SimpleDeathBans.LOGGER.info("Soul link auto-assigned: {} <-> {}", playerName, partnerName);
                 }
             } else {
-                // Added to waiting pool
-                player.sendMessage(
-                    Text.literal("You await a soul partner...").formatted(Formatting.GRAY, Formatting.ITALIC),
-                    false
-                );
+                // Added to waiting pool or on random reassign cooldown - show waiting message
+                // Randomize between two messages
+                String waitingMessage = Math.random() < 0.5 
+                    ? "§5✦ §7Your soul yearns for a bond... §5✦"
+                    : "§k><§r §5Your soul wanders the void, seeking another... §k><§r";
+                player.sendMessage(Text.literal(waitingMessage), false);
             }
         } else {
-            // Manual partner mode - tell player how to link
+            // Manual partner mode - tell player how to link with Soul Link Totem
             player.sendMessage(
                 Text.literal("Soul Link: ").formatted(Formatting.DARK_PURPLE)
                     .append(Text.literal("Shift+Right-click").formatted(Formatting.GOLD, Formatting.BOLD))
-                    .append(Text.literal(" a player to bind your souls together.").formatted(Formatting.GRAY)),
+                    .append(Text.literal(" a player with a ").formatted(Formatting.GRAY))
+                    .append(Text.literal("Soul Link Totem").formatted(Formatting.LIGHT_PURPLE))
+                    .append(Text.literal(" to request a soul link.").formatted(Formatting.GRAY)),
                 false
             );
         }

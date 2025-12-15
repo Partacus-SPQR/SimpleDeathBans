@@ -61,6 +61,13 @@ public class SimpleDeathBansClient implements ClientModInitializer {
                     config.soulLinkDamageSharePercent = payload.soulLinkDamageSharePercent();
                     config.soulLinkRandomPartner = payload.soulLinkRandomPartner();
                     config.soulLinkTotemSavesPartner = payload.soulLinkTotemSavesPartner();
+                    config.soulLinkSeverCooldownMinutes = payload.soulLinkSeverCooldownMinutes();
+                    config.soulLinkSeverBanTierIncrease = payload.soulLinkSeverBanTierIncrease();
+                    config.soulLinkExPartnerCooldownHours = payload.soulLinkExPartnerCooldownHours();
+                    config.soulLinkRandomReassignCooldownHours = payload.soulLinkRandomReassignCooldownHours();
+                    config.soulLinkRandomAssignCheckIntervalMinutes = payload.soulLinkRandomAssignCheckIntervalMinutes();
+                    config.soulLinkCompassMaxUses = payload.soulLinkCompassMaxUses();
+                    config.soulLinkCompassCooldownMinutes = payload.soulLinkCompassCooldownMinutes();
                     config.enableSharedHealth = payload.enableSharedHealth();
                     config.sharedHealthDamagePercent = payload.sharedHealthDamagePercent();
                     config.sharedHealthTotemSavesAll = payload.sharedHealthTotemSavesAll();

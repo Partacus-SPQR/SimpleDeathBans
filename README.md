@@ -41,7 +41,7 @@ A hardcore survival Fabric mod featuring a progressive banning system with Soul 
 [  Eye of Ender ] [Totem of Undying] [  Eye of Ender ]
 [Amethyst Shard] [Eye of Ender] [Amethyst Shard]
 ```
-*Yields 2 Soul Link Totems*
+*Yields 1 Soul Link Totem*
 
 ### 3. Shared Health (Server-Wide Health Pool)
 - **Togglable** (OP Level 4 only, default: OFF)
@@ -148,11 +148,19 @@ Config file: `config/simpledeathbans.json`
 {
     "baseBanMinutes": 1,
     "banMultiplierPercent": 100,
-    "maxBanTier": 10,
+    "maxBanTier": -1,
+    "exponentialBanMode": false,
     "enableSoulLink": false,
     "soulLinkDamageSharePercent": 100,
     "soulLinkRandomPartner": true,
     "soulLinkTotemSavesPartner": true,
+    "soulLinkSeverCooldownMinutes": 30,
+    "soulLinkSeverBanTierIncrease": 1,
+    "soulLinkExPartnerCooldownHours": 24,
+    "soulLinkRandomReassignCooldownHours": 12,
+    "soulLinkRandomAssignCheckIntervalMinutes": 60,
+    "soulLinkCompassMaxUses": 10,
+    "soulLinkCompassCooldownMinutes": 10,
     "enableSharedHealth": false,
     "sharedHealthDamagePercent": 100,
     "sharedHealthTotemSavesAll": true,
@@ -160,12 +168,45 @@ Config file: `config/simpledeathbans.json`
     "mercyPlaytimeHours": 24,
     "mercyMovementBlocks": 50,
     "mercyBlockInteractions": 20,
+    "mercyCheckIntervalMinutes": 15,
     "pvpBanMultiplierPercent": 50,
     "pveBanMultiplierPercent": 100,
     "enableGhostEcho": true,
     "enableResurrectionAltar": true
 }
 ```
+
+### Configuration Reference
+
+| Setting | Range | Default | Description |
+|---------|-------|---------|-------------|
+| `baseBanMinutes` | 1-60 | 1 | Base ban duration per tier (minutes) |
+| `banMultiplierPercent` | 10-1000 | 100 | Global ban time multiplier (100 = 1x) |
+| `maxBanTier` | -1 to 100 | -1 | Maximum ban tier (-1 = infinite) |
+| `exponentialBanMode` | true/false | false | Use doubling formula (1,2,4,8...) vs linear |
+| `enableSoulLink` | true/false | false | Enable Soul Link partner system |
+| `soulLinkDamageSharePercent` | 0-200 | 100 | Damage shared to partner (non-lethal only) |
+| `soulLinkRandomPartner` | true/false | true | Auto-pair vs manual Soul Link Totem |
+| `soulLinkTotemSavesPartner` | true/false | true | Totem of Undying saves both partners |
+| `soulLinkSeverCooldownMinutes` | 0-120 | 30 | Cooldown after breaking a soul link |
+| `soulLinkSeverBanTierIncrease` | 0-10 | 1 | Ban tier penalty for severing |
+| `soulLinkExPartnerCooldownHours` | 0-168 | 24 | Cooldown before re-linking with ex-partner |
+| `soulLinkRandomReassignCooldownHours` | 0-72 | 12 | Grace period before auto-reassignment |
+| `soulLinkRandomAssignCheckIntervalMinutes` | 1-1440 | 60 | How often to check for unlinked players |
+| `soulLinkCompassMaxUses` | 1-100 | 10 | Tracking uses per Soul Link Totem |
+| `soulLinkCompassCooldownMinutes` | 0-60 | 10 | Cooldown between tracking uses |
+| `enableSharedHealth` | true/false | false | Enable server-wide health sharing |
+| `sharedHealthDamagePercent` | 0-200 | 100 | Damage shared to all players (non-lethal only) |
+| `sharedHealthTotemSavesAll` | true/false | true | One totem saves everyone |
+| `enableMercyCooldown` | true/false | true | Enable ban tier reduction over time |
+| `mercyPlaytimeHours` | 1-168 | 24 | Active hours needed to reduce tier |
+| `mercyMovementBlocks` | 0-500 | 50 | Blocks moved per check to count as active |
+| `mercyBlockInteractions` | 0-200 | 20 | Interactions per check to count as active |
+| `mercyCheckIntervalMinutes` | 1-60 | 15 | Minutes between activity checks |
+| `pvpBanMultiplierPercent` | 0-500 | 50 | Ban modifier for PvP deaths |
+| `pveBanMultiplierPercent` | 0-500 | 100 | Ban modifier for PvE deaths |
+| `enableGhostEcho` | true/false | true | Lightning + death message on ban |
+| `enableResurrectionAltar` | true/false | true | Enable Resurrection Altar feature |
 
 **Note:** 
 - Multipliers are stored as integer percentages (100 = 100%, 50 = 50%, etc.)

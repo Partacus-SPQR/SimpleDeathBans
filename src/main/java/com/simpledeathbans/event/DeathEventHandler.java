@@ -114,9 +114,14 @@ public class DeathEventHandler {
                 deadPlayer.sendMessage(soulSeverMessage, false);
                 
                 // Kill partner with soul sever damage (delayed to avoid recursion)
+                SoulSeverDamageSource.markSoulSeverTarget(partnerUuid);
                 partnerWorld.getServer().execute(() -> {
-                    DamageSource soulSeverDamage = SoulSeverDamageSource.create(partnerWorld, deadPlayer);
-                    partner.damage(partnerWorld, soulSeverDamage, Float.MAX_VALUE);
+                    try {
+                        DamageSource soulSeverDamage = SoulSeverDamageSource.create(partnerWorld, deadPlayer);
+                        partner.damage(partnerWorld, soulSeverDamage, Float.MAX_VALUE);
+                    } finally {
+                        SoulSeverDamageSource.clearSoulSeverTarget(partnerUuid);
+                    }
                 });
             }
         });

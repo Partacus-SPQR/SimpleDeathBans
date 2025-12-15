@@ -177,6 +177,24 @@ public class BanDataManager {
     }
     
     /**
+     * Increments the tier for a player by specified amount (penalty for severing soul link).
+     */
+    public void incrementTier(UUID playerId, int amount) {
+        int current = tierHistory.getOrDefault(playerId, 0);
+        int maxTier = SimpleDeathBans.getInstance().getConfig().maxBanTier;
+        int newTier = current + amount;
+        
+        // Respect max tier if set (not -1)
+        if (maxTier > 0) {
+            newTier = Math.min(newTier, maxTier);
+        }
+        
+        tierHistory.put(playerId, newTier);
+        save();
+        SimpleDeathBans.LOGGER.info("Increased ban tier for {} from {} to {}", playerId, current, newTier);
+    }
+    
+    /**
      * Unbans a player (admin command).
      */
     public boolean unbanPlayer(UUID playerId) {
