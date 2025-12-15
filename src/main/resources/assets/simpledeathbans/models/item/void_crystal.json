@@ -6058,10 +6058,6 @@
 		"fixed": {
 			"translation": [0, 4, 7.75],
 			"scale": [1, 1.56, 1]
-		},
-		"on_shelf": {
-			"translation": [0, 28, 4.25],
-			"scale": [1, 1.78, 1]
 		}
 	},
 	"groups": [

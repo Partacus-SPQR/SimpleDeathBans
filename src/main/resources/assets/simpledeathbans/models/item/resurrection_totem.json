@@ -451,9 +451,6 @@
 		},
 		"fixed": {
 			"translation": [0, 0, 7.25]
-		},
-		"on_shelf": {
-			"translation": [0, 0, 4.25]
 		}
 	},
 	"groups": [

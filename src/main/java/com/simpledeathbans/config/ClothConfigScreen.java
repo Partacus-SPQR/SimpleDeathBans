@@ -130,7 +130,7 @@ public class ClothConfigScreen {
                         Text.literal("Base ban duration per tier (in minutes)."),
                         Text.literal("Formula: baseBan × tier × multiplier").formatted(Formatting.GRAY),
                         Text.literal("Range: 1-60 | Default: 1").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.baseBanMinutes = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.baseBanMinutes = newValue; })
                 .build());
         
         // Ban Multiplier (10-1000%)
@@ -144,7 +144,7 @@ public class ClothConfigScreen {
                         Text.literal("Global ban time multiplier (percentage)."),
                         Text.literal("100 = normal, 200 = double, 50 = half").formatted(Formatting.GRAY),
                         Text.literal("Range: 10-1000 | Default: 100").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.banMultiplierPercent = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.banMultiplierPercent = newValue; })
                 .build());
         
         // Max Ban Tier (-1 to 100, where -1 = infinite)
@@ -159,7 +159,7 @@ public class ClothConfigScreen {
                         Text.literal("-1 = No limit (infinite scaling)").formatted(Formatting.YELLOW),
                         Text.literal("Tier resets via Mercy Cooldown or commands.").formatted(Formatting.GRAY),
                         Text.literal("Range: -1 to 100 | Default: -1").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.maxBanTier = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.maxBanTier = newValue; })
                 .build());
         
         // Exponential Ban Mode toggle
@@ -172,7 +172,7 @@ public class ClothConfigScreen {
                         Text.literal("OFF: Linear (1, 2, 3, 4, 5...)").formatted(Formatting.GREEN),
                         Text.literal("ON: Doubling (1, 2, 4, 8, 16...)").formatted(Formatting.RED),
                         Text.literal("Default: OFF").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.exponentialBanMode = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.exponentialBanMode = newValue; })
                 .build());
         
         // Ghost Echo toggle
@@ -185,7 +185,7 @@ public class ClothConfigScreen {
                         Text.literal("• Lightning strike at death location").formatted(Formatting.GRAY),
                         Text.literal("• Custom message: 'lost to the void'").formatted(Formatting.GRAY),
                         Text.literal("Default: ON").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.enableGhostEcho = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.enableGhostEcho = newValue; })
                 .build());
         
         // --- PvP Settings Header ---
@@ -205,7 +205,7 @@ public class ClothConfigScreen {
                         Text.literal("50 = half ban, 0 = no ban for PvP").formatted(Formatting.GRAY),
                         Text.literal("Includes indirect kills (knockback, etc.)").formatted(Formatting.GRAY),
                         Text.literal("Range: 0-500 | Default: 50").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.pvpBanMultiplierPercent = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.pvpBanMultiplierPercent = newValue; })
                 .build());
         
         // PvE Ban Multiplier (0-500%)
@@ -220,7 +220,7 @@ public class ClothConfigScreen {
                         Text.literal("Mobs, fall damage, lava, void, etc.").formatted(Formatting.GRAY),
                         Text.literal("100 = normal, 0 = no ban for PvE").formatted(Formatting.GRAY),
                         Text.literal("Range: 0-500 | Default: 100").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.pveBanMultiplierPercent = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.pveBanMultiplierPercent = newValue; })
                 .build());
         
         // --- Altar of Resurrection Header ---
@@ -238,7 +238,7 @@ public class ClothConfigScreen {
                         Text.literal("Requires: Netherite beacon + Resurrection Totem").formatted(Formatting.GRAY),
                         Text.literal("ALL online players must participate!").formatted(Formatting.YELLOW),
                         Text.literal("Default: ON").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.enableResurrectionAltar = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.enableResurrectionAltar = newValue; })
                 .build());
         
         // --- Single-Player Settings Header ---
@@ -257,7 +257,7 @@ public class ClothConfigScreen {
                             Text.literal("§c§lRequires cheats enabled!").formatted(Formatting.RED),
                             Text.literal("Turning OFF disables death processing.").formatted(Formatting.GRAY),
                             Text.literal("Default: ON").formatted(Formatting.DARK_GRAY))
-                    .setSaveConsumer(newValue -> config.singlePlayerEnabled = newValue)
+                    .setSaveConsumer(newValue -> { if (canEdit) config.singlePlayerEnabled = newValue; })
                     .build());
         } else if (isSingleplayer && !canEdit) {
             general.addEntry(entryBuilder.startTextDescription(
@@ -291,7 +291,7 @@ public class ClothConfigScreen {
                         Text.literal("Partners share damage and have a Death Pact.").formatted(Formatting.GRAY),
                         Text.literal("LETHAL damage kills BOTH partners!").formatted(Formatting.RED),
                         Text.literal("Default: OFF").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.enableSoulLink = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.enableSoulLink = newValue; })
                 .build());
         
         // Soul Link Damage Share (0-200%)
@@ -307,7 +307,7 @@ public class ClothConfigScreen {
                         Text.literal("Only affects NON-LETHAL hits!").formatted(Formatting.YELLOW),
                         Text.literal("Lethal damage = Death Pact (both die)").formatted(Formatting.RED),
                         Text.literal("Range: 0-200 | Default: 100").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.soulLinkDamageSharePercent = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.soulLinkDamageSharePercent = newValue; })
                 .build());
         
         // Random Partner Assignment toggle
@@ -320,7 +320,7 @@ public class ClothConfigScreen {
                         Text.literal("ON: Auto-paired randomly on join").formatted(Formatting.GREEN),
                         Text.literal("OFF: Manual - Sneak+click with Soul Link Totem").formatted(Formatting.YELLOW),
                         Text.literal("Default: ON").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.soulLinkRandomPartner = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.soulLinkRandomPartner = newValue; })
                 .build());
         
         // Totem Saves Partner toggle
@@ -334,7 +334,7 @@ public class ClothConfigScreen {
                         Text.literal("OFF: Only the holder survives").formatted(Formatting.RED),
                         Text.literal("If BOTH have totems: both consumed, both live").formatted(Formatting.GRAY),
                         Text.literal("Default: ON").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.soulLinkTotemSavesPartner = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.soulLinkTotemSavesPartner = newValue; })
                 .build());
         
         // --- Soul Link Sever Settings ---
@@ -353,7 +353,7 @@ public class ClothConfigScreen {
                         Text.literal("Cooldown after breaking a soul link."),
                         Text.literal("Cannot link with ANY player during this time.").formatted(Formatting.GRAY),
                         Text.literal("Range: 0-120 | Default: 30").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.soulLinkSeverCooldownMinutes = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.soulLinkSeverCooldownMinutes = newValue; })
                 .build());
         
         // Sever Ban Tier Penalty (0-10)
@@ -368,7 +368,7 @@ public class ClothConfigScreen {
                         Text.literal("Your ban tier increases by this amount.").formatted(Formatting.GRAY),
                         Text.literal("Set to 0 to disable penalty.").formatted(Formatting.GRAY),
                         Text.literal("Range: 0-10 | Default: 1").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.soulLinkSeverBanTierIncrease = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.soulLinkSeverBanTierIncrease = newValue; })
                 .build());
         
         // Ex-Partner Cooldown (0-168 hours)
@@ -383,7 +383,7 @@ public class ClothConfigScreen {
                         Text.literal("Prevents quick on/off abuse with same player.").formatted(Formatting.GRAY),
                         Text.literal("168 hours = 1 week maximum").formatted(Formatting.GRAY),
                         Text.literal("Range: 0-168 | Default: 24").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.soulLinkExPartnerCooldownHours = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.soulLinkExPartnerCooldownHours = newValue; })
                 .build());
         
         // Random Reassign Cooldown (0-72 hours)
@@ -399,7 +399,7 @@ public class ClothConfigScreen {
                         Text.literal("system assigns you a new random partner.").formatted(Formatting.GRAY),
                         Text.literal("Only applies if Random Assignment is ON.").formatted(Formatting.YELLOW),
                         Text.literal("Range: 0-72 | Default: 12").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.soulLinkRandomReassignCooldownHours = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.soulLinkRandomReassignCooldownHours = newValue; })
                 .build());
         
         // Random Assign Check Interval (1-1440 min)
@@ -414,7 +414,7 @@ public class ClothConfigScreen {
                         Text.literal("Lower = faster pairing, more server load.").formatted(Formatting.GRAY),
                         Text.literal("1440 min = 24 hours maximum").formatted(Formatting.GRAY),
                         Text.literal("Range: 1-1440 | Default: 60").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.soulLinkRandomAssignCheckIntervalMinutes = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.soulLinkRandomAssignCheckIntervalMinutes = newValue; })
                 .build());
         
         // --- Soul Compass Settings ---
@@ -434,7 +434,7 @@ public class ClothConfigScreen {
                         Text.literal("Right-click totem to locate partner.").formatted(Formatting.GRAY),
                         Text.literal("Each totem has limited tracking uses.").formatted(Formatting.GRAY),
                         Text.literal("Range: 1-100 | Default: 10").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.soulLinkCompassMaxUses = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.soulLinkCompassMaxUses = newValue; })
                 .build());
         
         // Compass Cooldown (0-60 min)
@@ -449,7 +449,7 @@ public class ClothConfigScreen {
                         Text.literal("Prevents spam-tracking your partner.").formatted(Formatting.GRAY),
                         Text.literal("Set to 0 for no cooldown.").formatted(Formatting.GRAY),
                         Text.literal("Range: 0-60 | Default: 10").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.soulLinkCompassCooldownMinutes = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.soulLinkCompassCooldownMinutes = newValue; })
                 .build());
         
         // --- Shared Health Header ---
@@ -468,7 +468,7 @@ public class ClothConfigScreen {
                         Text.literal("If ONE player dies, EVERYONE dies!").formatted(Formatting.RED),
                         Text.literal("Stacks with Soul Link if both enabled.").formatted(Formatting.GRAY),
                         Text.literal("Default: OFF").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.enableSharedHealth = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.enableSharedHealth = newValue; })
                 .build());
         
         // Shared Damage Percent (0-200%)
@@ -484,7 +484,7 @@ public class ClothConfigScreen {
                         Text.literal("Only affects NON-LETHAL damage!").formatted(Formatting.YELLOW),
                         Text.literal("Lethal damage = instant death for ALL").formatted(Formatting.RED),
                         Text.literal("Range: 0-200 | Default: 100").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.sharedHealthDamagePercent = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.sharedHealthDamagePercent = newValue; })
                 .build());
         
         // Totem Saves All toggle
@@ -498,7 +498,7 @@ public class ClothConfigScreen {
                         Text.literal("OFF: Only holders survive, others die").formatted(Formatting.RED),
                         Text.literal("Multiple totems = all consumed, all saved").formatted(Formatting.GRAY),
                         Text.literal("Default: ON").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.sharedHealthTotemSavesAll = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.sharedHealthTotemSavesAll = newValue; })
                 .build());
         
         // ============================================
@@ -516,7 +516,7 @@ public class ClothConfigScreen {
                         Text.literal("Ban tier decreases over time without dying.").formatted(Formatting.GRAY),
                         Text.literal("Requires activity (not AFK) to count.").formatted(Formatting.YELLOW),
                         Text.literal("Default: ON").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.enableMercyCooldown = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.enableMercyCooldown = newValue; })
                 .build());
         
         // Mercy Playtime (1-168 hours)
@@ -532,7 +532,7 @@ public class ClothConfigScreen {
                         Text.literal("Resets to 0 on death.").formatted(Formatting.RED),
                         Text.literal("168 hours = 1 week maximum").formatted(Formatting.GRAY),
                         Text.literal("Range: 1-168 | Default: 24").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.mercyPlaytimeHours = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.mercyPlaytimeHours = newValue; })
                 .build());
         
         // Mercy Movement (0-500 blocks)
@@ -547,7 +547,7 @@ public class ClothConfigScreen {
                         Text.literal("Must move this OR interact with blocks.").formatted(Formatting.GRAY),
                         Text.literal("Prevents AFK farming mercy cooldown.").formatted(Formatting.YELLOW),
                         Text.literal("Range: 0-500 | Default: 50").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.mercyMovementBlocks = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.mercyMovementBlocks = newValue; })
                 .build());
         
         // Mercy Block Interactions (0-200)
@@ -562,7 +562,7 @@ public class ClothConfigScreen {
                         Text.literal("Breaking, placing, using blocks, etc.").formatted(Formatting.GRAY),
                         Text.literal("Must interact this OR move enough blocks.").formatted(Formatting.GRAY),
                         Text.literal("Range: 0-200 | Default: 20").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.mercyBlockInteractions = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.mercyBlockInteractions = newValue; })
                 .build());
         
         // Mercy Check Interval (1-60 min)
@@ -577,7 +577,7 @@ public class ClothConfigScreen {
                         Text.literal("Each check, player must meet activity threshold.").formatted(Formatting.GRAY),
                         Text.literal("Lower = stricter AFK detection.").formatted(Formatting.YELLOW),
                         Text.literal("Range: 1-60 | Default: 15").formatted(Formatting.DARK_GRAY))
-                .setSaveConsumer(newValue -> config.mercyCheckIntervalMinutes = newValue)
+                .setSaveConsumer(newValue -> { if (canEdit) config.mercyCheckIntervalMinutes = newValue; })
                 .build());
         
         // ============================================
