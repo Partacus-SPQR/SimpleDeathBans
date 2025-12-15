@@ -5,6 +5,14 @@ build/
 
 # Version builds (Stonecutter)
 versions/*/build/
+versions/*/bin/
+
+# Temp files
+*.zip
+void_crystal1.21.9-10.json
+resurrection_totem.png
+void_crystal.png
+SimpleDeathBansIcon256.png
 
 # IDE
 .idea/
