@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.2.0] - 2025-12-14
+## [1.2.0] - 2025-12-15
 
 ### Added
 - **Shared Health System** - Server-wide damage sharing (all players share damage)
@@ -18,6 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Recipe: Amethyst Shards + Eye of Enders + Totem of Undying (yields 2)
   - Prevents conflicts with other mods using shift+right-click on players
 - **Mutual Exclusivity** - Shared Health overrides Soul Link when enabled (existing links preserved)
+- **Single-Player Freeze System** - New immersive death handling for single-player:
+  - Full-screen overlay with countdown timer and animated effects
+  - Complete player immobilization (movement, actions, interactions blocked)
+  - Damage immunity while frozen (prevents death loops)
+  - Auto-respawn when timer expires
+  - Toggleable via config (Single Player Enabled option)
 
 ### Changed
 - **Cloth Config UI** - Replaced broken sliders with reliable text fields
@@ -37,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Resurrection Ritual Formatting** - Fixed message box exceeding chat width
 - **Resurrection Ritual Colors** - "Ban tier preserved" now red, "freed from void" now dark purple
 - **Login Message** - Now correctly mentions Soul Link Totem for manual linking
+- **Single-Player Config Sync** - Disabling mod now immediately clears ban and removes damage immunity
+- **Single-Player Enabled Config** - Now properly synced to server so damage immunity respects config changes
 
 ### Technical
 - Added SharedHealthMixin for server-wide death pact handling

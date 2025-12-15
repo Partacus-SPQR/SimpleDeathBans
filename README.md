@@ -231,12 +231,30 @@ Config file: `config/simpledeathbans.json`
 3. Place in `mods` folder
 4. (Optional) Install Cloth Config and ModMenu for better config experience
 
-## Single-Player Note
+## Single-Player Mode
 
-This mod works in single-player worlds with modified behavior:
-- **Death Handling** - On death, the world saves and you're returned to the title screen (simulates ban)
-- **Progressive Bans, Mercy Cooldown, Ghost Echo** - Work as expected
+This mod includes a dedicated **Single-Player Mode** (default: ON) with modified behavior:
+
+### How It Works
+- **Death Freezes You** - On death, instead of kicking you out, you're frozen in place with a full-screen overlay
+- **Countdown Timer** - Visual timer shows remaining ban time with animated effects
+- **Damage Immunity** - You cannot be hurt while frozen (prevents death loops)
+- **Complete Immobilization** - Movement, jumping, attacking, item use, block breaking/placing all disabled
+- **Auto-Unfreeze** - When timer expires, you automatically respawn and can play normally
+
+### Single-Player Config Option
+- **Enabled (default)**: Uses the freeze system described above
+- **Disabled**: Returns to title screen on death (original behavior)
+- Access via Mod Menu → Simple Death Bans → Single Player section
+
+### Features That Work Normally
+- **Progressive Bans** - Ban tier increases with each death
+- **Mercy Cooldown** - Active playtime reduces your ban tier
+- **Ghost Echo** - Lightning and death messages still appear
+
+### Features Requiring Multiplayer
 - **Soul Link** - No effect (requires multiple players)
+- **Shared Health** - No effect (requires multiple players)
 - **Altar of Resurrection** - Can be completed solo, but cannot unban yourself while banned
 
 Use `/sdb unban <name>` with cheats enabled to self-unban in single-player.
