@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Soul Link Totem** - New craftable item required for manual soul linking
   - Recipe: Amethyst Shards + Eyes of Ender + Totem of Undying
   - Prevents conflicts with other mods using shift+right-click
+- **Void Crystal Totem** - New item to sever soul links with penalties
+  - Recipe: End Crystals + Soul Link Totem
+  - Increases ban tier and applies cooldowns
 - **Single-Player Freeze System** - Immersive death handling for single-player worlds
   - Full-screen overlay with animated countdown timer
   - Complete player immobilization with damage immunity
