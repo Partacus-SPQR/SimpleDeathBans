@@ -53,6 +53,23 @@ A hardcore survival Fabric mod featuring a progressive banning system with Soul 
 ```
 *Yields 1 Soul Link Totem*
 
+#### Void Crystal (Soul Link Severance)
+- **Purpose**: Sever your current soul link
+- **Usage**: Right-click while holding to break your soul bond
+- **Penalty**: Increases your ban tier by 1 (configurable)
+- **Cooldowns Applied**:
+  - You cannot form a new link for 30 minutes (configurable)
+  - Cannot re-link with your ex-partner for 24 hours (configurable)
+- **Visual**: Has enchantment glint to indicate power
+
+#### Void Crystal Recipe (3×3 Shaped):
+```
+[End Crystal]    [    Empty    ]   [End Crystal]
+[    Empty   ] [Soul Link Totem] [    Empty   ]
+[End Crystal]    [    Empty    ]   [End Crystal]
+```
+*Yields 1 Void Crystal*
+
 ### 3. Shared Health (Server-Wide Health Pool)
 - **Togglable** (OP Level 4 only, default: OFF)
 - **Server-Wide Damage**: When ANY player takes damage, ALL players take damage
