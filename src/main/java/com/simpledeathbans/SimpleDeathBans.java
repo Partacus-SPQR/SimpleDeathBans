@@ -13,6 +13,7 @@ import com.simpledeathbans.event.SoulLinkEventHandler;
 import com.simpledeathbans.item.ModItems;
 import com.simpledeathbans.command.ModCommands;
 import com.simpledeathbans.network.ConfigSyncPayload;
+import com.simpledeathbans.network.SinglePlayerBanPayload;
 import com.simpledeathbans.ritual.ResurrectionRitualManager;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -134,6 +135,9 @@ public class SimpleDeathBans implements ModInitializer {
         // Register the config sync payload type for both directions
         PayloadTypeRegistry.playC2S().register(ConfigSyncPayload.ID, ConfigSyncPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(ConfigSyncPayload.ID, ConfigSyncPayload.CODEC);
+        
+        // Register single-player ban payload (server to client only)
+        PayloadTypeRegistry.playS2C().register(SinglePlayerBanPayload.ID, SinglePlayerBanPayload.CODEC);
         
         // Register server-side handler with permission validation
         ServerPlayNetworking.registerGlobalReceiver(ConfigSyncPayload.ID, (payload, context) -> {

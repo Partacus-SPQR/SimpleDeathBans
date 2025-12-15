@@ -240,6 +240,36 @@ public class ClothConfigScreen {
                 .setSaveConsumer(newValue -> config.enableResurrectionAltar = newValue)
                 .build());
         
+        // --- Single-Player Settings Header ---
+        general.addEntry(entryBuilder.startTextDescription(
+                Text.literal("═══ Single-Player Settings ═══").formatted(Formatting.GOLD))
+                .build());
+        
+        // Single-player toggle (only visible in single-player with cheats)
+        if (isSingleplayer && canEdit) {
+            general.addEntry(entryBuilder.startBooleanToggle(
+                    Text.literal("Enable Mod in Single-Player"),
+                    config.singlePlayerEnabled)
+                    .setDefaultValue(true)
+                    .setTooltip(
+                            Text.literal("Enable or disable death bans in single-player."),
+                            Text.literal("§c§lRequires cheats enabled!").formatted(Formatting.RED),
+                            Text.literal("Turning OFF disables death processing.").formatted(Formatting.GRAY),
+                            Text.literal("Default: ON").formatted(Formatting.DARK_GRAY))
+                    .setSaveConsumer(newValue -> config.singlePlayerEnabled = newValue)
+                    .build());
+        } else if (isSingleplayer && !canEdit) {
+            general.addEntry(entryBuilder.startTextDescription(
+                    Text.literal("⚠ Single-Player toggle requires cheats enabled.")
+                            .formatted(Formatting.RED))
+                    .build());
+        } else {
+            general.addEntry(entryBuilder.startTextDescription(
+                    Text.literal("Single-Player toggle only available in single-player worlds.")
+                            .formatted(Formatting.GRAY))
+                    .build());
+        }
+        
         // ============================================
         // CATEGORY: Soul Link/Health Settings
         // ============================================

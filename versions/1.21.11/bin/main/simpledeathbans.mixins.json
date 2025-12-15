@@ -9,7 +9,12 @@
         "LivingEntityMixin",
         "SharedHealthMixin"
     ],
-    "client": [],
+    "client": [
+        "client.ClientPlayerEntityMixin",
+        "client.InGameHudMixin",
+        "client.KeyboardMixin",
+        "client.MouseMixin"
+    ],
     "injectors": {
         "defaultRequire": 1
     }

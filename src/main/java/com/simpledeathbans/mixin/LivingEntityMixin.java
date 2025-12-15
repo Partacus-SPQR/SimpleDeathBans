@@ -72,9 +72,25 @@ public abstract class LivingEntityMixin {
             return;
         }
         
-        // Skip in single-player
+        // SINGLE-PLAYER INVULNERABILITY: If player is frozen from a ban, make them invulnerable
+        // This prevents mobs from killing them while they wait out their ban timer
         if (world.getServer().isSingleplayer()) {
-            return;
+            // Check if the mod is disabled for single-player
+            SimpleDeathBans mod = SimpleDeathBans.getInstance();
+            if (mod != null && mod.getConfig() != null && !mod.getConfig().singlePlayerEnabled) {
+                return; // Mod disabled in single-player, let damage through
+            }
+            
+            // Check ban status on server side using BanDataManager
+            if (mod != null && mod.getBanDataManager() != null) {
+                if (mod.getBanDataManager().isBanned(player.getUuid())) {
+                    // Player is banned/frozen - make them invulnerable
+                    SimpleDeathBans.LOGGER.debug("Canceling damage to frozen single-player user: {}", player.getName().getString());
+                    cir.setReturnValue(false);
+                    return;
+                }
+            }
+            return; // Skip other soul link processing in single-player
         }
         
         // Check if this damage would be lethal

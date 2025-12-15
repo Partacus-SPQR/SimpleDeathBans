@@ -19,6 +19,9 @@ public class ModConfig {
     public int maxBanTier = -1; // -1 = infinite, 1-100 = actual max tier
     public boolean exponentialBanMode = false; // If true: 1, 2, 4, 8, 16... (doubles each death)
     
+    // Single-Player Settings
+    public boolean singlePlayerEnabled = true; // Enable/disable mod in single-player (requires OP Level 4 / cheats)
+    
     // Soul Link Settings (Operator Level 4 only)
     public boolean enableSoulLink = false;
     public int soulLinkDamageSharePercent = 100; // 100 = 100% = 1:1 ratio

@@ -5,7 +5,9 @@ import com.simpledeathbans.config.ModConfig;
 import com.simpledeathbans.damage.SoulSeverDamageSource;
 import com.simpledeathbans.data.BanDataManager;
 import com.simpledeathbans.data.SoulLinkManager;
+import com.simpledeathbans.network.SinglePlayerBanPayload;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LightningEntity;
 import net.minecraft.entity.damage.DamageSource;
@@ -43,6 +45,14 @@ public class DeathEventHandler {
         
         if (banManager == null) return;
         
+        // Check if mod is disabled in single-player
+        ServerWorld world = (ServerWorld) player.getEntityWorld();
+        if (world.getServer().isSingleplayer() && !config.singlePlayerEnabled) {
+            SimpleDeathBans.LOGGER.info("Single-player mod disabled - skipping death processing for {}", 
+                    player.getName().getString());
+            return;
+        }
+        
         // Check if this is a Soul Sever death (from soul link)
         if (SoulSeverDamageSource.isSoulSever(damageSource)) {
             // This player died from their partner dying - handle as normal death
@@ -51,7 +61,6 @@ public class DeathEventHandler {
         }
         
         // Check for soul link death pact (MULTIPLAYER ONLY)
-        ServerWorld world = (ServerWorld) player.getEntityWorld();
         if (config.enableSoulLink && soulLinkManager != null && !world.getServer().isSingleplayer()) {
             handleSoulLinkDeath(player, soulLinkManager);
         }
@@ -153,22 +162,23 @@ public class DeathEventHandler {
         
         ServerWorld world = (ServerWorld) player.getEntityWorld();
         
-        // SINGLE-PLAYER: Send them back to title screen properly
-        // We schedule this to run after the death is processed to avoid corruption
+        // SINGLE-PLAYER: Send a network payload to trigger client-side disconnect
+        // This allows the client to properly save the world before disconnecting,
+        // avoiding the OverlappingFileLockException that occurs with server-side disconnect.
         if (world.getServer().isSingleplayer()) {
-            SimpleDeathBans.LOGGER.info("Single-player death: Ban recorded for {} ({} minutes, tier {}). Saving and exiting world.", 
+            SimpleDeathBans.LOGGER.info("Single-player death: Sending ban notification to {} ({} minutes, tier {})", 
                 player.getName().getString(), banMinutes, tier);
             
-            // Schedule the disconnect to happen after the current tick to avoid issues
+            // Send the ban payload to the client
+            // The client will handle the disconnect properly, saving the world first
+            SinglePlayerBanPayload payload = new SinglePlayerBanPayload(tier, banEntry.getRemainingTime(), timeRemaining);
+            
+            // Send after a brief delay to ensure player respawns first and can see the effect
             world.getServer().execute(() -> {
-                // Show the ban message first
-                player.sendMessage(kickMessage, false);
-                
-                // Delay slightly then save and quit to title
-                // We use the server's stop method which properly saves everything
+                // Small delay to let respawn complete
                 world.getServer().execute(() -> {
-                    // Stop the integrated server - this saves the world and returns to title screen
-                    world.getServer().stop(false);
+                    ServerPlayNetworking.send(player, payload);
+                    SimpleDeathBans.LOGGER.info("Ban notification sent to client for {}", player.getName().getString());
                 });
             });
             return;

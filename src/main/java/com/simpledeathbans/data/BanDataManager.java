@@ -58,13 +58,18 @@ public class BanDataManager {
         
         public String getRemainingTimeFormatted() {
             long remaining = getRemainingTime();
-            long minutes = remaining / 60000;
-            long seconds = (remaining % 60000) / 1000;
+            long totalSeconds = remaining / 1000;
+            long seconds = totalSeconds % 60;
+            long totalMinutes = totalSeconds / 60;
+            long minutes = totalMinutes % 60;
+            long totalHours = totalMinutes / 60;
+            long hours = totalHours % 24;
+            long days = totalHours / 24;
             
-            if (minutes > 60) {
-                long hours = minutes / 60;
-                minutes = minutes % 60;
-                return String.format("%dh %dm", hours, minutes);
+            if (days > 0) {
+                return String.format("%dd %dh %dm %ds", days, hours, minutes, seconds);
+            } else if (hours > 0) {
+                return String.format("%dh %dm %ds", hours, minutes, seconds);
             }
             return String.format("%dm %ds", minutes, seconds);
         }
@@ -77,7 +82,12 @@ public class BanDataManager {
         // Increment tier
         int currentTier = tierHistory.getOrDefault(playerId, 0) + 1;
         int maxTier = SimpleDeathBans.getInstance().getConfig().maxBanTier;
-        currentTier = Math.min(currentTier, maxTier);
+        
+        // Only cap tier if maxTier is positive (not unlimited)
+        // When maxTier is -1 (unlimited), don't cap
+        if (maxTier > 0) {
+            currentTier = Math.min(currentTier, maxTier);
+        }
         
         tierHistory.put(playerId, currentTier);
         
