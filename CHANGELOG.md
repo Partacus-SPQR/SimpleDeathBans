@@ -8,49 +8,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [1.2.0] - 2025-12-15
 
 ### Added
-- **Shared Health System** - Server-wide damage sharing (all players share damage)
-- **Shared Health Death Pact** - If ANY player takes lethal damage, ALL players die
-- **Shared Health Totem Logic** - Multiple totem scenarios:
-  - Totem Saves All ON: Any totem saves everyone
-  - Totem Saves All OFF: Only totem holders survive
-- **Multi-totem Support** - Handles multiple totem holders with appropriate notifications
+- **Shared Health System** - Server-wide damage sharing where all players share damage
+- **Shared Health Death Pact** - Lethal damage to any player kills all players instantly
+- **Shared Health Totem Logic** - Configurable totem behavior (save all vs save self only)
 - **Soul Link Totem** - New craftable item required for manual soul linking
-  - Recipe: Amethyst Shards + Eye of Enders + Totem of Undying (yields 2)
-  - Prevents conflicts with other mods using shift+right-click on players
-- **Mutual Exclusivity** - Shared Health overrides Soul Link when enabled (existing links preserved)
-- **Single-Player Freeze System** - New immersive death handling for single-player:
-  - Full-screen overlay with countdown timer and animated effects
-  - Complete player immobilization (movement, actions, interactions blocked)
-  - Damage immunity while frozen (prevents death loops)
-  - Auto-respawn when timer expires
-  - Toggleable via config (Single Player Enabled option)
+  - Recipe: Amethyst Shards + Eyes of Ender + Totem of Undying
+  - Prevents conflicts with other mods using shift+right-click
+- **Single-Player Freeze System** - Immersive death handling for single-player worlds
+  - Full-screen overlay with animated countdown timer
+  - Complete player immobilization with damage immunity
+  - Auto-respawn when ban timer expires
+  - Toggleable via config
 
 ### Changed
-- **Cloth Config UI** - Replaced broken sliders with reliable text fields
-- **Config Tooltips** - Enhanced with multi-line explanations, ranges, and color-coded warnings
-- **Fallback Config UI** - Added missing sliders (Ban Multiplier, PvP/PvE Multipliers, Soul Link Damage Share, Shared Health Damage)
-- **Fallback Tooltips** - Updated all tooltips to match Cloth Config quality with ranges and helpful info
-- **Soul Link Damage Share** - Now explicitly documented as NON-LETHAL only
-- **Death Pact Clarification** - Lethal damage triggers instant death regardless of damage share %
-- **Soul Link Manual Mode** - Now requires holding Soul Link Totem (avoids mod conflicts)
+- **Config UI** - Replaced broken sliders with reliable text fields in Cloth Config
+- **Config Tooltips** - Enhanced with multi-line explanations and color-coded warnings
+- **Soul Link** - Manual mode now requires holding Soul Link Totem
+- **Mutual Exclusivity** - Shared Health overrides Soul Link when enabled
 
 ### Fixed
-- **Shared Health Damage Calculation** - Fixed missing /100.0 in percentage calculation
-- **Duplicate Soul Link Messages** - Added cooldown to prevent double message spam when shift+right-clicking
-- **Soul Link Totem Save (TotemSavesPartner=OFF)** - Fixed scenarios where:
-  - Player with totem now survives even if partner (no totem) takes lethal damage
-  - Player without totem now dies if partner (with totem) takes lethal damage
-- **Resurrection Ritual Formatting** - Fixed message box exceeding chat width
-- **Resurrection Ritual Colors** - "Ban tier preserved" now red, "freed from void" now dark purple
-- **Login Message** - Now correctly mentions Soul Link Totem for manual linking
-- **Single-Player Config Sync** - Disabling mod now immediately clears ban and removes damage immunity
-- **Single-Player Enabled Config** - Now properly synced to server so damage immunity respects config changes
+- **Shared Health Damage Calculation** - Corrected percentage calculation
+- **Duplicate Soul Link Messages** - Added cooldown to prevent spam
+- **Soul Link Totem Protection** - Fixed all totem save scenarios
+- **Resurrection Ritual** - Fixed message formatting and colors
+- **Config Permission Check** - Non-operators can now view but not modify settings
+- **Single-Player Config Sync** - Disabling mod immediately clears ban state
 
 ### Technical
-- Added SharedHealthMixin for server-wide death pact handling
-- Simplified SharedHealthHandler to only handle non-lethal damage sharing
-- Added interaction cooldown system to SoulLinkEventHandler
-- Updated config documentation in README
+- Multi-version support via Stonecutter (1.21.9, 1.21.10, 1.21.11)
+- Version-specific item models for cross-version compatibility
+- Added SharedHealthMixin for server-wide death handling
 
 ## [1.1.0] - 2025-12-13
 

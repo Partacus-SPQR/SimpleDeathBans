@@ -11,6 +11,16 @@ A hardcore survival Fabric mod featuring a progressive banning system with Soul 
 **Source:** [GitHub](https://github.com/Partacus-SPQR/SimpleDeathBans)  
 **Download:** [Modrinth](https://modrinth.com/project/simpledeathbans)
 
+## Version Compatibility
+
+| Minecraft | Mod Version | Fabric Loader | Fabric API | Cloth Config | ModMenu |
+|-----------|-------------|---------------|------------|--------------|---------|
+| **1.21.11** *(Primary)* | 1.2.0 | ≥0.18.2 | ≥0.139.5 | ≥21.11.150 | ≥17.0.0 |
+| 1.21.10 | 1.2.0 | ≥0.18.2 | ≥0.138.3 | ≥20.0.149 | ≥16.0.0 |
+| 1.21.9 | 1.2.0 | ≥0.18.2 | ≥0.134.0 | ≥20.0.149 | ≥16.0.0 |
+
+> **Note:** Cloth Config and ModMenu are optional but recommended for the best configuration experience.
+
 ## Features
 
 ### 1. Progressive Ban System
@@ -215,21 +225,23 @@ Config file: `config/simpledeathbans.json`
 
 ## Dependencies
 
-**Required:**
-- Fabric Loader 0.18.0+
-- Minecraft 1.21.9, 1.21.10, or 1.21.11
-- Fabric API
+### Required
+- **Fabric Loader** ≥0.18.2
+- **Fabric API** (version depends on Minecraft version - see compatibility table above)
 
-**Optional (Recommended):**
-- Cloth Config ≥20.0.0 (enhanced config screen)
-- ModMenu ≥17.0.0 (mod list integration)
+### Optional (Recommended)
+- **Cloth Config** - Enhanced configuration screen with sliders and tooltips
+- **ModMenu** - Mod list integration for easy config access
+
+> **Tip:** Without Cloth Config, a built-in fallback config screen is provided with full functionality.
 
 ## Installation
 
-1. Install Fabric Loader and Fabric API
-2. Download SimpleDeathBans jar
-3. Place in `mods` folder
-4. (Optional) Install Cloth Config and ModMenu for better config experience
+1. Install [Fabric Loader](https://fabricmc.net/use/installer/) for your Minecraft version
+2. Download the matching [Fabric API](https://modrinth.com/mod/fabric-api) version
+3. Download the SimpleDeathBans JAR for your Minecraft version
+4. Place all JARs in your `mods` folder
+5. (Optional) Install Cloth Config and ModMenu for enhanced config experience
 
 ## Single-Player Mode
 
@@ -259,13 +271,22 @@ This mod includes a dedicated **Single-Player Mode** (default: ON) with modified
 
 Use `/sdb unban <name>` with cheats enabled to self-unban in single-player.
 
-## Building
+## Building from Source
 
 ```bash
+# Build all versions
 ./gradlew build
+
+# Build specific version
+./gradlew :1.21.11:build
+./gradlew :1.21.10:build
+./gradlew :1.21.9:build
 ```
 
-Output jar will be in `build/libs/`
+Output JARs will be in:
+- `versions/1.21.11/build/libs/simpledeathbans-1.2.0+1.21.11.jar`
+- `versions/1.21.10/build/libs/simpledeathbans-1.2.0+1.21.10.jar`
+- `versions/1.21.9/build/libs/simpledeathbans-1.2.0+1.21.9.jar`
 
 ## License
 
