@@ -121,7 +121,7 @@ public class SimpleDeathBansClient implements ClientModInitializer {
                     context.drawText(textRenderer, tier, centerX - textRenderer.getWidth(tier) / 2, centerY + 30, 0xFFAAAAAA, true);
                     
                     // Hint
-                    String hint = "Press ESC -> Mod Menu -> disable Single-Player Mode";
+                    String hint = "Open Mod Menu -> Simple Death Bans -> disable Single-Player Mode";
                     context.drawText(textRenderer, hint, centerX - textRenderer.getWidth(hint) / 2, centerY + 60, 0xFF555555, true);
                 }
             }

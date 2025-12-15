@@ -2,6 +2,7 @@ package com.simpledeathbans.client;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.simpledeathbans.SimpleDeathBans;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.Text;
@@ -208,10 +209,47 @@ public class SinglePlayerBanHandler {
     }
     
     /**
+     * Checks if the single-player mod is disabled in config.
+     * If disabled, any existing ban should be immediately cleared.
+     */
+    private static boolean isModDisabledInConfig() {
+        SimpleDeathBans mod = SimpleDeathBans.getInstance();
+        if (mod != null && mod.getConfig() != null) {
+            return !mod.getConfig().singlePlayerEnabled;
+        }
+        return false;
+    }
+    
+    /**
      * Tick method called every client tick to check for ban expiration.
      */
     public static void tick() {
         if (!isBanned) return;
+        
+        // Check if mod was disabled in config - immediately clear ban
+        if (isModDisabledInConfig()) {
+            LOGGER.info("Single-player mod disabled in config - clearing ban immediately");
+            isBanned = false;
+            banEndTime = 0;
+            banTier = 0;
+            initialTimeFormatted = "";
+            deleteBanData();
+            
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client.player != null) {
+                client.player.sendMessage(Text.literal(""), false);
+                client.player.sendMessage(
+                    Text.literal("§a§k><§r §2§l✓ MOD DISABLED ✓ §a§k><§r"),
+                    false
+                );
+                client.player.sendMessage(
+                    Text.literal("§aSingle-player death bans have been §l§ndisabled§r§a."),
+                    false
+                );
+                client.player.sendMessage(Text.literal(""), false);
+            }
+            return;
+        }
         
         // Check if ban has expired
         if (System.currentTimeMillis() >= banEndTime) {
@@ -246,6 +284,8 @@ public class SinglePlayerBanHandler {
      * Use this for rendering to avoid side effects.
      */
     public static boolean isBannedRaw() {
+        // Also check if mod is disabled
+        if (isModDisabledInConfig()) return false;
         return isBanned && System.currentTimeMillis() < banEndTime;
     }
     
@@ -255,6 +295,13 @@ public class SinglePlayerBanHandler {
      */
     public static boolean isBanned() {
         if (!isBanned) return false;
+        
+        // Check if mod was disabled in config
+        if (isModDisabledInConfig()) {
+            LOGGER.info("Single-player mod disabled - clearing ban");
+            clearBan();
+            return false;
+        }
         
         // Check if ban has expired
         if (System.currentTimeMillis() >= banEndTime) {
@@ -378,7 +425,7 @@ public class SinglePlayerBanHandler {
         context.drawText(textRenderer, info2, centerX - info2Width / 2, centerY + 67, 0xFF555555, true);
         
         // Hint about disabling mod - Dark gray
-        String hint = "Press ESC -> Mod Menu -> Simple Death Bans -> disable Single-Player Mode";
+        String hint = "Open Mod Menu -> Simple Death Bans -> disable Single-Player Mode";
         int hintWidth = textRenderer.getWidth(hint);
         context.drawText(textRenderer, hint, centerX - hintWidth / 2, centerY + 90, 0xFF555555, true);
     }
