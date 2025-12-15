@@ -4,7 +4,6 @@ import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.data.BanDataManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.PlayerManager;
-//? if >=1.21.11
 import net.minecraft.server.PlayerConfigEntry;
 import net.minecraft.text.Text;
 import org.spongepowered.asm.mixin.Final;
@@ -20,7 +19,7 @@ import java.util.UUID;
 /**
  * Mixin to check for bans when players try to connect.
  * 
- * Note: In 1.21.11+, checkCanJoin uses PlayerConfigEntry instead of GameProfile.
+ * Note: All supported MC versions (1.21.9+) use PlayerConfigEntry for checkCanJoin.
  * 
  * SINGLE-PLAYER HANDLING:
  * We SKIP ban enforcement in this mixin for single-player because the integrated 
@@ -39,20 +38,14 @@ public class PlayerManagerMixin {
     
     /**
      * Check if the player is banned before allowing them to join.
-     * Uses PlayerConfigEntry in 1.21.11+, GameProfile in earlier versions.
+     * All supported versions (1.21.9+) use PlayerConfigEntry.
      * 
      * MULTIPLAYER ONLY: In single-player, we skip ban enforcement entirely
      * to prevent world corruption from blocking player join after server start.
      */
-    //? if >=1.21.11 {
     @Inject(method = "checkCanJoin", at = @At("HEAD"), cancellable = true)
     private void onCheckCanJoin(SocketAddress address, PlayerConfigEntry configEntry, CallbackInfoReturnable<Text> cir) {
         UUID playerId = configEntry.id();
-    //?} else {
-    /*@Inject(method = "checkCanJoin", at = @At("HEAD"), cancellable = true)
-    private void onCheckCanJoin(SocketAddress address, com.mojang.authlib.GameProfile profile, CallbackInfoReturnable<Text> cir) {
-        UUID playerId = profile.id();
-    *///?}
         
         // CRITICAL: Skip ban enforcement in single-player to prevent world corruption
         // Single-player bans are handled via client-side payload (SinglePlayerBanPayload)
