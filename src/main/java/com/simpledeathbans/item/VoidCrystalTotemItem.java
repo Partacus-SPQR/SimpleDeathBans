@@ -21,7 +21,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * The Void Crystal item used to sever soul links.
+ * The Void Crystal Totem item used to sever soul links.
  * 
  * Usage:
  * - Right-click while holding to sever your current soul link
@@ -33,9 +33,9 @@ import java.util.UUID;
  * - Row 2: Empty | Soul Link Totem | Empty
  * - Row 3: End Crystal | Empty | End Crystal
  */
-public class VoidCrystalItem extends Item {
+public class VoidCrystalTotemItem extends Item {
     
-    public VoidCrystalItem(Settings settings) {
+    public VoidCrystalTotemItem(Settings settings) {
         super(settings);
     }
     

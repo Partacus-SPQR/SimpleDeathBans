@@ -1,6 +1,6 @@
 {
     "model": {
         "type": "minecraft:model",
-        "model": "simpledeathbans:item/void_crystal"
+        "model": "simpledeathbans:item/void_crystal_totem"
     }
 }

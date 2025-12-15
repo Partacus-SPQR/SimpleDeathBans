@@ -22,12 +22,12 @@ public class ModItems {
     public static final Identifier SOUL_LINK_TOTEM_ID = Identifier.of(SimpleDeathBans.MOD_ID, "soul_link_totem");
     public static final RegistryKey<Item> SOUL_LINK_TOTEM_KEY = RegistryKey.of(RegistryKeys.ITEM, SOUL_LINK_TOTEM_ID);
     
-    public static final Identifier VOID_CRYSTAL_ID = Identifier.of(SimpleDeathBans.MOD_ID, "void_crystal");
-    public static final RegistryKey<Item> VOID_CRYSTAL_KEY = RegistryKey.of(RegistryKeys.ITEM, VOID_CRYSTAL_ID);
+    public static final Identifier VOID_CRYSTAL_TOTEM_ID = Identifier.of(SimpleDeathBans.MOD_ID, "void_crystal_totem");
+    public static final RegistryKey<Item> VOID_CRYSTAL_TOTEM_KEY = RegistryKey.of(RegistryKeys.ITEM, VOID_CRYSTAL_TOTEM_ID);
     
     public static Item RESURRECTION_TOTEM;
     public static Item SOUL_LINK_TOTEM;
-    public static Item VOID_CRYSTAL;
+    public static Item VOID_CRYSTAL_TOTEM;
     
     public static void register() {
         // Register Resurrection Totem
@@ -50,12 +50,12 @@ public class ModItems {
                 .rarity(Rarity.EPIC))
         );
         
-        // Register Void Crystal
-        VOID_CRYSTAL = Registry.register(
+        // Register Void Crystal Totem
+        VOID_CRYSTAL_TOTEM = Registry.register(
             Registries.ITEM,
-            VOID_CRYSTAL_ID,
-            new VoidCrystalItem(new Item.Settings()
-                .registryKey(VOID_CRYSTAL_KEY)
+            VOID_CRYSTAL_TOTEM_ID,
+            new VoidCrystalTotemItem(new Item.Settings()
+                .registryKey(VOID_CRYSTAL_TOTEM_KEY)
                 .maxCount(1)
                 .rarity(Rarity.EPIC))
         );
@@ -64,7 +64,7 @@ public class ModItems {
         ItemGroupEvents.modifyEntriesEvent(ItemGroups.TOOLS).register(content -> {
             content.add(RESURRECTION_TOTEM);
             content.add(SOUL_LINK_TOTEM);
-            content.add(VOID_CRYSTAL);
+            content.add(VOID_CRYSTAL_TOTEM);
         });
         
         // Register recipes
