@@ -234,6 +234,7 @@ public class SimpleDeathBans implements ModInitializer {
                     config.pvpBanMultiplierPercent = payload.pvpBanMultiplierPercent();
                     config.pveBanMultiplierPercent = payload.pveBanMultiplierPercent();
                     config.enableResurrectionAltar = payload.enableResurrectionAltar();
+                    config.singlePlayerEnabled = payload.singlePlayerEnabled();
                     
                     config.save();
                     
@@ -312,7 +313,8 @@ public class SimpleDeathBans implements ModInitializer {
                         config.mercyCheckIntervalMinutes,
                         config.pvpBanMultiplierPercent,
                         config.pveBanMultiplierPercent,
-                        config.enableResurrectionAltar
+                        config.enableResurrectionAltar,
+                        config.singlePlayerEnabled
                     );
                     
                     for (ServerPlayerEntity onlinePlayer : context.server().getPlayerManager().getPlayerList()) {

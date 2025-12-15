@@ -160,9 +160,10 @@ public class SimpleDeathBansClient implements ClientModInitializer {
                     config.pvpBanMultiplierPercent = payload.pvpBanMultiplierPercent();
                     config.pveBanMultiplierPercent = payload.pveBanMultiplierPercent();
                     config.enableResurrectionAltar = payload.enableResurrectionAltar();
+                    config.singlePlayerEnabled = payload.singlePlayerEnabled();
                     
-                    LOGGER.info("Received config update from server - enableSoulLink: {}, enableSharedHealth: {}, enableMercyCooldown: {}",
-                        config.enableSoulLink, config.enableSharedHealth, config.enableMercyCooldown);
+                    LOGGER.info("Received config update from server - enableSoulLink: {}, enableSharedHealth: {}, enableMercyCooldown: {}, singlePlayerEnabled: {}",
+                        config.enableSoulLink, config.enableSharedHealth, config.enableMercyCooldown, config.singlePlayerEnabled);
                 }
             });
         });

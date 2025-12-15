@@ -951,7 +951,8 @@ public class SimpleFallbackConfigScreen extends Screen {
                     config.mercyCheckIntervalMinutes,
                     config.pvpBanMultiplierPercent,
                     config.pveBanMultiplierPercent,
-                    config.enableResurrectionAltar
+                    config.enableResurrectionAltar,
+                    config.singlePlayerEnabled
                 ));
                 LOGGER.info("Sent config update to server");
             }

@@ -36,7 +36,8 @@ public record ConfigSyncPayload(
     int mercyCheckIntervalMinutes,
     int pvpBanMultiplierPercent,
     int pveBanMultiplierPercent,
-    boolean enableResurrectionAltar
+    boolean enableResurrectionAltar,
+    boolean singlePlayerEnabled
 ) implements CustomPayload {
     
     public static final CustomPayload.Id<ConfigSyncPayload> ID = 
@@ -73,7 +74,8 @@ public record ConfigSyncPayload(
                     buf.readInt(),        // mercyCheckIntervalMinutes
                     buf.readInt(),        // pvpBanMultiplierPercent
                     buf.readInt(),        // pveBanMultiplierPercent
-                    buf.readBoolean()     // enableResurrectionAltar
+                    buf.readBoolean(),    // enableResurrectionAltar
+                    buf.readBoolean()     // singlePlayerEnabled
                 );
             }
             
@@ -106,6 +108,7 @@ public record ConfigSyncPayload(
                 buf.writeInt(payload.pvpBanMultiplierPercent);
                 buf.writeInt(payload.pveBanMultiplierPercent);
                 buf.writeBoolean(payload.enableResurrectionAltar);
+                buf.writeBoolean(payload.singlePlayerEnabled);
             }
         };
     

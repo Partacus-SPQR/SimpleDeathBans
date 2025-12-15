@@ -88,7 +88,8 @@ public class ClothConfigScreen {
                         config.mercyCheckIntervalMinutes,
                         config.pvpBanMultiplierPercent,
                         config.pveBanMultiplierPercent,
-                        config.enableResurrectionAltar
+                        config.enableResurrectionAltar,
+                        config.singlePlayerEnabled
                     ));
                     LOGGER.info("Sent config update to server");
                 }
