@@ -3,7 +3,7 @@
 [![Minecraft](https://img.shields.io/badge/Minecraft-1.21.9--1.21.11-green)](https://minecraft.net)
 [![Fabric](https://img.shields.io/badge/Mod%20Loader-Fabric-blue)](https://fabricmc.net)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.2.0-orange)](https://modrinth.com/project/simpledeathbans)
+[![Version](https://img.shields.io/badge/Version-1.2.1-orange)](https://modrinth.com/project/simpledeathbans)
 
 A hardcore survival Fabric mod featuring a progressive banning system with Soul Links, Mercy Cooldowns, and Resurrection Rituals.
 
@@ -15,9 +15,9 @@ A hardcore survival Fabric mod featuring a progressive banning system with Soul 
 
 | Minecraft | Mod Version | Fabric Loader | Fabric API | Cloth Config | ModMenu |
 |-----------|-------------|---------------|------------|--------------|---------|
-| **1.21.11** *(Primary)* | 1.2.0 | ≥0.18.2 | ≥0.139.5 | ≥21.11.150 | ≥17.0.0 |
-| 1.21.10 | 1.2.0 | ≥0.18.2 | ≥0.138.3 | ≥20.0.149 | ≥16.0.0 |
-| 1.21.9 | 1.2.0 | ≥0.18.2 | ≥0.134.0 | ≥20.0.149 | ≥16.0.0 |
+| **1.21.11** *(Primary)* | 1.2.1 | ≥0.18.2 | ≥0.139.5 | ≥21.11.150 | ≥17.0.0 |
+| 1.21.10 | 1.2.1 | ≥0.18.2 | ≥0.138.3 | ≥20.0.149 | ≥16.0.0 |
+| 1.21.9 | 1.2.1 | ≥0.18.2 | ≥0.134.0 | ≥20.0.149 | ≥16.0.0 |
 
 > **Note:** Cloth Config and ModMenu are optional but recommended for the best configuration experience.
 
@@ -173,11 +173,13 @@ Config file: `config/simpledeathbans.json`
 
 ```json
 {
+    "enableDeathBans": true,
     "baseBanMinutes": 1,
     "banMultiplierPercent": 100,
     "maxBanTier": -1,
     "exponentialBanMode": false,
     "enableSoulLink": false,
+    "soulLinkShareHunger": false,
     "soulLinkDamageSharePercent": 100,
     "soulLinkRandomPartner": true,
     "soulLinkTotemSavesPartner": true,
@@ -191,6 +193,7 @@ Config file: `config/simpledeathbans.json`
     "enableSharedHealth": false,
     "sharedHealthDamagePercent": 100,
     "sharedHealthTotemSavesAll": true,
+    "sharedHealthShareHunger": false,
     "enableMercyCooldown": true,
     "mercyPlaytimeHours": 24,
     "mercyMovementBlocks": 50,
@@ -207,6 +210,7 @@ Config file: `config/simpledeathbans.json`
 
 | Setting | Range | Default | Description |
 |---------|-------|---------|-------------|
+| `enableDeathBans` | true/false | true | Master switch to enable/disable death bans |
 | `baseBanMinutes` | 1-60 | 1 | Base ban duration per tier (minutes) |
 | `banMultiplierPercent` | 10-1000 | 100 | Global ban time multiplier (100 = 1x) |
 | `maxBanTier` | -1 to 100 | -1 | Maximum ban tier (-1 = infinite) |
@@ -215,6 +219,7 @@ Config file: `config/simpledeathbans.json`
 | `soulLinkDamageSharePercent` | 0-200 | 100 | Damage shared to partner (non-lethal only) |
 | `soulLinkRandomPartner` | true/false | true | Auto-pair vs manual Soul Link Totem |
 | `soulLinkTotemSavesPartner` | true/false | true | Totem of Undying saves both partners |
+| `soulLinkShareHunger` | true/false | false | Share hunger loss with soul-linked partner |
 | `soulLinkSeverCooldownMinutes` | 0-120 | 30 | Cooldown after breaking a soul link |
 | `soulLinkSeverBanTierIncrease` | 0-10 | 1 | Ban tier penalty for severing |
 | `soulLinkExPartnerCooldownHours` | 0-168 | 24 | Cooldown before re-linking with ex-partner |
@@ -225,6 +230,7 @@ Config file: `config/simpledeathbans.json`
 | `enableSharedHealth` | true/false | false | Enable server-wide health sharing |
 | `sharedHealthDamagePercent` | 0-200 | 100 | Damage shared to all players (non-lethal only) |
 | `sharedHealthTotemSavesAll` | true/false | true | One totem saves everyone |
+| `sharedHealthShareHunger` | true/false | false | Share hunger loss with all players |
 | `enableMercyCooldown` | true/false | true | Enable ban tier reduction over time |
 | `mercyPlaytimeHours` | 1-168 | 24 | Active hours needed to reduce tier |
 | `mercyMovementBlocks` | 0-500 | 50 | Blocks moved per check to count as active |
@@ -301,9 +307,9 @@ Use `/sdb unban <name>` with cheats enabled to self-unban in single-player.
 ```
 
 Output JARs will be in:
-- `versions/1.21.11/build/libs/simpledeathbans-1.2.0+1.21.11.jar`
-- `versions/1.21.10/build/libs/simpledeathbans-1.2.0+1.21.10.jar`
-- `versions/1.21.9/build/libs/simpledeathbans-1.2.0+1.21.9.jar`
+- `versions/1.21.11/build/libs/simpledeathbans-1.2.1+1.21.11.jar`
+- `versions/1.21.10/build/libs/simpledeathbans-1.2.1+1.21.10.jar`
+- `versions/1.21.9/build/libs/simpledeathbans-1.2.1+1.21.9.jar`
 
 ## License
 

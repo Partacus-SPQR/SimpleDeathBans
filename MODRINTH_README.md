@@ -1,6 +1,6 @@
 # Simple Death Bans
 
-A hardcore survival Fabric mod featuring a progressive banning system with Soul Links, Mercy Cooldowns, and Resurrection Rituals.
+A survival/SMP Fabric mod featuring a progressive banning system with Soul Links, Mercy Cooldowns, and Resurrection Rituals.
 
 ## Features
 

@@ -141,6 +141,30 @@ public class SimpleFallbackConfigScreen extends Screen {
         // ============================================
         y += ROW_HEIGHT; // Section header space
         
+        // Enable Death Bans toggle
+        ButtonWidget enableDeathBansToggle = ButtonWidget.builder(
+            Text.literal("Enable Death Bans: " + (config.enableDeathBans ? "ON" : "OFF")),
+            button -> {
+                if (canEdit) {
+                    config.enableDeathBans = !config.enableDeathBans;
+                    button.setMessage(Text.literal("Enable Death Bans: " + (config.enableDeathBans ? "ON" : "OFF")));
+                } else {
+                    showPermissionDenied();
+                }
+            }
+        ).dimensions(widgetX, y, WIDGET_WIDTH, 20).build();
+        addScrollableWidget(enableDeathBansToggle, y);
+        addResetButton(resetX, y, () -> {
+            config.enableDeathBans = true;
+            enableDeathBansToggle.setMessage(Text.literal("Enable Death Bans: ON"));
+        });
+        addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
+            Text.literal("Master toggle for death ban system."),
+            Text.literal("OFF: Deaths have no ban consequences.").formatted(Formatting.YELLOW),
+            Text.literal("ON: Deaths result in temporary bans.").formatted(Formatting.GREEN),
+            Text.literal("Default: ON").formatted(Formatting.DARK_GRAY));
+        y += ROW_HEIGHT;
+        
         // Base Ban Minutes (1-60)
         baseBanMinutesSlider = new IntSlider(widgetX, y, WIDGET_WIDTH, 20,
             Text.literal("Base Ban Time: " + config.baseBanMinutes + " min"),
@@ -362,6 +386,30 @@ public class SimpleFallbackConfigScreen extends Screen {
             Text.literal("Only affects NON-LETHAL hits!").formatted(Formatting.YELLOW),
             Text.literal("Lethal damage = Death Pact (both die)").formatted(Formatting.RED),
             Text.literal("Range: 0-200 | Default: 100").formatted(Formatting.DARK_GRAY));
+        y += ROW_HEIGHT;
+        
+        // Soul Link Share Hunger toggle
+        ButtonWidget soulLinkShareHungerToggle = ButtonWidget.builder(
+            Text.literal("Share Hunger: " + (config.soulLinkShareHunger ? "ON" : "OFF")),
+            button -> {
+                if (canEdit) {
+                    config.soulLinkShareHunger = !config.soulLinkShareHunger;
+                    button.setMessage(Text.literal("Share Hunger: " + (config.soulLinkShareHunger ? "ON" : "OFF")));
+                } else {
+                    showPermissionDenied();
+                }
+            }
+        ).dimensions(widgetX, y, WIDGET_WIDTH, 20).build();
+        addScrollableWidget(soulLinkShareHungerToggle, y);
+        addResetButton(resetX, y, () -> {
+            config.soulLinkShareHunger = false;
+            soulLinkShareHungerToggle.setMessage(Text.literal("Share Hunger: OFF"));
+        });
+        addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
+            Text.literal("Share hunger drain with your soul partner."),
+            Text.literal("ON: When you lose hunger, partner loses too").formatted(Formatting.YELLOW),
+            Text.literal("OFF: Hunger is independent").formatted(Formatting.GREEN),
+            Text.literal("Default: OFF").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // Soul Link Random Partner
@@ -642,6 +690,30 @@ public class SimpleFallbackConfigScreen extends Screen {
             Text.literal("Only affects NON-LETHAL damage!").formatted(Formatting.YELLOW),
             Text.literal("Lethal damage = instant death for ALL").formatted(Formatting.RED),
             Text.literal("Range: 0-200 | Default: 100").formatted(Formatting.DARK_GRAY));
+        y += ROW_HEIGHT;
+        
+        // Shared Health Share Hunger toggle
+        ButtonWidget sharedHealthShareHungerToggle = ButtonWidget.builder(
+            Text.literal("Share Hunger: " + (config.sharedHealthShareHunger ? "ON" : "OFF")),
+            button -> {
+                if (canEdit) {
+                    config.sharedHealthShareHunger = !config.sharedHealthShareHunger;
+                    button.setMessage(Text.literal("Share Hunger: " + (config.sharedHealthShareHunger ? "ON" : "OFF")));
+                } else {
+                    showPermissionDenied();
+                }
+            }
+        ).dimensions(widgetX, y, WIDGET_WIDTH, 20).build();
+        addScrollableWidget(sharedHealthShareHungerToggle, y);
+        addResetButton(resetX, y, () -> {
+            config.sharedHealthShareHunger = false;
+            sharedHealthShareHungerToggle.setMessage(Text.literal("Share Hunger: OFF"));
+        });
+        addTooltip(widgetX, y, WIDGET_WIDTH + RESET_BTN_WIDTH + SPACING, 20,
+            Text.literal("Share hunger drain with all players."),
+            Text.literal("ON: When anyone loses hunger, all lose it").formatted(Formatting.YELLOW),
+            Text.literal("OFF: Hunger is independent").formatted(Formatting.GREEN),
+            Text.literal("Default: OFF").formatted(Formatting.DARK_GRAY));
         y += ROW_HEIGHT;
         
         // Totem Saves All
@@ -925,6 +997,7 @@ public class SimpleFallbackConfigScreen extends Screen {
             // Send config to server
             if (ClientPlayNetworking.canSend(ConfigSyncPayload.ID)) {
                 ClientPlayNetworking.send(new ConfigSyncPayload(
+                    config.enableDeathBans,
                     config.baseBanMinutes,
                     config.banMultiplierPercent,
                     config.maxBanTier,
@@ -932,6 +1005,7 @@ public class SimpleFallbackConfigScreen extends Screen {
                     config.enableGhostEcho,
                     config.enableSoulLink,
                     config.soulLinkDamageSharePercent,
+                    config.soulLinkShareHunger,
                     config.soulLinkRandomPartner,
                     config.soulLinkTotemSavesPartner,
                     config.soulLinkSeverCooldownMinutes,
@@ -943,6 +1017,7 @@ public class SimpleFallbackConfigScreen extends Screen {
                     config.soulLinkCompassCooldownMinutes,
                     config.enableSharedHealth,
                     config.sharedHealthDamagePercent,
+                    config.sharedHealthShareHunger,
                     config.sharedHealthTotemSavesAll,
                     config.enableMercyCooldown,
                     config.mercyPlaytimeHours,

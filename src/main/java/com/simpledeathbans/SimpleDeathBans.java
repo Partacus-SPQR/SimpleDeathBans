@@ -6,6 +6,7 @@ import com.simpledeathbans.data.PlayerDataManager;
 import com.simpledeathbans.data.SoulLinkManager;
 import com.simpledeathbans.event.BlockInteractionHandler;
 import com.simpledeathbans.event.DeathEventHandler;
+import com.simpledeathbans.event.HungerShareHandler;
 import com.simpledeathbans.event.MercyCooldownHandler;
 import com.simpledeathbans.event.SharedHealthHandler;
 import com.simpledeathbans.event.SoulLinkCooldownHandler;
@@ -99,6 +100,8 @@ public class SimpleDeathBans implements ModInitializer {
             if (ritualManager != null) {
                 ritualManager.onPlayerDisconnect(handler.getPlayer().getUuid());
             }
+            // Clean up hunger tracking
+            HungerShareHandler.clearPlayer(handler.getPlayer().getUuid());
         });
         
         // Server tick events for mercy cooldown
@@ -123,6 +126,9 @@ public class SimpleDeathBans implements ModInitializer {
         
         // Register block interaction tracking for mercy cooldown
         BlockInteractionHandler.register();
+        
+        // Register hunger sharing for Soul Link and Shared Health
+        HungerShareHandler.register();
         
         LOGGER.info("SimpleDeathBans initialized successfully!");
     }
@@ -164,6 +170,7 @@ public class SimpleDeathBans implements ModInitializer {
                 
                 if (isOp) {
                     // Player IS an operator - apply config changes
+                    config.enableDeathBans = payload.enableDeathBans();
                     config.baseBanMinutes = payload.baseBanMinutes();
                     config.banMultiplierPercent = payload.banMultiplierPercent();
                     config.maxBanTier = payload.maxBanTier();
@@ -215,6 +222,7 @@ public class SimpleDeathBans implements ModInitializer {
                     }
                     
                     config.soulLinkDamageSharePercent = payload.soulLinkDamageSharePercent();
+                    config.soulLinkShareHunger = payload.soulLinkShareHunger();
                     config.soulLinkRandomPartner = payload.soulLinkRandomPartner();
                     config.soulLinkTotemSavesPartner = payload.soulLinkTotemSavesPartner();
                     config.soulLinkSeverCooldownMinutes = payload.soulLinkSeverCooldownMinutes();
@@ -225,6 +233,7 @@ public class SimpleDeathBans implements ModInitializer {
                     config.soulLinkCompassMaxUses = payload.soulLinkCompassMaxUses();
                     config.soulLinkCompassCooldownMinutes = payload.soulLinkCompassCooldownMinutes();
                     config.sharedHealthDamagePercent = payload.sharedHealthDamagePercent();
+                    config.sharedHealthShareHunger = payload.sharedHealthShareHunger();
                     config.sharedHealthTotemSavesAll = payload.sharedHealthTotemSavesAll();
                     config.enableMercyCooldown = payload.enableMercyCooldown();
                     config.mercyPlaytimeHours = payload.mercyPlaytimeHours();
@@ -287,6 +296,7 @@ public class SimpleDeathBans implements ModInitializer {
                     
                     // Broadcast updated config to ALL online players so they see the changes
                     ConfigSyncPayload broadcastPayload = new ConfigSyncPayload(
+                        config.enableDeathBans,
                         config.baseBanMinutes,
                         config.banMultiplierPercent,
                         config.maxBanTier,
@@ -294,6 +304,7 @@ public class SimpleDeathBans implements ModInitializer {
                         config.enableGhostEcho,
                         config.enableSoulLink,
                         config.soulLinkDamageSharePercent,
+                        config.soulLinkShareHunger,
                         config.soulLinkRandomPartner,
                         config.soulLinkTotemSavesPartner,
                         config.soulLinkSeverCooldownMinutes,
@@ -305,6 +316,7 @@ public class SimpleDeathBans implements ModInitializer {
                         config.soulLinkCompassCooldownMinutes,
                         config.enableSharedHealth,
                         config.sharedHealthDamagePercent,
+                        config.sharedHealthShareHunger,
                         config.sharedHealthTotemSavesAll,
                         config.enableMercyCooldown,
                         config.mercyPlaytimeHours,

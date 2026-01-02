@@ -45,6 +45,13 @@ public class DeathEventHandler {
         
         if (banManager == null) return;
         
+        // Check if death bans are disabled globally
+        if (!config.enableDeathBans) {
+            SimpleDeathBans.LOGGER.debug("Death bans disabled - skipping ban for {}", 
+                    player.getName().getString());
+            return;
+        }
+        
         // Check if mod is disabled in single-player
         ServerWorld world = (ServerWorld) player.getEntityWorld();
         if (world.getServer().isSingleplayer() && !config.singlePlayerEnabled) {

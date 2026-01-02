@@ -133,6 +133,7 @@ public class SimpleDeathBansClient implements ClientModInitializer {
                 ModConfig config = SimpleDeathBans.getInstance().getConfig();
                 if (config != null) {
                     // Update local config with server's values
+                    config.enableDeathBans = payload.enableDeathBans();
                     config.baseBanMinutes = payload.baseBanMinutes();
                     config.banMultiplierPercent = payload.banMultiplierPercent();
                     config.maxBanTier = payload.maxBanTier();
@@ -140,6 +141,7 @@ public class SimpleDeathBansClient implements ClientModInitializer {
                     config.enableGhostEcho = payload.enableGhostEcho();
                     config.enableSoulLink = payload.enableSoulLink();
                     config.soulLinkDamageSharePercent = payload.soulLinkDamageSharePercent();
+                    config.soulLinkShareHunger = payload.soulLinkShareHunger();
                     config.soulLinkRandomPartner = payload.soulLinkRandomPartner();
                     config.soulLinkTotemSavesPartner = payload.soulLinkTotemSavesPartner();
                     config.soulLinkSeverCooldownMinutes = payload.soulLinkSeverCooldownMinutes();
@@ -151,6 +153,7 @@ public class SimpleDeathBansClient implements ClientModInitializer {
                     config.soulLinkCompassCooldownMinutes = payload.soulLinkCompassCooldownMinutes();
                     config.enableSharedHealth = payload.enableSharedHealth();
                     config.sharedHealthDamagePercent = payload.sharedHealthDamagePercent();
+                    config.sharedHealthShareHunger = payload.sharedHealthShareHunger();
                     config.sharedHealthTotemSavesAll = payload.sharedHealthTotemSavesAll();
                     config.enableMercyCooldown = payload.enableMercyCooldown();
                     config.mercyPlaytimeHours = payload.mercyPlaytimeHours();
@@ -162,8 +165,8 @@ public class SimpleDeathBansClient implements ClientModInitializer {
                     config.enableResurrectionAltar = payload.enableResurrectionAltar();
                     config.singlePlayerEnabled = payload.singlePlayerEnabled();
                     
-                    LOGGER.info("Received config update from server - enableSoulLink: {}, enableSharedHealth: {}, enableMercyCooldown: {}, singlePlayerEnabled: {}",
-                        config.enableSoulLink, config.enableSharedHealth, config.enableMercyCooldown, config.singlePlayerEnabled);
+                    LOGGER.info("Received config update from server - enableDeathBans: {}, enableSoulLink: {}, enableSharedHealth: {}",
+                        config.enableDeathBans, config.enableSoulLink, config.enableSharedHealth);
                 }
             });
         });

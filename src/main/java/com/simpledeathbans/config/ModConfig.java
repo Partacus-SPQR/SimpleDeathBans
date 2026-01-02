@@ -14,6 +14,7 @@ public class ModConfig {
     private static final Path CONFIG_PATH = FabricLoader.getInstance().getConfigDir().resolve("simpledeathbans.json");
     
     // General Settings
+    public boolean enableDeathBans = true; // Master toggle to enable/disable death bans
     public int baseBanMinutes = 1;
     public int banMultiplierPercent = 100; // 100 = 1.0x, stored as percentage
     public int maxBanTier = -1; // -1 = infinite, 1-100 = actual max tier
@@ -25,6 +26,7 @@ public class ModConfig {
     // Soul Link Settings (Operator Level 4 only)
     public boolean enableSoulLink = false;
     public int soulLinkDamageSharePercent = 100; // 100 = 100% = 1:1 ratio
+    public boolean soulLinkShareHunger = false; // Share hunger between soul-linked partners
     public boolean soulLinkRandomPartner = true; // If true: auto-random pairing, if false: shift+right-click to choose
     public boolean soulLinkTotemSavesPartner = true; // If partner uses totem, both players are saved
     
@@ -42,6 +44,7 @@ public class ModConfig {
     // Shared Health Settings (Server-wide damage sharing)
     public boolean enableSharedHealth = false; // Server-wide health pool
     public int sharedHealthDamagePercent = 100; // 100 = 100% of damage shared to all players
+    public boolean sharedHealthShareHunger = false; // Share hunger drain across all players
     public boolean sharedHealthTotemSavesAll = true; // Any player's totem can save everyone
     
     // Mercy Cooldown Settings

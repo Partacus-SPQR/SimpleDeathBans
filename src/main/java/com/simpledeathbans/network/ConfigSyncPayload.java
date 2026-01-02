@@ -10,6 +10,7 @@ import net.minecraft.util.Identifier;
  * Server will validate operator permissions before applying.
  */
 public record ConfigSyncPayload(
+    boolean enableDeathBans,
     int baseBanMinutes,
     int banMultiplierPercent,
     int maxBanTier,
@@ -17,6 +18,7 @@ public record ConfigSyncPayload(
     boolean enableGhostEcho,
     boolean enableSoulLink,
     int soulLinkDamageSharePercent,
+    boolean soulLinkShareHunger,
     boolean soulLinkRandomPartner,
     boolean soulLinkTotemSavesPartner,
     int soulLinkSeverCooldownMinutes,
@@ -28,6 +30,7 @@ public record ConfigSyncPayload(
     int soulLinkCompassCooldownMinutes,
     boolean enableSharedHealth,
     int sharedHealthDamagePercent,
+    boolean sharedHealthShareHunger,
     boolean sharedHealthTotemSavesAll,
     boolean enableMercyCooldown,
     int mercyPlaytimeHours,
@@ -48,6 +51,7 @@ public record ConfigSyncPayload(
             @Override
             public ConfigSyncPayload decode(RegistryByteBuf buf) {
                 return new ConfigSyncPayload(
+                    buf.readBoolean(),    // enableDeathBans
                     buf.readInt(),        // baseBanMinutes
                     buf.readInt(),        // banMultiplierPercent
                     buf.readInt(),        // maxBanTier
@@ -55,6 +59,7 @@ public record ConfigSyncPayload(
                     buf.readBoolean(),    // enableGhostEcho
                     buf.readBoolean(),    // enableSoulLink
                     buf.readInt(),        // soulLinkDamageSharePercent
+                    buf.readBoolean(),    // soulLinkShareHunger
                     buf.readBoolean(),    // soulLinkRandomPartner
                     buf.readBoolean(),    // soulLinkTotemSavesPartner
                     buf.readInt(),        // soulLinkSeverCooldownMinutes
@@ -66,6 +71,7 @@ public record ConfigSyncPayload(
                     buf.readInt(),        // soulLinkCompassCooldownMinutes
                     buf.readBoolean(),    // enableSharedHealth
                     buf.readInt(),        // sharedHealthDamagePercent
+                    buf.readBoolean(),    // sharedHealthShareHunger
                     buf.readBoolean(),    // sharedHealthTotemSavesAll
                     buf.readBoolean(),    // enableMercyCooldown
                     buf.readInt(),        // mercyPlaytimeHours
@@ -81,6 +87,7 @@ public record ConfigSyncPayload(
             
             @Override
             public void encode(RegistryByteBuf buf, ConfigSyncPayload payload) {
+                buf.writeBoolean(payload.enableDeathBans);
                 buf.writeInt(payload.baseBanMinutes);
                 buf.writeInt(payload.banMultiplierPercent);
                 buf.writeInt(payload.maxBanTier);
@@ -88,6 +95,7 @@ public record ConfigSyncPayload(
                 buf.writeBoolean(payload.enableGhostEcho);
                 buf.writeBoolean(payload.enableSoulLink);
                 buf.writeInt(payload.soulLinkDamageSharePercent);
+                buf.writeBoolean(payload.soulLinkShareHunger);
                 buf.writeBoolean(payload.soulLinkRandomPartner);
                 buf.writeBoolean(payload.soulLinkTotemSavesPartner);
                 buf.writeInt(payload.soulLinkSeverCooldownMinutes);
@@ -99,6 +107,7 @@ public record ConfigSyncPayload(
                 buf.writeInt(payload.soulLinkCompassCooldownMinutes);
                 buf.writeBoolean(payload.enableSharedHealth);
                 buf.writeInt(payload.sharedHealthDamagePercent);
+                buf.writeBoolean(payload.sharedHealthShareHunger);
                 buf.writeBoolean(payload.sharedHealthTotemSavesAll);
                 buf.writeBoolean(payload.enableMercyCooldown);
                 buf.writeInt(payload.mercyPlaytimeHours);

@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] - 2026-01-01
+
+### Added
+- **Enable Death Bans Toggle** - Master switch to disable the ban system entirely while keeping other features active
+- **Soul Link Share Hunger** - Optional hunger sharing between soul-linked partners (when one loses hunger, partner loses same amount)
+- **Shared Health Share Hunger** - Optional server-wide hunger sharing (when any player loses hunger, all players lose same amount)
+
+### Changed
+- **Config Sync** - All new options properly sync between client and server
+
 ## [1.2.0] - 2025-12-15
 
 ### Added

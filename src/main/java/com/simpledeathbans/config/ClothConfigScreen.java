@@ -62,6 +62,7 @@ public class ClothConfigScreen {
                 // Send config to server for validation and sync
                 if (ClientPlayNetworking.canSend(ConfigSyncPayload.ID)) {
                     ClientPlayNetworking.send(new ConfigSyncPayload(
+                        config.enableDeathBans,
                         config.baseBanMinutes,
                         config.banMultiplierPercent,
                         config.maxBanTier,
@@ -69,6 +70,7 @@ public class ClothConfigScreen {
                         config.enableGhostEcho,
                         config.enableSoulLink,
                         config.soulLinkDamageSharePercent,
+                        config.soulLinkShareHunger,
                         config.soulLinkRandomPartner,
                         config.soulLinkTotemSavesPartner,
                         config.soulLinkSeverCooldownMinutes,
@@ -80,6 +82,7 @@ public class ClothConfigScreen {
                         config.soulLinkCompassCooldownMinutes,
                         config.enableSharedHealth,
                         config.sharedHealthDamagePercent,
+                        config.sharedHealthShareHunger,
                         config.sharedHealthTotemSavesAll,
                         config.enableMercyCooldown,
                         config.mercyPlaytimeHours,
@@ -118,6 +121,19 @@ public class ClothConfigScreen {
                             .formatted(Formatting.GOLD))
                     .build());
         }
+        
+        // Enable Death Bans toggle
+        general.addEntry(entryBuilder.startBooleanToggle(
+                Text.literal("Enable Death Bans"),
+                config.enableDeathBans)
+                .setDefaultValue(true)
+                .setTooltip(
+                        Text.literal("Master toggle for death ban system."),
+                        Text.literal("OFF: Deaths have no ban consequences.").formatted(Formatting.YELLOW),
+                        Text.literal("ON: Deaths result in temporary bans.").formatted(Formatting.GREEN),
+                        Text.literal("Default: ON").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> { if (canEdit) config.enableDeathBans = newValue; })
+                .build());
         
         // Base Ban Minutes (1-60)
         general.addEntry(entryBuilder.startIntField(
@@ -310,6 +326,19 @@ public class ClothConfigScreen {
                 .setSaveConsumer(newValue -> { if (canEdit) config.soulLinkDamageSharePercent = newValue; })
                 .build());
         
+        // Soul Link Share Hunger toggle
+        soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
+                Text.literal("Share Hunger"),
+                config.soulLinkShareHunger)
+                .setDefaultValue(false)
+                .setTooltip(
+                        Text.literal("Share hunger drain with your soul partner."),
+                        Text.literal("ON: When you lose hunger, partner loses too").formatted(Formatting.YELLOW),
+                        Text.literal("OFF: Hunger is independent").formatted(Formatting.GREEN),
+                        Text.literal("Default: OFF").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> { if (canEdit) config.soulLinkShareHunger = newValue; })
+                .build());
+        
         // Random Partner Assignment toggle
         soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
                 Text.literal("Random Partner Assignment"),
@@ -485,6 +514,19 @@ public class ClothConfigScreen {
                         Text.literal("Lethal damage = instant death for ALL").formatted(Formatting.RED),
                         Text.literal("Range: 0-200 | Default: 100").formatted(Formatting.DARK_GRAY))
                 .setSaveConsumer(newValue -> { if (canEdit) config.sharedHealthDamagePercent = newValue; })
+                .build());
+        
+        // Shared Health Share Hunger toggle
+        soulLinkHealth.addEntry(entryBuilder.startBooleanToggle(
+                Text.literal("Share Hunger"),
+                config.sharedHealthShareHunger)
+                .setDefaultValue(false)
+                .setTooltip(
+                        Text.literal("Share hunger drain with all players."),
+                        Text.literal("ON: When anyone loses hunger, all lose it").formatted(Formatting.YELLOW),
+                        Text.literal("OFF: Hunger is independent").formatted(Formatting.GREEN),
+                        Text.literal("Default: OFF").formatted(Formatting.DARK_GRAY))
+                .setSaveConsumer(newValue -> { if (canEdit) config.sharedHealthShareHunger = newValue; })
                 .build());
         
         // Totem Saves All toggle
