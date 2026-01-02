@@ -15,9 +15,10 @@ import java.util.*;
  * Handles hunger sharing for Soul Link and Shared Health systems.
  * 
  * HUNGER SHARING FLOW:
- * - Soul Link: When one partner loses hunger, the other loses the same amount
- * - Shared Health: When any player loses hunger, all players lose the same amount
+ * - Soul Link: When one partner's hunger changes, the other's changes the same amount
+ * - Shared Health: When any player's hunger changes, all players change the same amount
  * 
+ * Shares both hunger LOSS (from sprinting, damage, etc.) and hunger GAIN (from eating).
  * Uses tick-based tracking to detect hunger changes between ticks.
  */
 public class HungerShareHandler {
@@ -65,9 +66,9 @@ public class HungerShareHandler {
             // Get previous hunger (default to current if not tracked)
             Integer previousLevel = previousHunger.get(playerId);
             
-            if (previousLevel != null && currentHunger < previousLevel) {
-                // Player lost hunger - check if we should share it
-                int hungerLost = previousLevel - currentHunger;
+            if (previousLevel != null && currentHunger != previousLevel) {
+                // Player's hunger changed - check if we should share it
+                int hungerDelta = currentHunger - previousLevel; // positive = gained, negative = lost
                 
                 // Skip if already processing this player's hunger (prevents recursion)
                 if (processingHunger.contains(playerId)) {
@@ -76,11 +77,11 @@ public class HungerShareHandler {
                 
                 // Shared Health takes priority (server-wide sharing)
                 if (config.enableSharedHealth && config.sharedHealthShareHunger) {
-                    shareHungerToAll(player, hungerLost, server);
+                    shareHungerToAll(player, hungerDelta, server);
                 }
                 // Soul Link only if Shared Health is off
                 else if (config.enableSoulLink && config.soulLinkShareHunger && soulLinkManager != null) {
-                    shareHungerToPartner(player, hungerLost, soulLinkManager);
+                    shareHungerToPartner(player, hungerDelta, soulLinkManager);
                 }
             }
             
@@ -95,9 +96,10 @@ public class HungerShareHandler {
     }
     
     /**
-     * Share hunger loss to all other players (Shared Health mode)
+     * Share hunger change to all other players (Shared Health mode)
+     * @param hungerDelta positive = gained hunger, negative = lost hunger
      */
-    private static void shareHungerToAll(ServerPlayerEntity source, int hungerLost, MinecraftServer server) {
+    private static void shareHungerToAll(ServerPlayerEntity source, int hungerDelta, MinecraftServer server) {
         UUID sourceId = source.getUuid();
         
         // Mark source as processing to prevent recursion
@@ -116,9 +118,9 @@ public class HungerShareHandler {
                 processingHunger.add(playerId);
                 
                 try {
-                    // Reduce hunger (minimum 0)
+                    // Apply hunger change (clamp between 0 and 20)
                     int currentHunger = player.getHungerManager().getFoodLevel();
-                    int newHunger = Math.max(0, currentHunger - hungerLost);
+                    int newHunger = Math.max(0, Math.min(20, currentHunger + hungerDelta));
                     player.getHungerManager().setFoodLevel(newHunger);
                     
                     // Update tracking to prevent re-triggering
@@ -133,9 +135,10 @@ public class HungerShareHandler {
     }
     
     /**
-     * Share hunger loss to soul-linked partner (Soul Link mode)
+     * Share hunger change to soul-linked partner (Soul Link mode)
+     * @param hungerDelta positive = gained hunger, negative = lost hunger
      */
-    private static void shareHungerToPartner(ServerPlayerEntity source, int hungerLost, SoulLinkManager soulLinkManager) {
+    private static void shareHungerToPartner(ServerPlayerEntity source, int hungerDelta, SoulLinkManager soulLinkManager) {
         UUID sourceId = source.getUuid();
         
         Optional<UUID> partnerUuid = soulLinkManager.getPartner(sourceId);
@@ -156,9 +159,9 @@ public class HungerShareHandler {
         processingHunger.add(partnerId);
         
         try {
-            // Reduce partner's hunger (minimum 0)
+            // Apply hunger change to partner (clamp between 0 and 20)
             int currentHunger = partner.getHungerManager().getFoodLevel();
-            int newHunger = Math.max(0, currentHunger - hungerLost);
+            int newHunger = Math.max(0, Math.min(20, currentHunger + hungerDelta));
             partner.getHungerManager().setFoodLevel(newHunger);
             
             // Update tracking to prevent re-triggering

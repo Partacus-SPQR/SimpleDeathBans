@@ -9,11 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 - **Enable Death Bans Toggle** - Master switch to disable the ban system entirely while keeping other features active
-- **Soul Link Share Hunger** - Optional hunger sharing between soul-linked partners (when one loses hunger, partner loses same amount)
-- **Shared Health Share Hunger** - Optional server-wide hunger sharing (when any player loses hunger, all players lose same amount)
+- **Soul Link Share Hunger** - Optional hunger sharing between soul-linked partners (shares both hunger loss AND gain from eating)
+- **Shared Health Share Hunger** - Optional server-wide hunger sharing (shares both hunger loss AND gain from eating)
 
 ### Changed
 - **Config Sync** - All new options properly sync between client and server
+
+### Fixed
+- **Hunger Sharing** - Now properly shares hunger gain (from eating) in addition to hunger loss
 
 ## [1.2.0] - 2025-12-15
 
