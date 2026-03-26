@@ -6,8 +6,8 @@ import com.simpledeathbans.damage.SoulSeverDamageSource;
 import com.simpledeathbans.util.DamageShareTracker;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +29,7 @@ public class SharedHealthHandler {
     public static void register() {
         // Register damage event for shared health (NON-LETHAL only)
         ServerLivingEntityEvents.ALLOW_DAMAGE.register((entity, source, amount) -> {
-            if (!(entity instanceof ServerPlayerEntity player)) {
+            if (!(entity instanceof ServerPlayer player)) {
                 return true;
             }
             
@@ -42,7 +42,7 @@ public class SharedHealthHandler {
             }
             
             // SINGLE-PLAYER: Skip shared health (no other players)
-            ServerWorld world = (ServerWorld) player.getEntityWorld();
+            ServerLevel world = (ServerLevel) player.level();
             if (world.getServer().isSingleplayer()) {
                 return true;
             }
@@ -53,7 +53,7 @@ public class SharedHealthHandler {
             }
             
             // Check GLOBAL tracker to prevent cross-handler recursion with SoulLink
-            UUID playerId = player.getUuid();
+            UUID playerId = player.getUUID();
             if (DamageShareTracker.isProcessing(playerId)) {
                 return true;
             }
@@ -81,28 +81,28 @@ public class SharedHealthHandler {
      * Share non-lethal damage to all online players.
      * Lethal scenarios are handled by SharedHealthMixin.
      */
-    private static void shareNonLethalDamage(ServerPlayerEntity sourcePlayer, float damage, ModConfig config) {
-        ServerWorld sourceWorld = (ServerWorld) sourcePlayer.getEntityWorld();
+    private static void shareNonLethalDamage(ServerPlayer sourcePlayer, float damage, ModConfig config) {
+        ServerLevel sourceWorld = (ServerLevel) sourcePlayer.level();
         MinecraftServer server = sourceWorld.getServer();
         if (server == null) return;
         
-        List<ServerPlayerEntity> allPlayers = new ArrayList<>(server.getPlayerManager().getPlayerList());
+        List<ServerPlayer> allPlayers = new ArrayList<>(server.getPlayerList().getPlayers());
         
         // Remove the source player (they already took damage)
-        allPlayers.removeIf(p -> p.getUuid().equals(sourcePlayer.getUuid()));
+        allPlayers.removeIf(p -> p.getUUID().equals(sourcePlayer.getUUID()));
         
         if (allPlayers.isEmpty()) return;
         
         // Apply damage to all other players (non-lethal only - mixin catches lethal)
-        for (ServerPlayerEntity player : allPlayers) {
-            UUID playerId = player.getUuid();
+        for (ServerPlayer player : allPlayers) {
+            UUID playerId = player.getUUID();
             
             // Mark as processing GLOBALLY to prevent cross-handler recursion
             DamageShareTracker.markProcessing(playerId);
             try {
-                ServerWorld world = (ServerWorld) player.getEntityWorld();
+                ServerLevel world = (ServerLevel) player.level();
                 // Use magic damage for shared damage
-                player.damage(world, world.getDamageSources().magic(), damage);
+                player.hurtServer(world, world.damageSources().magic(), damage);
             } finally {
                 DamageShareTracker.clearProcessing(playerId);
             }

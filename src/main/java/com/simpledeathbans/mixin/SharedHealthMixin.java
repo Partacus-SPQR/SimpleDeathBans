@@ -3,21 +3,21 @@ package com.simpledeathbans.mixin;
 import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.config.ModConfig;
 import com.simpledeathbans.util.DamageShareTracker;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.particle.ParticleTypes;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
+import net.minecraft.world.InteractionHand;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -55,15 +55,15 @@ public abstract class SharedHealthMixin {
      * Priority lower than LivingEntityMixin to not conflict with Soul Link.
      */
     @Inject(
-        method = "damage",
+        method = "hurtServer",
         at = @At("HEAD"),
         cancellable = true
     )
-    private void onDamageForSharedHealth(ServerWorld world, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
+    private void onDamageForSharedHealth(ServerLevel world, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
         LivingEntity self = (LivingEntity) (Object) this;
         
         // Only for server-side players
-        if (!(self instanceof ServerPlayerEntity player)) {
+        if (!(self instanceof ServerPlayer player)) {
             return;
         }
         
@@ -73,7 +73,7 @@ public abstract class SharedHealthMixin {
         }
         
         // CRITICAL: Prevent recursion - check if we're already processing this player
-        if (DamageShareTracker.isProcessing(player.getUuid())) {
+        if (DamageShareTracker.isProcessing(player.getUUID())) {
             return;
         }
         
@@ -95,15 +95,15 @@ public abstract class SharedHealthMixin {
         
         // === LETHAL DAMAGE DETECTED - DEATH PACT ACTIVATED ===
         MinecraftServer server = world.getServer();
-        List<ServerPlayerEntity> allPlayers = new ArrayList<>(server.getPlayerManager().getPlayerList());
+        List<ServerPlayer> allPlayers = new ArrayList<>(server.getPlayerList().getPlayers());
         
         if (allPlayers.size() <= 1) {
             return; // Only one player, vanilla behavior
         }
         
         // Find all totem holders
-        List<ServerPlayerEntity> totemHolders = new ArrayList<>();
-        for (ServerPlayerEntity p : allPlayers) {
+        List<ServerPlayer> totemHolders = new ArrayList<>();
+        for (ServerPlayer p : allPlayers) {
             if (hasTotemOfUndying(p)) {
                 totemHolders.add(p);
             }
@@ -120,32 +120,32 @@ public abstract class SharedHealthMixin {
                 // === SCENARIO: At least one person has a totem - EVERYONE SAVED ===
                 
                 // Consume ALL totems from holders
-                for (ServerPlayerEntity holder : totemHolders) {
+                for (ServerPlayer holder : totemHolders) {
                     consumeTotem(holder);
                 }
                 
                 // Apply totem effects to ALL players
-                for (ServerPlayerEntity p : allPlayers) {
-                    applyTotemEffects(p, (ServerWorld) p.getEntityWorld());
+                for (ServerPlayer p : allPlayers) {
+                    applyTotemEffects(p, (ServerLevel) p.level());
                 }
                 
                 // Server-wide notification
-                Text serverMsg;
+                Component serverMsg;
                 if (totemHolders.size() == 1) {
                     // Single totem holder
                     String holderName = totemHolders.get(0).getName().getString();
-                    serverMsg = Text.literal("§k><§r ")
-                        .append(Text.literal(holderName).formatted(Formatting.GOLD))
-                        .append(Text.literal("'s totem has saved everyone from the void!").formatted(Formatting.DARK_PURPLE))
-                        .append(Text.literal(" §k><§r"));
+                    serverMsg = Component.literal("§k><§r ")
+                        .append(Component.literal(holderName).withStyle(ChatFormatting.GOLD))
+                        .append(Component.literal("'s totem has saved everyone from the void!").withStyle(ChatFormatting.DARK_PURPLE))
+                        .append(Component.literal(" §k><§r"));
                 } else {
                     // Multiple totem holders
-                    serverMsg = Text.literal("§k><§r ")
-                        .append(Text.literal("Multiple people have saved others from the void!").formatted(Formatting.DARK_PURPLE))
-                        .append(Text.literal(" §k><§r"));
+                    serverMsg = Component.literal("§k><§r ")
+                        .append(Component.literal("Multiple people have saved others from the void!").withStyle(ChatFormatting.DARK_PURPLE))
+                        .append(Component.literal(" §k><§r"));
                 }
                 
-                server.getPlayerManager().broadcast(serverMsg, false);
+                server.getPlayerList().broadcastSystemMessage(serverMsg, false);
                 
                 SimpleDeathBans.LOGGER.info("Shared Health: {} totem holder(s) saved all {} players", 
                     totemHolders.size(), allPlayers.size());
@@ -156,30 +156,30 @@ public abstract class SharedHealthMixin {
             
             // === SCENARIO: No one has totems - EVERYONE DIES ===
             // Send notification before death
-            Text voidPullMsg = Text.literal("§k><§r ")
-                .append(Text.literal("The void claims all...").formatted(Formatting.DARK_PURPLE))
-                .append(Text.literal(" §k><§r"));
+            Component voidPullMsg = Component.literal("§k><§r ")
+                .append(Component.literal("The void claims all...").withStyle(ChatFormatting.DARK_PURPLE))
+                .append(Component.literal(" §k><§r"));
             
-            for (ServerPlayerEntity p : allPlayers) {
-                p.sendMessage(voidPullMsg, false);
+            for (ServerPlayer p : allPlayers) {
+                p.sendSystemMessage(voidPullMsg);
             }
             
             // Mark all players as processing to prevent recursion
-            for (ServerPlayerEntity p : allPlayers) {
-                DamageShareTracker.markProcessing(p.getUuid());
+            for (ServerPlayer p : allPlayers) {
+                DamageShareTracker.markProcessing(p.getUUID());
             }
             
             try {
                 // Kill all OTHER players (the original player will die from the damage)
-                for (ServerPlayerEntity p : allPlayers) {
-                    if (!p.getUuid().equals(player.getUuid())) {
+                for (ServerPlayer p : allPlayers) {
+                    if (!p.getUUID().equals(player.getUUID())) {
                         p.kill(world); // Death pact - everyone dies
                     }
                 }
             } finally {
                 // Clear processing flags
-                for (ServerPlayerEntity p : allPlayers) {
-                    DamageShareTracker.clearProcessing(p.getUuid());
+                for (ServerPlayer p : allPlayers) {
+                    DamageShareTracker.clearProcessing(p.getUUID());
                 }
             }
             
@@ -196,53 +196,53 @@ public abstract class SharedHealthMixin {
                 // === SCENARIO: Some have totems - ONLY TOTEM HOLDERS SURVIVE ===
                 
                 // Players WITHOUT totems will die
-                List<ServerPlayerEntity> willDie = new ArrayList<>();
-                for (ServerPlayerEntity p : allPlayers) {
+                List<ServerPlayer> willDie = new ArrayList<>();
+                for (ServerPlayer p : allPlayers) {
                     if (!hasTotemOfUndying(p)) {
                         willDie.add(p);
                     }
                 }
                 
                 // Consume totems and apply effects to holders only
-                for (ServerPlayerEntity holder : totemHolders) {
+                for (ServerPlayer holder : totemHolders) {
                     consumeTotem(holder);
-                    applyTotemEffects(holder, (ServerWorld) holder.getEntityWorld());
+                    applyTotemEffects(holder, (ServerLevel) holder.level());
                 }
                 
                 // Server-wide notification
-                Text serverMsg;
+                Component serverMsg;
                 if (totemHolders.size() == 1) {
                     // Single survivor
                     String survivorName = totemHolders.get(0).getName().getString();
-                    serverMsg = Text.literal("§k><§r ")
-                        .append(Text.literal(survivorName).formatted(Formatting.GOLD))
-                        .append(Text.literal(" is the only one to survive from the void!").formatted(Formatting.DARK_PURPLE))
-                        .append(Text.literal(" §k><§r"));
+                    serverMsg = Component.literal("§k><§r ")
+                        .append(Component.literal(survivorName).withStyle(ChatFormatting.GOLD))
+                        .append(Component.literal(" is the only one to survive from the void!").withStyle(ChatFormatting.DARK_PURPLE))
+                        .append(Component.literal(" §k><§r"));
                 } else {
                     // Multiple survivors
-                    serverMsg = Text.literal("§k><§r ")
-                        .append(Text.literal("Multiple people have survived the voids grasp!").formatted(Formatting.DARK_PURPLE))
-                        .append(Text.literal(" §k><§r"));
+                    serverMsg = Component.literal("§k><§r ")
+                        .append(Component.literal("Multiple people have survived the voids grasp!").withStyle(ChatFormatting.DARK_PURPLE))
+                        .append(Component.literal(" §k><§r"));
                 }
                 
-                server.getPlayerManager().broadcast(serverMsg, false);
+                server.getPlayerList().broadcastSystemMessage(serverMsg, false);
                 
                 // Mark players as processing to prevent recursion
-                for (ServerPlayerEntity p : willDie) {
-                    DamageShareTracker.markProcessing(p.getUuid());
+                for (ServerPlayer p : willDie) {
+                    DamageShareTracker.markProcessing(p.getUUID());
                 }
                 
                 try {
                     // Kill players without totems
-                    for (ServerPlayerEntity p : willDie) {
-                        if (!p.getUuid().equals(player.getUuid())) {
+                    for (ServerPlayer p : willDie) {
+                        if (!p.getUUID().equals(player.getUUID())) {
                             p.kill(world);
                         }
                     }
                 } finally {
                     // Clear processing flags
-                    for (ServerPlayerEntity p : willDie) {
-                        DamageShareTracker.clearProcessing(p.getUuid());
+                    for (ServerPlayer p : willDie) {
+                        DamageShareTracker.clearProcessing(p.getUUID());
                     }
                 }
                 
@@ -250,7 +250,7 @@ public abstract class SharedHealthMixin {
                     totemHolders.size(), willDie.size());
                 
                 // If the triggering player had a totem, cancel damage
-                if (hasTotemOfUndying(player) || totemHolders.stream().anyMatch(h -> h.getUuid().equals(player.getUuid()))) {
+                if (hasTotemOfUndying(player) || totemHolders.stream().anyMatch(h -> h.getUUID().equals(player.getUUID()))) {
                     cir.setReturnValue(false);
                 }
                 // Otherwise let original damage proceed (they'll die)
@@ -258,30 +258,30 @@ public abstract class SharedHealthMixin {
             }
             
             // === SCENARIO: No one has totems - EVERYONE DIES ===
-            Text voidPullMsg = Text.literal("§k><§r ")
-                .append(Text.literal("The void claims all...").formatted(Formatting.DARK_PURPLE))
-                .append(Text.literal(" §k><§r"));
+            Component voidPullMsg = Component.literal("§k><§r ")
+                .append(Component.literal("The void claims all...").withStyle(ChatFormatting.DARK_PURPLE))
+                .append(Component.literal(" §k><§r"));
             
-            for (ServerPlayerEntity p : allPlayers) {
-                p.sendMessage(voidPullMsg, false);
+            for (ServerPlayer p : allPlayers) {
+                p.sendSystemMessage(voidPullMsg);
             }
             
             // Mark all players as processing to prevent recursion
-            for (ServerPlayerEntity p : allPlayers) {
-                DamageShareTracker.markProcessing(p.getUuid());
+            for (ServerPlayer p : allPlayers) {
+                DamageShareTracker.markProcessing(p.getUUID());
             }
             
             try {
                 // Kill all OTHER players
-                for (ServerPlayerEntity p : allPlayers) {
-                    if (!p.getUuid().equals(player.getUuid())) {
+                for (ServerPlayer p : allPlayers) {
+                    if (!p.getUUID().equals(player.getUUID())) {
                         p.kill(world);
                     }
                 }
             } finally {
                 // Clear processing flags
-                for (ServerPlayerEntity p : allPlayers) {
-                    DamageShareTracker.clearProcessing(p.getUuid());
+                for (ServerPlayer p : allPlayers) {
+                    DamageShareTracker.clearProcessing(p.getUUID());
                 }
             }
             
@@ -294,23 +294,23 @@ public abstract class SharedHealthMixin {
      * Check if player has a Totem of Undying in either hand.
      */
     @Unique
-    private boolean hasTotemOfUndying(ServerPlayerEntity player) {
-        return player.getStackInHand(Hand.MAIN_HAND).isOf(Items.TOTEM_OF_UNDYING) ||
-               player.getStackInHand(Hand.OFF_HAND).isOf(Items.TOTEM_OF_UNDYING);
+    private boolean hasTotemOfUndying(ServerPlayer player) {
+        return player.getItemInHand(InteractionHand.MAIN_HAND).is(Items.TOTEM_OF_UNDYING) ||
+               player.getItemInHand(InteractionHand.OFF_HAND).is(Items.TOTEM_OF_UNDYING);
     }
     
     /**
      * Consume totem from player's hand.
      */
     @Unique
-    private void consumeTotem(ServerPlayerEntity player) {
-        ItemStack mainHand = player.getStackInHand(Hand.MAIN_HAND);
-        ItemStack offHand = player.getStackInHand(Hand.OFF_HAND);
+    private void consumeTotem(ServerPlayer player) {
+        ItemStack mainHand = player.getItemInHand(InteractionHand.MAIN_HAND);
+        ItemStack offHand = player.getItemInHand(InteractionHand.OFF_HAND);
         
-        if (mainHand.isOf(Items.TOTEM_OF_UNDYING)) {
-            mainHand.decrement(1);
-        } else if (offHand.isOf(Items.TOTEM_OF_UNDYING)) {
-            offHand.decrement(1);
+        if (mainHand.is(Items.TOTEM_OF_UNDYING)) {
+            mainHand.shrink(1);
+        } else if (offHand.is(Items.TOTEM_OF_UNDYING)) {
+            offHand.shrink(1);
         }
     }
     
@@ -318,21 +318,21 @@ public abstract class SharedHealthMixin {
      * Apply totem effects to a player.
      */
     @Unique
-    private void applyTotemEffects(ServerPlayerEntity player, ServerWorld world) {
+    private void applyTotemEffects(ServerPlayer player, ServerLevel world) {
         // Set health to 1 (totem effect)
         player.setHealth(1.0F);
         
         // Clear harmful effects
-        player.clearStatusEffects();
+        player.removeAllEffects();
         
         // Apply regeneration, absorption, and fire resistance like vanilla totem
-        player.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, 900, 1));
-        player.addStatusEffect(new StatusEffectInstance(StatusEffects.ABSORPTION, 100, 1));
-        player.addStatusEffect(new StatusEffectInstance(StatusEffects.FIRE_RESISTANCE, 800, 0));
+        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 900, 1));
+        player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 100, 1));
+        player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 800, 0));
         
         // Play totem animation and sound
         world.playSound(null, player.getX(), player.getY(), player.getZ(),
-            SoundEvents.ITEM_TOTEM_USE, SoundCategory.PLAYERS, 1.0f, 1.0f);
+            SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 1.0f, 1.0f);
         
         // Spawn totem particles
         spawnTotemParticles(world, player);
@@ -342,7 +342,7 @@ public abstract class SharedHealthMixin {
      * Spawns Totem of Undying particles around a player.
      */
     @Unique
-    private void spawnTotemParticles(ServerWorld world, ServerPlayerEntity player) {
+    private void spawnTotemParticles(ServerLevel world, ServerPlayer player) {
         double x = player.getX();
         double y = player.getY() + 1.0;
         double z = player.getZ();
@@ -353,7 +353,7 @@ public abstract class SharedHealthMixin {
             double offsetY = (world.getRandom().nextDouble() - 0.5) * 2.0;
             double offsetZ = (world.getRandom().nextDouble() - 0.5) * 2.0;
             
-            world.spawnParticles(ParticleTypes.TOTEM_OF_UNDYING,
+            world.sendParticles(ParticleTypes.TOTEM_OF_UNDYING,
                 x + offsetX, y + offsetY, z + offsetZ,
                 1, 0, 0, 0, 0.5);
         }

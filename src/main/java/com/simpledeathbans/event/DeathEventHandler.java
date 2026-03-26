@@ -8,17 +8,17 @@ import com.simpledeathbans.data.SoulLinkManager;
 import com.simpledeathbans.network.SinglePlayerBanPayload;
 import net.fabricmc.fabric.api.entity.event.v1.ServerLivingEntityEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LightningEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
 import java.util.UUID;
 
@@ -29,13 +29,13 @@ public class DeathEventHandler {
     
     public static void register() {
         ServerLivingEntityEvents.AFTER_DEATH.register((entity, damageSource) -> {
-            if (entity instanceof ServerPlayerEntity player) {
+            if (entity instanceof ServerPlayer player) {
                 handlePlayerDeath(player, damageSource);
             }
         });
     }
     
-    private static void handlePlayerDeath(ServerPlayerEntity player, DamageSource damageSource) {
+    private static void handlePlayerDeath(ServerPlayer player, DamageSource damageSource) {
         SimpleDeathBans mod = SimpleDeathBans.getInstance();
         if (mod == null) return;
         
@@ -53,7 +53,7 @@ public class DeathEventHandler {
         }
         
         // Check if mod is disabled in single-player
-        ServerWorld world = (ServerWorld) player.getEntityWorld();
+        ServerLevel world = (ServerLevel) player.level();
         if (world.getServer().isSingleplayer() && !config.singlePlayerEnabled) {
             SimpleDeathBans.LOGGER.info("Single-player mod disabled - skipping death processing for {}", 
                     player.getName().getString());
@@ -81,19 +81,19 @@ public class DeathEventHandler {
     
     private static boolean isPvPDeath(DamageSource source) {
         // Direct player attack
-        if (source.getAttacker() instanceof PlayerEntity) {
+        if (source.getEntity() instanceof Player) {
             return true;
         }
         
         // Indirect kill (player pushed into hazard)
-        if (source.getSource() instanceof PlayerEntity) {
+        if (source.getDirectEntity() instanceof Player) {
             return true;
         }
         
         // Check for projectiles from players
-        var attacker = source.getAttacker();
-        if (attacker != null && source.getSource() != attacker) {
-            if (source.getSource() instanceof PlayerEntity) {
+        var attacker = source.getEntity();
+        if (attacker != null && source.getDirectEntity() != attacker) {
+            if (source.getDirectEntity() instanceof Player) {
                 return true;
             }
         }
@@ -101,40 +101,40 @@ public class DeathEventHandler {
         return false;
     }
     
-    private static void handleSoulLinkDeath(ServerPlayerEntity deadPlayer, SoulLinkManager soulLinkManager) {
-        UUID deadPlayerId = deadPlayer.getUuid();
+    private static void handleSoulLinkDeath(ServerPlayer deadPlayer, SoulLinkManager soulLinkManager) {
+        UUID deadPlayerId = deadPlayer.getUUID();
         
         soulLinkManager.getPartner(deadPlayerId).ifPresent(partnerUuid -> {
-            ServerWorld world = (ServerWorld) deadPlayer.getEntityWorld();
-            ServerPlayerEntity partner = world.getServer().getPlayerManager().getPlayer(partnerUuid);
+            ServerLevel world = (ServerLevel) deadPlayer.level();
+            ServerPlayer partner = world.getServer().getPlayerList().getPlayer(partnerUuid);
             
             if (partner != null && partner.isAlive()) {
                 // Play wither spawn sound to both
                 world.playSound(
                     null, deadPlayer.getX(), deadPlayer.getY(), deadPlayer.getZ(),
-                    SoundEvents.ENTITY_WITHER_SPAWN, SoundCategory.PLAYERS,
+                    SoundEvents.WITHER_SPAWN, SoundSource.PLAYERS,
                     1.0f, 1.0f
                 );
                 
-                ServerWorld partnerWorld = (ServerWorld) partner.getEntityWorld();
+                ServerLevel partnerWorld = (ServerLevel) partner.level();
                 partnerWorld.playSound(
                     null, partner.getX(), partner.getY(), partner.getZ(),
-                    SoundEvents.ENTITY_WITHER_SPAWN, SoundCategory.PLAYERS,
+                    SoundEvents.WITHER_SPAWN, SoundSource.PLAYERS,
                     1.0f, 1.0f
                 );
                 
                 // Send soul sever message
-                Text soulSeverMessage = Text.literal("Your soul has been severed")
-                    .setStyle(Style.EMPTY.withColor(Formatting.DARK_RED).withItalic(true));
-                partner.sendMessage(soulSeverMessage, false);
-                deadPlayer.sendMessage(soulSeverMessage, false);
+                Component soulSeverMessage = Component.literal("Your soul has been severed")
+                    .withStyle(Style.EMPTY.withColor(ChatFormatting.DARK_RED).withItalic(true));
+                partner.sendSystemMessage(soulSeverMessage);
+                deadPlayer.sendSystemMessage(soulSeverMessage);
                 
                 // Kill partner with soul sever damage (delayed to avoid recursion)
                 SoulSeverDamageSource.markSoulSeverTarget(partnerUuid);
                 partnerWorld.getServer().execute(() -> {
                     try {
                         DamageSource soulSeverDamage = SoulSeverDamageSource.create(partnerWorld, deadPlayer);
-                        partner.damage(partnerWorld, soulSeverDamage, Float.MAX_VALUE);
+                        partner.hurtServer(partnerWorld, soulSeverDamage, Float.MAX_VALUE);
                     } finally {
                         SoulSeverDamageSource.clearSoulSeverTarget(partnerUuid);
                     }
@@ -143,12 +143,12 @@ public class DeathEventHandler {
         });
     }
     
-    private static void handleBanAndDisconnect(ServerPlayerEntity player, BanDataManager banManager, ModConfig config, boolean isPvP) {
+    private static void handleBanAndDisconnect(ServerPlayer player, BanDataManager banManager, ModConfig config, boolean isPvP) {
         // Calculate ban time
-        int banMinutes = banManager.calculateBanMinutes(player.getUuid(), isPvP);
+        int banMinutes = banManager.calculateBanMinutes(player.getUUID(), isPvP);
         
         // Create ban entry
-        BanDataManager.BanEntry banEntry = banManager.createBan(player.getUuid(), player.getName().getString(), banMinutes);
+        BanDataManager.BanEntry banEntry = banManager.createBan(player.getUUID(), player.getName().getString(), banMinutes);
         
         // Ghost Echo effect
         if (config.enableGhostEcho) {
@@ -156,18 +156,18 @@ public class DeathEventHandler {
         }
         
         // Build kick message
-        int tier = banManager.getTier(player.getUuid());
+        int tier = banManager.getTier(player.getUUID());
         String timeRemaining = banEntry.getRemainingTimeFormatted();
         
-        Text kickMessage = Text.empty()
-            .append(Text.literal("§c§k><§r §4§lBANNED §c§k><§r\n\n"))
-            .append(Text.literal("§5You have been claimed by the void.\n\n"))
-            .append(Text.literal("§7Time remaining: §c" + timeRemaining + "§r\n"))
-            .append(Text.literal("§7Ban Tier: §c" + tier + "§r\n\n"))
-            .append(Text.literal("§8Death results in temporary bans.\n"))
-            .append(Text.literal("§8Your ban tier increases with each death."));
+        Component kickMessage = Component.empty()
+            .append(Component.literal("§c§k><§r §4§lBANNED §c§k><§r\n\n"))
+            .append(Component.literal("§5You have been claimed by the void.\n\n"))
+            .append(Component.literal("§7Time remaining: §c" + timeRemaining + "§r\n"))
+            .append(Component.literal("§7Ban Tier: §c" + tier + "§r\n\n"))
+            .append(Component.literal("§8Death results in temporary bans.\n"))
+            .append(Component.literal("§8Your ban tier increases with each death."));
         
-        ServerWorld world = (ServerWorld) player.getEntityWorld();
+        ServerLevel world = (ServerLevel) player.level();
         
         // SINGLE-PLAYER: Send a network payload to trigger client-side disconnect
         // This allows the client to properly save the world before disconnecting,
@@ -193,29 +193,29 @@ public class DeathEventHandler {
         
         // MULTIPLAYER: Disconnect the player
         world.getServer().execute(() -> {
-            player.networkHandler.disconnect(kickMessage);
+            player.connection.disconnect(kickMessage);
         });
     }
     
-    private static void performGhostEcho(ServerPlayerEntity player, BanDataManager.BanEntry banEntry) {
-        ServerWorld world = (ServerWorld) player.getEntityWorld();
+    private static void performGhostEcho(ServerPlayer player, BanDataManager.BanEntry banEntry) {
+        ServerLevel world = (ServerLevel) player.level();
         
         // Spawn cosmetic lightning at death location (no damage, no fire)
-        LightningEntity lightning = new LightningEntity(EntityType.LIGHTNING_BOLT, world);
-        lightning.refreshPositionAfterTeleport(player.getX(), player.getY(), player.getZ());
-        lightning.setCosmetic(true); // No damage, no fire
-        world.spawnEntity(lightning);
+        LightningBolt lightning = new LightningBolt(EntityType.LIGHTNING_BOLT, world);
+        lightning.teleportTo(player.getX(), player.getY(), player.getZ());
+        lightning.setVisualOnly(true); // No damage, no fire
+        world.addFreshEntity(lightning);
         
         // Broadcast custom death message with styled formatting
         // §k = obfuscated, §4 = dark red, §5 = dark purple, §c = red
         String banTime = banEntry.getRemainingTimeFormatted();
-        Text deathMessage = Text.empty()
-            .append(Text.literal("§c§k><§r "))
-            .append(Text.literal(player.getName().getString()).formatted(Formatting.DARK_PURPLE))
-            .append(Text.literal(" has been lost to the void for ").formatted(Formatting.DARK_PURPLE))
-            .append(Text.literal(banTime).formatted(Formatting.RED))
-            .append(Text.literal(" §c§k><§r"));
+        Component deathMessage = Component.empty()
+            .append(Component.literal("§c§k><§r "))
+            .append(Component.literal(player.getName().getString()).withStyle(ChatFormatting.DARK_PURPLE))
+            .append(Component.literal(" has been lost to the void for ").withStyle(ChatFormatting.DARK_PURPLE))
+            .append(Component.literal(banTime).withStyle(ChatFormatting.RED))
+            .append(Component.literal(" §c§k><§r"));
         
-        world.getServer().getPlayerManager().broadcast(deathMessage, false);
+        world.getServer().getPlayerList().broadcastSystemMessage(deathMessage, false);
     }
 }

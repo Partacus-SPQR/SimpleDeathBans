@@ -2,7 +2,7 @@ package com.simpledeathbans.config;
 
 import com.terraformersmc.modmenu.api.ConfigScreenFactory;
 import com.terraformersmc.modmenu.api.ModMenuApi;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.screens.Screen;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +20,8 @@ public class ModMenuIntegration implements ModMenuApi {
      */
     public static Screen getConfigScreen(Screen parent) {
         // Try Cloth Config first
-        if (isClothConfigAvailable()) {
+        //? if <26.1 {
+        /*if (isClothConfigAvailable()) {
             try {
                 LOGGER.info("Using Cloth Config screen");
                 return ClothConfigScreen.create(parent);
@@ -28,6 +29,7 @@ public class ModMenuIntegration implements ModMenuApi {
                 LOGGER.warn("Failed to create Cloth Config screen, using fallback", e);
             }
         }
+        *///?}
         
         LOGGER.info("Using fallback config screen (Cloth Config unavailable)");
         return new SimpleFallbackConfigScreen(parent);

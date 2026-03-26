@@ -5,8 +5,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.simpledeathbans.SimpleDeathBans;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.BlockPos;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -58,7 +58,7 @@ public class PlayerDataManager {
             totalPlaytimeSinceDeathTicks = 0;
         }
         
-        public void startActivityCheck(ServerPlayerEntity player) {
+        public void startActivityCheck(ServerPlayer player) {
             lastActivityCheckTime = System.currentTimeMillis();
             lastCheckX = player.getX();
             lastCheckY = player.getY();
@@ -67,7 +67,7 @@ public class PlayerDataManager {
             lastCheckBlocksPlaced = currentBlocksPlaced;
         }
         
-        public boolean checkActivity(ServerPlayerEntity player, int requiredMovement, int requiredInteractions) {
+        public boolean checkActivity(ServerPlayer player, int requiredMovement, int requiredInteractions) {
             double dx = player.getX() - lastCheckX;
             double dy = player.getY() - lastCheckY;
             double dz = player.getZ() - lastCheckZ;
@@ -91,7 +91,7 @@ public class PlayerDataManager {
     
     public PlayerDataManager(MinecraftServer server) {
         this.server = server;
-        this.dataFile = server.getSavePath(net.minecraft.util.WorldSavePath.ROOT).resolve("simpledeathbans_players.json");
+        this.dataFile = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).resolve("simpledeathbans_players.json");
     }
     
     public void load() {

@@ -3,9 +3,9 @@ package com.simpledeathbans.mixin;
 import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.data.BanDataManager;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.PlayerManager;
-import net.minecraft.server.PlayerConfigEntry;
-import net.minecraft.text.Text;
+import net.minecraft.server.players.PlayerList;
+import net.minecraft.server.players.NameAndId;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -31,7 +31,7 @@ import java.util.UUID;
  * - Client properly saves world and disconnects to title screen
  * - On next join attempt, ban is checked but not enforced here (player sees title screen)
  */
-@Mixin(PlayerManager.class)
+@Mixin(PlayerList.class)
 public class PlayerManagerMixin {
     
     @Shadow @Final private MinecraftServer server;
@@ -43,8 +43,8 @@ public class PlayerManagerMixin {
      * MULTIPLAYER ONLY: In single-player, we skip ban enforcement entirely
      * to prevent world corruption from blocking player join after server start.
      */
-    @Inject(method = "checkCanJoin", at = @At("HEAD"), cancellable = true)
-    private void onCheckCanJoin(SocketAddress address, PlayerConfigEntry configEntry, CallbackInfoReturnable<Text> cir) {
+    @Inject(method = "canPlayerLogin", at = @At("HEAD"), cancellable = true)
+    private void onCheckCanJoin(SocketAddress address, NameAndId configEntry, CallbackInfoReturnable<Component> cir) {
         UUID playerId = configEntry.id();
         
         // CRITICAL: Skip ban enforcement in single-player to prevent world corruption
@@ -66,13 +66,13 @@ public class PlayerManagerMixin {
             String timeFormatted = entry.getRemainingTimeFormatted();
             
             // Styled ban message with obfuscated header, dark purple theme
-            Text banMessage = Text.empty()
-                .append(Text.literal("§c§k><§r §4§lBANNED §c§k><§r\n\n"))
-                .append(Text.literal("§5You have been claimed by the void.\n\n"))
-                .append(Text.literal("§7Time remaining: §c" + timeFormatted + "§r\n"))
-                .append(Text.literal("§7Ban Tier: §c" + entry.banTier() + "§r\n\n"))
-                .append(Text.literal("§8Death results in temporary bans.\n"))
-                .append(Text.literal("§8Your ban tier increases with each death."));
+            Component banMessage = Component.empty()
+                .append(Component.literal("§c§k><§r §4§lBANNED §c§k><§r\n\n"))
+                .append(Component.literal("§5You have been claimed by the void.\n\n"))
+                .append(Component.literal("§7Time remaining: §c" + timeFormatted + "§r\n"))
+                .append(Component.literal("§7Ban Tier: §c" + entry.banTier() + "§r\n\n"))
+                .append(Component.literal("§8Death results in temporary bans.\n"))
+                .append(Component.literal("§8Your ban tier increases with each death."));
             
             cir.setReturnValue(banMessage);
         }

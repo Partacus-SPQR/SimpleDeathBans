@@ -6,8 +6,8 @@ import com.simpledeathbans.data.SoulLinkManager;
 import com.simpledeathbans.util.DamageShareTracker;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.*;
 
@@ -53,15 +53,15 @@ public class HungerShareHandler {
             return;
         }
         
-        List<ServerPlayerEntity> players = server.getPlayerManager().getPlayerList();
+        List<ServerPlayer> players = server.getPlayerList().getPlayers();
         if (players.isEmpty()) return;
         
         SoulLinkManager soulLinkManager = mod.getSoulLinkManager();
         
         // Process hunger changes
-        for (ServerPlayerEntity player : players) {
-            UUID playerId = player.getUuid();
-            int currentHunger = player.getHungerManager().getFoodLevel();
+        for (ServerPlayer player : players) {
+            UUID playerId = player.getUUID();
+            int currentHunger = player.getFoodData().getFoodLevel();
             
             // Get previous hunger (default to current if not tracked)
             Integer previousLevel = previousHunger.get(playerId);
@@ -91,7 +91,7 @@ public class HungerShareHandler {
         
         // Clean up players who left
         previousHunger.keySet().removeIf(uuid -> 
-            server.getPlayerManager().getPlayer(uuid) == null
+            server.getPlayerList().getPlayer(uuid) == null
         );
     }
     
@@ -99,17 +99,17 @@ public class HungerShareHandler {
      * Share hunger change to all other players (Shared Health mode)
      * @param hungerDelta positive = gained hunger, negative = lost hunger
      */
-    private static void shareHungerToAll(ServerPlayerEntity source, int hungerDelta, MinecraftServer server) {
-        UUID sourceId = source.getUuid();
+    private static void shareHungerToAll(ServerPlayer source, int hungerDelta, MinecraftServer server) {
+        UUID sourceId = source.getUUID();
         
         // Mark source as processing to prevent recursion
         processingHunger.add(sourceId);
         
         try {
-            for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-                if (player.getUuid().equals(sourceId)) continue;
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                if (player.getUUID().equals(sourceId)) continue;
                 
-                UUID playerId = player.getUuid();
+                UUID playerId = player.getUUID();
                 
                 // Skip if this player is also being processed
                 if (processingHunger.contains(playerId)) continue;
@@ -119,9 +119,9 @@ public class HungerShareHandler {
                 
                 try {
                     // Apply hunger change (clamp between 0 and 20)
-                    int currentHunger = player.getHungerManager().getFoodLevel();
+                    int currentHunger = player.getFoodData().getFoodLevel();
                     int newHunger = Math.max(0, Math.min(20, currentHunger + hungerDelta));
-                    player.getHungerManager().setFoodLevel(newHunger);
+                    player.getFoodData().setFoodLevel(newHunger);
                     
                     // Update tracking to prevent re-triggering
                     previousHunger.put(playerId, newHunger);
@@ -138,18 +138,18 @@ public class HungerShareHandler {
      * Share hunger change to soul-linked partner (Soul Link mode)
      * @param hungerDelta positive = gained hunger, negative = lost hunger
      */
-    private static void shareHungerToPartner(ServerPlayerEntity source, int hungerDelta, SoulLinkManager soulLinkManager) {
-        UUID sourceId = source.getUuid();
+    private static void shareHungerToPartner(ServerPlayer source, int hungerDelta, SoulLinkManager soulLinkManager) {
+        UUID sourceId = source.getUUID();
         
         Optional<UUID> partnerUuid = soulLinkManager.getPartner(sourceId);
         if (partnerUuid.isEmpty()) return;
         
-        ServerWorld world = (ServerWorld) source.getEntityWorld();
-        ServerPlayerEntity partner = world.getServer().getPlayerManager().getPlayer(partnerUuid.get());
+        ServerLevel world = (ServerLevel) source.level();
+        ServerPlayer partner = world.getServer().getPlayerList().getPlayer(partnerUuid.get());
         
         if (partner == null || !partner.isAlive()) return;
         
-        UUID partnerId = partner.getUuid();
+        UUID partnerId = partner.getUUID();
         
         // Skip if partner is already being processed
         if (processingHunger.contains(partnerId)) return;
@@ -160,9 +160,9 @@ public class HungerShareHandler {
         
         try {
             // Apply hunger change to partner (clamp between 0 and 20)
-            int currentHunger = partner.getHungerManager().getFoodLevel();
+            int currentHunger = partner.getFoodData().getFoodLevel();
             int newHunger = Math.max(0, Math.min(20, currentHunger + hungerDelta));
-            partner.getHungerManager().setFoodLevel(newHunger);
+            partner.getFoodData().setFoodLevel(newHunger);
             
             // Update tracking to prevent re-triggering
             previousHunger.put(partnerId, newHunger);

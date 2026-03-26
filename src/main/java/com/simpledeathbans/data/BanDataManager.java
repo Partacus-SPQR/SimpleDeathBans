@@ -5,12 +5,12 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.simpledeathbans.SimpleDeathBans;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -33,7 +33,7 @@ public class BanDataManager {
     private final Set<UUID> recentlyExpiredBans = Collections.newSetFromMap(new ConcurrentHashMap<>());
     
     public BanDataManager(MinecraftServer server) {
-        this.dataPath = server.getSavePath(net.minecraft.util.WorldSavePath.ROOT)
+        this.dataPath = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
             .resolve("simpledeathbans");
         load();
     }
@@ -107,8 +107,8 @@ public class BanDataManager {
     /**
      * Check if a returning player was previously banned and announce their return.
      */
-    public void checkAndAnnounceReturn(ServerPlayerEntity player, MinecraftServer server) {
-        UUID playerId = player.getUuid();
+    public void checkAndAnnounceReturn(ServerPlayer player, MinecraftServer server) {
+        UUID playerId = player.getUUID();
         
         // Check if this player had an expired ban we should announce
         if (recentlyExpiredBans.remove(playerId)) {
@@ -116,17 +116,17 @@ public class BanDataManager {
             String playerName = player.getName().getString();
             
             // Dark purple styled return message to match ban message theme
-            Text returnMessage = Text.empty()
-                .append(Text.literal("✦ ").formatted(Formatting.DARK_PURPLE))
-                .append(Text.literal(playerName).formatted(Formatting.GOLD))
-                .append(Text.literal(" has found their way back from the void!").formatted(Formatting.DARK_PURPLE));
+            Component returnMessage = Component.empty()
+                .append(Component.literal("✦ ").withStyle(ChatFormatting.DARK_PURPLE))
+                .append(Component.literal(playerName).withStyle(ChatFormatting.GOLD))
+                .append(Component.literal(" has found their way back from the void!").withStyle(ChatFormatting.DARK_PURPLE));
             
-            server.getPlayerManager().broadcast(returnMessage, false);
+            server.getPlayerList().broadcastSystemMessage(returnMessage, false);
             
             // Play a mystical sound for the returning player
-            ServerWorld world = (ServerWorld) player.getEntityWorld();
+            ServerLevel world = (ServerLevel) player.level();
             world.playSound(null, player.getX(), player.getY(), player.getZ(),
-                SoundEvents.BLOCK_RESPAWN_ANCHOR_DEPLETE, SoundCategory.PLAYERS, 1.0f, 1.2f);
+                SoundEvents.RESPAWN_ANCHOR_DEPLETE, SoundSource.PLAYERS, 1.0f, 1.2f);
             
             SimpleDeathBans.LOGGER.info("{} has returned from ban (tier {})", playerName, tierHistory.getOrDefault(playerId, 0));
         }

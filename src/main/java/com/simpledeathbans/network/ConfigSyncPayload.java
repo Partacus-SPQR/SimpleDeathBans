@@ -1,9 +1,13 @@
 package com.simpledeathbans.network;
 
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+//? if >=1.21.11 {
+import net.minecraft.resources.Identifier;
+//?} else {
+/*import net.minecraft.resources.ResourceLocation;*/
+//?}
 
 /**
  * Network payload for syncing config changes from client to server.
@@ -41,15 +45,20 @@ public record ConfigSyncPayload(
     int pveBanMultiplierPercent,
     boolean enableResurrectionAltar,
     boolean singlePlayerEnabled
-) implements CustomPayload {
+) implements CustomPacketPayload {
     
-    public static final CustomPayload.Id<ConfigSyncPayload> ID = 
-        new CustomPayload.Id<>(Identifier.of("simpledeathbans", "config_sync"));
+    //? if >=1.21.11 {
+    public static final CustomPacketPayload.Type<ConfigSyncPayload> ID = 
+        new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath("simpledeathbans", "config_sync"));
+    //?} else {
+    /*public static final CustomPacketPayload.Type<ConfigSyncPayload> ID = 
+        new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("simpledeathbans", "config_sync"));*/
+    //?}
     
-    public static final PacketCodec<RegistryByteBuf, ConfigSyncPayload> CODEC = 
-        new PacketCodec<>() {
+    public static final StreamCodec<RegistryFriendlyByteBuf, ConfigSyncPayload> CODEC = 
+        new StreamCodec<>() {
             @Override
-            public ConfigSyncPayload decode(RegistryByteBuf buf) {
+            public ConfigSyncPayload decode(RegistryFriendlyByteBuf buf) {
                 return new ConfigSyncPayload(
                     buf.readBoolean(),    // enableDeathBans
                     buf.readInt(),        // baseBanMinutes
@@ -86,7 +95,7 @@ public record ConfigSyncPayload(
             }
             
             @Override
-            public void encode(RegistryByteBuf buf, ConfigSyncPayload payload) {
+            public void encode(RegistryFriendlyByteBuf buf, ConfigSyncPayload payload) {
                 buf.writeBoolean(payload.enableDeathBans);
                 buf.writeInt(payload.baseBanMinutes);
                 buf.writeInt(payload.banMultiplierPercent);
@@ -122,7 +131,7 @@ public record ConfigSyncPayload(
         };
     
     @Override
-    public CustomPayload.Id<? extends CustomPayload> getId() {
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

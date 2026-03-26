@@ -12,7 +12,8 @@
     
     "key.simpledeathbans.config": "Open Config Screen",
     "key.categories.simpledeathbans": "SimpleDeathBans",
-    "category.simpledeathbans.category": "SimpleDeathBans",
+    "key.category.simpledeathbans.category": "SimpleDeathBans Config",
+    "category.simpledeathbans.category": "SimpleDeathBans Config",
     
     "config.simpledeathbans.title": "SimpleDeathBans Configuration",
     "config.simpledeathbans.general": "General Settings",

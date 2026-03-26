@@ -8,17 +8,17 @@ import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.data.BanDataManager;
 import com.simpledeathbans.data.SoulLinkManager;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.minecraft.command.argument.EntityArgumentType;
+import net.minecraft.commands.arguments.EntityArgument;
 //? if >=1.21.11
-import net.minecraft.command.permission.Permission;
+import net.minecraft.server.permissions.Permission;
 //? if >=1.21.11
-import net.minecraft.command.permission.PermissionLevel;
-import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.server.permissions.PermissionLevel;
+import net.minecraft.commands.Commands;
+import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
 /**
  * Registers all admin commands for the mod.
@@ -41,50 +41,50 @@ public class ModCommands {
     public static void register() {
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             // Main command: /simpledeathbans
-            var mainCommand = CommandManager.literal("simpledeathbans")
+            var mainCommand = Commands.literal("simpledeathbans")
                 .requires(ModCommands::hasOperatorPermission)
-                .then(CommandManager.literal("reload")
+                .then(Commands.literal("reload")
                     .executes(ModCommands::reloadConfig))
-                .then(CommandManager.literal("settier")
-                    .then(CommandManager.argument("player", EntityArgumentType.player())
-                        .then(CommandManager.argument("tier", IntegerArgumentType.integer(0, 100))
+                .then(Commands.literal("settier")
+                    .then(Commands.argument("player", EntityArgument.player())
+                        .then(Commands.argument("tier", IntegerArgumentType.integer(0, 100))
                             .executes(ModCommands::setTier))))
-                .then(CommandManager.literal("gettier")
-                    .then(CommandManager.argument("player", EntityArgumentType.player())
+                .then(Commands.literal("gettier")
+                    .then(Commands.argument("player", EntityArgument.player())
                         .executes(ModCommands::getTier)))
-                .then(CommandManager.literal("unban")
-                    .then(CommandManager.argument("player", EntityArgumentType.player())
+                .then(Commands.literal("unban")
+                    .then(Commands.argument("player", EntityArgument.player())
                         .executes(ModCommands::unbanPlayer)))
-                .then(CommandManager.literal("unbanbyname")
-                    .then(CommandManager.argument("playername", StringArgumentType.word())
+                .then(Commands.literal("unbanbyname")
+                    .then(Commands.argument("playername", StringArgumentType.word())
                         .executes(ModCommands::unbanPlayerByName)))
-                .then(CommandManager.literal("clearbans")
+                .then(Commands.literal("clearbans")
                     .executes(ModCommands::clearAllBans))
-                .then(CommandManager.literal("listbans")
+                .then(Commands.literal("listbans")
                     .executes(ModCommands::listBans))
-                .then(CommandManager.literal("soullink")
-                    .then(CommandManager.literal("toggle")
+                .then(Commands.literal("soullink")
+                    .then(Commands.literal("toggle")
                         .executes(ModCommands::toggleSoulLink))
-                    .then(CommandManager.literal("set")
-                        .then(CommandManager.argument("player1", EntityArgumentType.player())
-                            .then(CommandManager.argument("player2", EntityArgumentType.player())
+                    .then(Commands.literal("set")
+                        .then(Commands.argument("player1", EntityArgument.player())
+                            .then(Commands.argument("player2", EntityArgument.player())
                                 .executes(ModCommands::setSoulLink))))
-                    .then(CommandManager.literal("clear")
-                        .then(CommandManager.argument("player", EntityArgumentType.player())
+                    .then(Commands.literal("clear")
+                        .then(Commands.argument("player", EntityArgument.player())
                             .executes(ModCommands::clearSoulLink)))
-                    .then(CommandManager.literal("status")
-                        .then(CommandManager.argument("player", EntityArgumentType.player())
+                    .then(Commands.literal("status")
+                        .then(Commands.argument("player", EntityArgument.player())
                             .executes(ModCommands::getSoulLinkStatus))))
-                .then(CommandManager.literal("sharedhealth")
-                    .then(CommandManager.literal("toggle")
+                .then(Commands.literal("sharedhealth")
+                    .then(Commands.literal("toggle")
                         .executes(ModCommands::toggleSharedHealth))
-                    .then(CommandManager.literal("status")
+                    .then(Commands.literal("status")
                         .executes(ModCommands::getSharedHealthStatus)));
             
             dispatcher.register(mainCommand);
             
             // Alias: /sdb
-            dispatcher.register(CommandManager.literal("sdb")
+            dispatcher.register(Commands.literal("sdb")
                 .requires(ModCommands::hasOperatorPermission)
                 .redirect(dispatcher.getRoot().getChild("simpledeathbans"))
             );
@@ -96,184 +96,184 @@ public class ModCommands {
      * Console and command blocks always have permission.
      * Players must have operator level 4.
      */
-    private static boolean hasOperatorPermission(ServerCommandSource source) {
+    private static boolean hasOperatorPermission(CommandSourceStack source) {
         //? if >=1.21.11 {
         // 1.21.11+: Use new Permission/PermissionLevel API
-        return source.getPermissions().hasPermission(new Permission.Level(PermissionLevel.OWNERS));
+        return source.permissions().hasPermission(new Permission.HasCommandLevel(PermissionLevel.OWNERS));
         //?} else {
-        /*// Pre-1.21.11: Use hasPermissionLevel(4)
-        return source.hasPermissionLevel(4);
+        /*// Pre-1.21.11: Use hasPermission(4)
+        return source.hasPermission(4);
         *///?}
     }
     
-    private static int reloadConfig(CommandContext<ServerCommandSource> context) {
+    private static int reloadConfig(CommandContext<CommandSourceStack> context) {
         SimpleDeathBans.getInstance().reloadConfig();
-        context.getSource().sendFeedback(
-            () -> Text.translatable("simpledeathbans.command.reload")
-                .setStyle(Style.EMPTY.withColor(Formatting.GREEN)),
+        context.getSource().sendSuccess(
+            () -> Component.translatable("simpledeathbans.command.reload")
+                .withStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)),
             true
         );
         return Command.SINGLE_SUCCESS;
     }
     
-    private static int setTier(CommandContext<ServerCommandSource> context) {
+    private static int setTier(CommandContext<CommandSourceStack> context) {
         try {
-            ServerPlayerEntity player = EntityArgumentType.getPlayer(context, "player");
+            ServerPlayer player = EntityArgument.getPlayer(context, "player");
             int tier = IntegerArgumentType.getInteger(context, "tier");
             
             BanDataManager banManager = SimpleDeathBans.getInstance().getBanDataManager();
             if (banManager == null) {
-                context.getSource().sendError(Text.literal("Ban manager not initialized"));
+                context.getSource().sendFailure(Component.literal("Ban manager not initialized"));
                 return 0;
             }
             
-            banManager.setTier(player.getUuid(), player.getName().getString(), tier);
+            banManager.setTier(player.getUUID(), player.getName().getString(), tier);
             String playerName = player.getName().getString();
             
-            context.getSource().sendFeedback(
-                () -> Text.translatable("simpledeathbans.command.settier", playerName, tier)
-                    .setStyle(Style.EMPTY.withColor(Formatting.GREEN)),
+            context.getSource().sendSuccess(
+                () -> Component.translatable("simpledeathbans.command.settier", playerName, tier)
+                    .withStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)),
                 true
             );
             
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
-            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal("Error: " + e.getMessage()));
             return 0;
         }
     }
     
-    private static int getTier(CommandContext<ServerCommandSource> context) {
+    private static int getTier(CommandContext<CommandSourceStack> context) {
         try {
-            ServerPlayerEntity player = EntityArgumentType.getPlayer(context, "player");
+            ServerPlayer player = EntityArgument.getPlayer(context, "player");
             
             BanDataManager banManager = SimpleDeathBans.getInstance().getBanDataManager();
             if (banManager == null) {
-                context.getSource().sendError(Text.literal("Ban manager not initialized"));
+                context.getSource().sendFailure(Component.literal("Ban manager not initialized"));
                 return 0;
             }
             
-            int tier = banManager.getTier(player.getUuid());
+            int tier = banManager.getTier(player.getUUID());
             String playerName = player.getName().getString();
             
-            context.getSource().sendFeedback(
-                () -> Text.translatable("simpledeathbans.command.gettier", playerName, tier)
-                    .setStyle(Style.EMPTY.withColor(Formatting.YELLOW)),
+            context.getSource().sendSuccess(
+                () -> Component.translatable("simpledeathbans.command.gettier", playerName, tier)
+                    .withStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW)),
                 false
             );
             
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
-            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal("Error: " + e.getMessage()));
             return 0;
         }
     }
     
-    private static int unbanPlayer(CommandContext<ServerCommandSource> context) {
+    private static int unbanPlayer(CommandContext<CommandSourceStack> context) {
         try {
-            ServerPlayerEntity player = EntityArgumentType.getPlayer(context, "player");
+            ServerPlayer player = EntityArgument.getPlayer(context, "player");
             
             BanDataManager banManager = SimpleDeathBans.getInstance().getBanDataManager();
             if (banManager == null) {
-                context.getSource().sendError(Text.literal("Ban manager not initialized"));
+                context.getSource().sendFailure(Component.literal("Ban manager not initialized"));
                 return 0;
             }
             
-            boolean success = banManager.unbanPlayer(player.getUuid());
+            boolean success = banManager.unbanPlayer(player.getUUID());
             String playerName = player.getName().getString();
             
             if (success) {
-                context.getSource().sendFeedback(
-                    () -> Text.translatable("simpledeathbans.command.unban", playerName)
-                        .setStyle(Style.EMPTY.withColor(Formatting.GREEN)),
+                context.getSource().sendSuccess(
+                    () -> Component.translatable("simpledeathbans.command.unban", playerName)
+                        .withStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)),
                     true
                 );
             } else {
-                context.getSource().sendFeedback(
-                    () -> Text.literal(playerName + " is not currently banned")
-                        .setStyle(Style.EMPTY.withColor(Formatting.YELLOW)),
+                context.getSource().sendSuccess(
+                    () -> Component.literal(playerName + " is not currently banned")
+                        .withStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW)),
                     false
                 );
             }
             
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
-            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal("Error: " + e.getMessage()));
             return 0;
         }
     }
     
-    private static int unbanPlayerByName(CommandContext<ServerCommandSource> context) {
+    private static int unbanPlayerByName(CommandContext<CommandSourceStack> context) {
         try {
             String playerName = StringArgumentType.getString(context, "playername");
             
             BanDataManager banManager = SimpleDeathBans.getInstance().getBanDataManager();
             if (banManager == null) {
-                context.getSource().sendError(Text.literal("Ban manager not initialized"));
+                context.getSource().sendFailure(Component.literal("Ban manager not initialized"));
                 return 0;
             }
             
             boolean success = banManager.unbanPlayerByName(playerName);
             
             if (success) {
-                context.getSource().sendFeedback(
-                    () -> Text.translatable("simpledeathbans.command.unban", playerName)
-                        .setStyle(Style.EMPTY.withColor(Formatting.GREEN)),
+                context.getSource().sendSuccess(
+                    () -> Component.translatable("simpledeathbans.command.unban", playerName)
+                        .withStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)),
                     true
                 );
             } else {
-                context.getSource().sendFeedback(
-                    () -> Text.literal(playerName + " is not currently banned")
-                        .setStyle(Style.EMPTY.withColor(Formatting.YELLOW)),
+                context.getSource().sendSuccess(
+                    () -> Component.literal(playerName + " is not currently banned")
+                        .withStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW)),
                     false
                 );
             }
             
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
-            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal("Error: " + e.getMessage()));
             return 0;
         }
     }
     
-    private static int clearAllBans(CommandContext<ServerCommandSource> context) {
+    private static int clearAllBans(CommandContext<CommandSourceStack> context) {
         BanDataManager banManager = SimpleDeathBans.getInstance().getBanDataManager();
         if (banManager == null) {
-            context.getSource().sendError(Text.literal("Ban manager not initialized"));
+            context.getSource().sendFailure(Component.literal("Ban manager not initialized"));
             return 0;
         }
         
         banManager.clearAllBans();
-        context.getSource().sendFeedback(
-            () -> Text.translatable("simpledeathbans.command.clearbans")
-                .setStyle(Style.EMPTY.withColor(Formatting.GREEN)),
+        context.getSource().sendSuccess(
+            () -> Component.translatable("simpledeathbans.command.clearbans")
+                .withStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)),
             true
         );
         
         return Command.SINGLE_SUCCESS;
     }
     
-    private static int listBans(CommandContext<ServerCommandSource> context) {
+    private static int listBans(CommandContext<CommandSourceStack> context) {
         BanDataManager banManager = SimpleDeathBans.getInstance().getBanDataManager();
         if (banManager == null) {
-            context.getSource().sendError(Text.literal("Ban manager not initialized"));
+            context.getSource().sendFailure(Component.literal("Ban manager not initialized"));
             return 0;
         }
         
         var bannedPlayers = banManager.getAllBannedPlayers();
         
         if (bannedPlayers.isEmpty()) {
-            context.getSource().sendFeedback(
-                () -> Text.literal("No players are currently banned.")
-                    .setStyle(Style.EMPTY.withColor(Formatting.YELLOW)),
+            context.getSource().sendSuccess(
+                () -> Component.literal("No players are currently banned.")
+                    .withStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW)),
                 false
             );
             return Command.SINGLE_SUCCESS;
         }
         
-        context.getSource().sendFeedback(
-            () -> Text.literal("=== Banned Players ===")
-                .setStyle(Style.EMPTY.withColor(Formatting.GOLD)),
+        context.getSource().sendSuccess(
+            () -> Component.literal("=== Banned Players ===")
+                .withStyle(Style.EMPTY.withColor(ChatFormatting.GOLD)),
             false
         );
         
@@ -282,9 +282,9 @@ public class ModCommands {
                 entry.playerName(), 
                 entry.banTier(), 
                 entry.getRemainingTimeFormatted());
-            context.getSource().sendFeedback(
-                () -> Text.literal(info)
-                    .setStyle(Style.EMPTY.withColor(Formatting.GRAY)),
+            context.getSource().sendSuccess(
+                () -> Component.literal(info)
+                    .withStyle(Style.EMPTY.withColor(ChatFormatting.GRAY)),
                 false
             );
         }
@@ -292,83 +292,83 @@ public class ModCommands {
         return Command.SINGLE_SUCCESS;
     }
     
-    private static int setSoulLink(CommandContext<ServerCommandSource> context) {
+    private static int setSoulLink(CommandContext<CommandSourceStack> context) {
         try {
-            ServerPlayerEntity player1 = EntityArgumentType.getPlayer(context, "player1");
-            ServerPlayerEntity player2 = EntityArgumentType.getPlayer(context, "player2");
+            ServerPlayer player1 = EntityArgument.getPlayer(context, "player1");
+            ServerPlayer player2 = EntityArgument.getPlayer(context, "player2");
             
             SoulLinkManager soulLinkManager = SimpleDeathBans.getInstance().getSoulLinkManager();
             if (soulLinkManager == null) {
-                context.getSource().sendError(Text.literal("Soul link manager not initialized"));
+                context.getSource().sendFailure(Component.literal("Soul link manager not initialized"));
                 return 0;
             }
             
-            soulLinkManager.setLink(player1.getUuid(), player2.getUuid());
+            soulLinkManager.setLink(player1.getUUID(), player2.getUUID());
             
             String p1Name = player1.getName().getString();
             String p2Name = player2.getName().getString();
             
-            context.getSource().sendFeedback(
-                () -> Text.translatable("simpledeathbans.command.soullink.set", p1Name, p2Name)
-                    .setStyle(Style.EMPTY.withColor(Formatting.GREEN)),
+            context.getSource().sendSuccess(
+                () -> Component.translatable("simpledeathbans.command.soullink.set", p1Name, p2Name)
+                    .withStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)),
                 true
             );
             
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
-            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal("Error: " + e.getMessage()));
             return 0;
         }
     }
     
-    private static int clearSoulLink(CommandContext<ServerCommandSource> context) {
+    private static int clearSoulLink(CommandContext<CommandSourceStack> context) {
         try {
-            ServerPlayerEntity player = EntityArgumentType.getPlayer(context, "player");
+            ServerPlayer player = EntityArgument.getPlayer(context, "player");
             
             SoulLinkManager soulLinkManager = SimpleDeathBans.getInstance().getSoulLinkManager();
             if (soulLinkManager == null) {
-                context.getSource().sendError(Text.literal("Soul link manager not initialized"));
+                context.getSource().sendFailure(Component.literal("Soul link manager not initialized"));
                 return 0;
             }
             
-            boolean success = soulLinkManager.clearLink(player.getUuid());
+            boolean success = soulLinkManager.clearLink(player.getUUID());
             String playerName = player.getName().getString();
             
             if (success) {
-                context.getSource().sendFeedback(
-                    () -> Text.translatable("simpledeathbans.command.soullink.clear", playerName)
-                        .setStyle(Style.EMPTY.withColor(Formatting.GREEN)),
+                context.getSource().sendSuccess(
+                    () -> Component.translatable("simpledeathbans.command.soullink.clear", playerName)
+                        .withStyle(Style.EMPTY.withColor(ChatFormatting.GREEN)),
                     true
                 );
             } else {
-                context.getSource().sendFeedback(
-                    () -> Text.translatable("simpledeathbans.command.soullink.none", playerName)
-                        .setStyle(Style.EMPTY.withColor(Formatting.YELLOW)),
+                context.getSource().sendSuccess(
+                    () -> Component.translatable("simpledeathbans.command.soullink.none", playerName)
+                        .withStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW)),
                     false
                 );
             }
             
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
-            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal("Error: " + e.getMessage()));
             return 0;
         }
     }
     
-    private static int toggleSoulLink(CommandContext<ServerCommandSource> context) {
+    private static int toggleSoulLink(CommandContext<CommandSourceStack> context) {
         var config = SimpleDeathBans.getInstance().getConfig();
         if (config == null) {
-            context.getSource().sendError(Text.literal("Config not initialized"));
+            context.getSource().sendFailure(Component.literal("Config not initialized"));
             return 0;
         }
         
         // Check if trying to enable Soul Link while Shared Health is active
         if (!config.enableSoulLink && config.enableSharedHealth) {
             // Broadcast server message
-            Text serverMsg = Text.literal("\u00a7k><\u00a7r ")
-                .append(Text.literal("Must disable Shared Health before enabling Soul Link.").formatted(Formatting.RED))
-                .append(Text.literal(" \u00a7k><\u00a7r"));
-            context.getSource().sendFeedback(() -> serverMsg, true);
+            Component serverMsg = Component.literal("\u00a7k><\u00a7r ")
+                .append(Component.literal("Must disable Shared Health before enabling Soul Link.").withStyle(ChatFormatting.RED))
+                .append(Component.literal(" \u00a7k><\u00a7r"));
+            context.getSource().sendSuccess(() -> serverMsg, true);
             return 0;
         }
         
@@ -380,24 +380,24 @@ public class ModCommands {
         
         // Broadcast server-wide message when Soul Link is enabled
         if (config.enableSoulLink) {
-            Text serverMsg = Text.literal("\u00a7k><\u00a7r ")
-                .append(Text.literal("Soul Link has been enabled.").formatted(Formatting.GREEN))
-                .append(Text.literal(" \u00a7k><\u00a7r"));
-            context.getSource().getServer().getPlayerManager().broadcast(serverMsg, false);
+            Component serverMsg = Component.literal("\u00a7k><\u00a7r ")
+                .append(Component.literal("Soul Link has been enabled.").withStyle(ChatFormatting.GREEN))
+                .append(Component.literal(" \u00a7k><\u00a7r"));
+            context.getSource().getServer().getPlayerList().broadcastSystemMessage(serverMsg, false);
         }
         
         String status = config.enableSoulLink ? "ENABLED" : "DISABLED";
-        Formatting color = config.enableSoulLink ? Formatting.GREEN : Formatting.RED;
+        ChatFormatting color = config.enableSoulLink ? ChatFormatting.GREEN : ChatFormatting.RED;
         
-        context.getSource().sendFeedback(
-            () -> Text.literal("Soul Link feature is now ")
-                .append(Text.literal(status).formatted(color, Formatting.BOLD)),
+        context.getSource().sendSuccess(
+            () -> Component.literal("Soul Link feature is now ")
+                .append(Component.literal(status).withStyle(color, ChatFormatting.BOLD)),
             true
         );
         
         if (config.enableSoulLink) {
-            context.getSource().sendFeedback(
-                () -> Text.literal("Players will be auto-assigned soul partners on join.").formatted(Formatting.GRAY),
+            context.getSource().sendSuccess(
+                () -> Component.literal("Players will be auto-assigned soul partners on join.").withStyle(ChatFormatting.GRAY),
                 false
             );
         }
@@ -405,48 +405,48 @@ public class ModCommands {
         return Command.SINGLE_SUCCESS;
     }
     
-    private static int getSoulLinkStatus(CommandContext<ServerCommandSource> context) {
+    private static int getSoulLinkStatus(CommandContext<CommandSourceStack> context) {
         try {
-            ServerPlayerEntity player = EntityArgumentType.getPlayer(context, "player");
+            ServerPlayer player = EntityArgument.getPlayer(context, "player");
             
             SoulLinkManager soulLinkManager = SimpleDeathBans.getInstance().getSoulLinkManager();
             if (soulLinkManager == null) {
-                context.getSource().sendError(Text.literal("Soul link manager not initialized"));
+                context.getSource().sendFailure(Component.literal("Soul link manager not initialized"));
                 return 0;
             }
             
             String playerName = player.getName().getString();
-            var partnerOpt = soulLinkManager.getPartner(player.getUuid());
+            var partnerOpt = soulLinkManager.getPartner(player.getUUID());
             
             if (partnerOpt.isPresent()) {
                 var partnerUuid = partnerOpt.get();
-                ServerPlayerEntity partner = context.getSource().getServer().getPlayerManager().getPlayer(partnerUuid);
+                ServerPlayer partner = context.getSource().getServer().getPlayerList().getPlayer(partnerUuid);
                 String partnerName = partner != null ? partner.getName().getString() : "Unknown (Offline)";
                 
-                context.getSource().sendFeedback(
-                    () -> Text.translatable("simpledeathbans.command.soullink.status", playerName, partnerName)
-                        .setStyle(Style.EMPTY.withColor(Formatting.YELLOW)),
+                context.getSource().sendSuccess(
+                    () -> Component.translatable("simpledeathbans.command.soullink.status", playerName, partnerName)
+                        .withStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW)),
                     false
                 );
             } else {
-                context.getSource().sendFeedback(
-                    () -> Text.translatable("simpledeathbans.command.soullink.none", playerName)
-                        .setStyle(Style.EMPTY.withColor(Formatting.YELLOW)),
+                context.getSource().sendSuccess(
+                    () -> Component.translatable("simpledeathbans.command.soullink.none", playerName)
+                        .withStyle(Style.EMPTY.withColor(ChatFormatting.YELLOW)),
                     false
                 );
             }
             
             return Command.SINGLE_SUCCESS;
         } catch (Exception e) {
-            context.getSource().sendError(Text.literal("Error: " + e.getMessage()));
+            context.getSource().sendFailure(Component.literal("Error: " + e.getMessage()));
             return 0;
         }
     }
     
-    private static int toggleSharedHealth(CommandContext<ServerCommandSource> context) {
+    private static int toggleSharedHealth(CommandContext<CommandSourceStack> context) {
         var config = SimpleDeathBans.getInstance().getConfig();
         if (config == null) {
-            context.getSource().sendError(Text.literal("Config not initialized"));
+            context.getSource().sendFailure(Component.literal("Config not initialized"));
             return 0;
         }
         
@@ -460,38 +460,38 @@ public class ModCommands {
         if (config.enableSharedHealth && soulLinkWasOn) {
             config.enableSoulLink = false;
             // Broadcast two separate server-wide messages
-            Text msg1 = Text.literal("\u00a7k><\u00a7r ")
-                .append(Text.literal("Soul Link has been disabled.").formatted(Formatting.RED))
-                .append(Text.literal(" \u00a7k><\u00a7r"));
-            context.getSource().getServer().getPlayerManager().broadcast(msg1, false);
+            Component msg1 = Component.literal("\u00a7k><\u00a7r ")
+                .append(Component.literal("Soul Link has been disabled.").withStyle(ChatFormatting.RED))
+                .append(Component.literal(" \u00a7k><\u00a7r"));
+            context.getSource().getServer().getPlayerList().broadcastSystemMessage(msg1, false);
             
-            Text msg2 = Text.literal("\u00a7k><\u00a7r ")
-                .append(Text.literal("Shared Health has been enabled.").formatted(Formatting.GREEN))
-                .append(Text.literal(" \u00a7k><\u00a7r"));
-            context.getSource().getServer().getPlayerManager().broadcast(msg2, false);
+            Component msg2 = Component.literal("\u00a7k><\u00a7r ")
+                .append(Component.literal("Shared Health has been enabled.").withStyle(ChatFormatting.GREEN))
+                .append(Component.literal(" \u00a7k><\u00a7r"));
+            context.getSource().getServer().getPlayerList().broadcastSystemMessage(msg2, false);
         } else if (wasEnablingSharedHealth) {
             // Just enabling Shared Health (Soul Link wasn't on)
-            Text serverMsg = Text.literal("\u00a7k><\u00a7r ")
-                .append(Text.literal("Shared Health has been enabled.").formatted(Formatting.GREEN))
-                .append(Text.literal(" \u00a7k><\u00a7r"));
-            context.getSource().getServer().getPlayerManager().broadcast(serverMsg, false);
+            Component serverMsg = Component.literal("\u00a7k><\u00a7r ")
+                .append(Component.literal("Shared Health has been enabled.").withStyle(ChatFormatting.GREEN))
+                .append(Component.literal(" \u00a7k><\u00a7r"));
+            context.getSource().getServer().getPlayerList().broadcastSystemMessage(serverMsg, false);
         }
         
         // Save the config
         SimpleDeathBans.getInstance().saveConfig();
         
         String status = config.enableSharedHealth ? "ENABLED" : "DISABLED";
-        Formatting color = config.enableSharedHealth ? Formatting.GREEN : Formatting.RED;
+        ChatFormatting color = config.enableSharedHealth ? ChatFormatting.GREEN : ChatFormatting.RED;
         
-        context.getSource().sendFeedback(
-            () -> Text.literal("Shared Health feature is now ")
-                .append(Text.literal(status).formatted(color, Formatting.BOLD)),
+        context.getSource().sendSuccess(
+            () -> Component.literal("Shared Health feature is now ")
+                .append(Component.literal(status).withStyle(color, ChatFormatting.BOLD)),
             true
         );
         
         if (config.enableSharedHealth) {
-            context.getSource().sendFeedback(
-                () -> Text.literal("⚠ ALL players now share damage! Any totem can save everyone.").formatted(Formatting.GOLD),
+            context.getSource().sendSuccess(
+                () -> Component.literal("⚠ ALL players now share damage! Any totem can save everyone.").withStyle(ChatFormatting.GOLD),
                 false
             );
         }
@@ -499,23 +499,23 @@ public class ModCommands {
         return Command.SINGLE_SUCCESS;
     }
     
-    private static int getSharedHealthStatus(CommandContext<ServerCommandSource> context) {
+    private static int getSharedHealthStatus(CommandContext<CommandSourceStack> context) {
         var config = SimpleDeathBans.getInstance().getConfig();
         if (config == null) {
-            context.getSource().sendError(Text.literal("Config not initialized"));
+            context.getSource().sendFailure(Component.literal("Config not initialized"));
             return 0;
         }
         
         String status = config.enableSharedHealth ? "ENABLED" : "DISABLED";
-        Formatting color = config.enableSharedHealth ? Formatting.GREEN : Formatting.RED;
+        ChatFormatting color = config.enableSharedHealth ? ChatFormatting.GREEN : ChatFormatting.RED;
         
-        context.getSource().sendFeedback(
-            () -> Text.literal("Shared Health: ")
-                .append(Text.literal(status).formatted(color, Formatting.BOLD))
-                .append(Text.literal("\nDamage Share: ").formatted(Formatting.GRAY))
-                .append(Text.literal((int)(config.sharedHealthDamagePercent * 100) + "%").formatted(Formatting.YELLOW))
-                .append(Text.literal("\nTotem Saves All: ").formatted(Formatting.GRAY))
-                .append(Text.literal(config.sharedHealthTotemSavesAll ? "Yes" : "No").formatted(Formatting.YELLOW)),
+        context.getSource().sendSuccess(
+            () -> Component.literal("Shared Health: ")
+                .append(Component.literal(status).withStyle(color, ChatFormatting.BOLD))
+                .append(Component.literal("\nDamage Share: ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal((int)(config.sharedHealthDamagePercent * 100) + "%").withStyle(ChatFormatting.YELLOW))
+                .append(Component.literal("\nTotem Saves All: ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(config.sharedHealthTotemSavesAll ? "Yes" : "No").withStyle(ChatFormatting.YELLOW)),
             false
         );
         

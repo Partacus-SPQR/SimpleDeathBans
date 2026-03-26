@@ -2,17 +2,17 @@ package com.simpledeathbans.item;
 
 import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.ritual.ResurrectionRitualManager;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 
 /**
  * The Resurrection Totem item used for the Altar of Resurrection ritual.
@@ -35,49 +35,49 @@ import net.minecraft.world.World;
  */
 public class ResurrectionTotemItem extends Item {
     
-    public ResurrectionTotemItem(Settings settings) {
+    public ResurrectionTotemItem(Item.Properties settings) {
         super(settings);
     }
     
     @Override
-    public ActionResult useOnBlock(ItemUsageContext context) {
-        World world = context.getWorld();
-        BlockPos pos = context.getBlockPos();
-        PlayerEntity player = context.getPlayer();
+    public InteractionResult useOn(UseOnContext context) {
+        Level world = context.getLevel();
+        BlockPos pos = context.getClickedPos();
+        Player player = context.getPlayer();
         
-        if (world.isClient() || player == null) {
-            return ActionResult.PASS;
+        if (world.isClientSide() || player == null) {
+            return InteractionResult.PASS;
         }
         
         // Must be sneaking to activate the ritual
-        if (!player.isSneaking()) {
-            return ActionResult.PASS;
+        if (!player.isShiftKeyDown()) {
+            return InteractionResult.PASS;
         }
         
         // Check if clicked on a beacon
         if (world.getBlockState(pos).getBlock() != Blocks.BEACON) {
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
         
         // Must be server side
-        if (!(world instanceof ServerWorld serverWorld)) {
-            return ActionResult.PASS;
+        if (!(world instanceof ServerLevel serverWorld)) {
+            return InteractionResult.PASS;
         }
         
-        if (!(player instanceof ServerPlayerEntity serverPlayer)) {
-            return ActionResult.PASS;
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return InteractionResult.PASS;
         }
         
         // Check if resurrection altars are enabled
         if (!SimpleDeathBans.getInstance().getConfig().enableResurrectionAltar) {
-            serverPlayer.sendMessage(Text.literal("Resurrection rituals are disabled on this server.")
-                .formatted(Formatting.RED), false);
-            return ActionResult.FAIL;
+            serverPlayer.sendSystemMessage(Component.literal("Resurrection rituals are disabled on this server.")
+                .withStyle(ChatFormatting.RED));
+            return InteractionResult.FAIL;
         }
         
         ResurrectionRitualManager ritualManager = SimpleDeathBans.getInstance().getRitualManager();
         if (ritualManager == null) {
-            return ActionResult.FAIL;
+            return InteractionResult.FAIL;
         }
         
         // Attempt to interact with the ritual (initiate or commit)
@@ -85,9 +85,9 @@ public class ResurrectionTotemItem extends Item {
         
         if (success) {
             // Don't consume totem here - it's consumed when ritual completes
-            return ActionResult.SUCCESS;
+            return InteractionResult.SUCCESS;
         }
         
-        return ActionResult.FAIL;
+        return InteractionResult.FAIL;
     }
 }

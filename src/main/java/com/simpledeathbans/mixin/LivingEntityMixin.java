@@ -4,20 +4,20 @@ import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.config.ModConfig;
 import com.simpledeathbans.damage.SoulSeverDamageSource;
 import com.simpledeathbans.data.SoulLinkManager;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
+import net.minecraft.world.InteractionHand;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -54,21 +54,21 @@ import java.util.UUID;
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin {
 
-    @Shadow public abstract ItemStack getStackInHand(Hand hand);
+    @Shadow public abstract ItemStack getItemInHand(InteractionHand hand);
 
     /**
      * Intercept damage method to handle Soul Link totem scenarios.
      */
     @Inject(
-        method = "damage",
+        method = "hurtServer",
         at = @At("HEAD"),
         cancellable = true
     )
-    private void onDamageForSoulLink(ServerWorld world, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
+    private void onDamageForSoulLink(ServerLevel world, DamageSource source, float amount, CallbackInfoReturnable<Boolean> cir) {
         LivingEntity self = (LivingEntity) (Object) this;
         
         // Only for server-side players
-        if (!(self instanceof ServerPlayerEntity player)) {
+        if (!(self instanceof ServerPlayer player)) {
             return;
         }
         
@@ -83,7 +83,7 @@ public abstract class LivingEntityMixin {
             
             // Check ban status on server side using BanDataManager
             if (mod != null && mod.getBanDataManager() != null) {
-                if (mod.getBanDataManager().isBanned(player.getUuid())) {
+                if (mod.getBanDataManager().isBanned(player.getUUID())) {
                     // Player is banned/frozen - make them invulnerable
                     SimpleDeathBans.LOGGER.debug("Canceling damage to frozen single-player user: {}", player.getName().getString());
                     cir.setReturnValue(false);
@@ -116,7 +116,7 @@ public abstract class LivingEntityMixin {
             return;
         }
         
-        UUID playerId = player.getUuid();
+        UUID playerId = player.getUUID();
         
         // Check if player has a soul link partner
         if (!soulLinkManager.hasPartner(playerId)) {
@@ -138,18 +138,18 @@ public abstract class LivingEntityMixin {
                 consumeTotem(player);
                 applyTotemEffects(player, world);
                 
-                Text savedMsg = Text.literal("§k><§r ")
-                    .append(Text.literal("Your totem has saved you from the void!").formatted(Formatting.DARK_PURPLE))
-                    .append(Text.literal(" §k><§r"));
-                player.sendMessage(savedMsg, false);
+                Component savedMsg = Component.literal("§k><§r ")
+                    .append(Component.literal("Your totem has saved you from the void!").withStyle(ChatFormatting.DARK_PURPLE))
+                    .append(Component.literal(" §k><§r"));
+                player.sendSystemMessage(savedMsg);
                 
                 // Server-wide notification
                 String playerName = player.getName().getString();
-                Text serverMsg = Text.literal("§k><§r ")
-                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
-                    .append(Text.literal(" is the only one to survive from the void!").formatted(Formatting.DARK_PURPLE))
-                    .append(Text.literal(" §k><§r"));
-                world.getServer().getPlayerManager().broadcast(serverMsg, false);
+                Component serverMsg = Component.literal("§k><§r ")
+                    .append(Component.literal(playerName).withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal(" is the only one to survive from the void!").withStyle(ChatFormatting.DARK_PURPLE))
+                    .append(Component.literal(" §k><§r"));
+                world.getServer().getPlayerList().broadcastSystemMessage(serverMsg, false);
                 
                 SimpleDeathBans.LOGGER.info("Soul Link: {} survived soul sever with totem (partner died)", playerName);
                 
@@ -160,8 +160,8 @@ public abstract class LivingEntityMixin {
             return;
         }
         
-        ServerPlayerEntity partner = soulLinkManager.getPartner(playerId)
-            .map(uuid -> world.getServer().getPlayerManager().getPlayer(uuid))
+        ServerPlayer partner = soulLinkManager.getPartner(playerId)
+            .map(uuid -> world.getServer().getPlayerList().getPlayer(uuid))
             .orElse(null);
         
         if (partner == null || !partner.isAlive()) {
@@ -182,25 +182,25 @@ public abstract class LivingEntityMixin {
             consumeTotem(partner);
             
             applyTotemEffects(player, world);
-            applyTotemEffects(partner, (ServerWorld) partner.getEntityWorld());
+            applyTotemEffects(partner, (ServerLevel) partner.level());
             
             // Notifications (obfuscation + purple)
-            Text bothSavedMsg = Text.literal("§k><§r ")
-                .append(Text.literal("You have both avoided the pull from the void!").formatted(Formatting.DARK_PURPLE))
-                .append(Text.literal(" §k><§r"));
+            Component bothSavedMsg = Component.literal("§k><§r ")
+                .append(Component.literal("You have both avoided the pull from the void!").withStyle(ChatFormatting.DARK_PURPLE))
+                .append(Component.literal(" §k><§r"));
             
-            player.sendMessage(bothSavedMsg, false);
-            partner.sendMessage(bothSavedMsg, false);
+            player.sendSystemMessage(bothSavedMsg);
+            partner.sendSystemMessage(bothSavedMsg);
             
             // Server-wide notification
-            Text serverMsg = Text.literal("§k><§r ")
-                .append(Text.literal(playerName).formatted(Formatting.GOLD))
-                .append(Text.literal(" and ").formatted(Formatting.DARK_PURPLE))
-                .append(Text.literal(partnerName).formatted(Formatting.GOLD))
-                .append(Text.literal(" have avoided the grasp of the void!").formatted(Formatting.DARK_PURPLE))
-                .append(Text.literal(" §k><§r"));
+            Component serverMsg = Component.literal("§k><§r ")
+                .append(Component.literal(playerName).withStyle(ChatFormatting.GOLD))
+                .append(Component.literal(" and ").withStyle(ChatFormatting.DARK_PURPLE))
+                .append(Component.literal(partnerName).withStyle(ChatFormatting.GOLD))
+                .append(Component.literal(" have avoided the grasp of the void!").withStyle(ChatFormatting.DARK_PURPLE))
+                .append(Component.literal(" §k><§r"));
             
-            world.getServer().getPlayerManager().broadcast(serverMsg, false);
+            world.getServer().getPlayerList().broadcastSystemMessage(serverMsg, false);
             
             SimpleDeathBans.LOGGER.info("Soul Link: Both {} and {} used totems to survive", playerName, partnerName);
             
@@ -215,55 +215,55 @@ public abstract class LivingEntityMixin {
             
             if (config.soulLinkTotemSavesPartner) {
                 // Totem saves BOTH
-                applyTotemEffects(partner, (ServerWorld) partner.getEntityWorld());
+                applyTotemEffects(partner, (ServerLevel) partner.level());
                 
                 // Player notification (obfuscation + purple)
-                Text playerMsg = Text.literal("§k><§r ")
-                    .append(Text.literal("Your totem has saved both yourself and ").formatted(Formatting.DARK_PURPLE))
-                    .append(Text.literal(partnerName).formatted(Formatting.GOLD))
-                    .append(Text.literal(" from the void!").formatted(Formatting.DARK_PURPLE))
-                    .append(Text.literal(" §k><§r"));
-                player.sendMessage(playerMsg, false);
+                Component playerMsg = Component.literal("§k><§r ")
+                    .append(Component.literal("Your totem has saved both yourself and ").withStyle(ChatFormatting.DARK_PURPLE))
+                    .append(Component.literal(partnerName).withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal(" from the void!").withStyle(ChatFormatting.DARK_PURPLE))
+                    .append(Component.literal(" §k><§r"));
+                player.sendSystemMessage(playerMsg);
                 
                 // Partner notification
-                Text partnerMsg = Text.literal("§k><§r ")
-                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
-                    .append(Text.literal(" has saved you both from the void with their totem!").formatted(Formatting.DARK_PURPLE))
-                    .append(Text.literal(" §k><§r"));
-                partner.sendMessage(partnerMsg, false);
+                Component partnerMsg = Component.literal("§k><§r ")
+                    .append(Component.literal(playerName).withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal(" has saved you both from the void with their totem!").withStyle(ChatFormatting.DARK_PURPLE))
+                    .append(Component.literal(" §k><§r"));
+                partner.sendSystemMessage(partnerMsg);
                 
                 // Server-wide notification
-                Text serverMsg = Text.literal("§k><§r ")
-                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
-                    .append(Text.literal(" has saved ").formatted(Formatting.DARK_PURPLE))
-                    .append(Text.literal(partnerName).formatted(Formatting.GOLD))
-                    .append(Text.literal(" from the grasp of the void!").formatted(Formatting.DARK_PURPLE))
-                    .append(Text.literal(" §k><§r"));
-                world.getServer().getPlayerManager().broadcast(serverMsg, false);
+                Component serverMsg = Component.literal("§k><§r ")
+                    .append(Component.literal(playerName).withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal(" has saved ").withStyle(ChatFormatting.DARK_PURPLE))
+                    .append(Component.literal(partnerName).withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal(" from the grasp of the void!").withStyle(ChatFormatting.DARK_PURPLE))
+                    .append(Component.literal(" §k><§r"));
+                world.getServer().getPlayerList().broadcastSystemMessage(serverMsg, false);
                 
                 SimpleDeathBans.LOGGER.info("Soul Link: {} totem saved both players (TotemSavesPartner=ON)", playerName);
             } else {
                 // Totem saves ONLY the holder, partner MUST die via death pact
-                Text playerMsg = Text.literal("§k><§r ")
-                    .append(Text.literal("Your totem has saved you from the void!").formatted(Formatting.DARK_PURPLE))
-                    .append(Text.literal(" §k><§r"));
-                player.sendMessage(playerMsg, false);
+                Component playerMsg = Component.literal("§k><§r ")
+                    .append(Component.literal("Your totem has saved you from the void!").withStyle(ChatFormatting.DARK_PURPLE))
+                    .append(Component.literal(" §k><§r"));
+                player.sendSystemMessage(playerMsg);
                 
                 // Server-wide notification - this player survived alone
-                Text serverMsg = Text.literal("§k><§r ")
-                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
-                    .append(Text.literal(" is the only one to survive from the void!").formatted(Formatting.DARK_PURPLE))
-                    .append(Text.literal(" §k><§r"));
-                world.getServer().getPlayerManager().broadcast(serverMsg, false);
+                Component serverMsg = Component.literal("§k><§r ")
+                    .append(Component.literal(playerName).withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal(" is the only one to survive from the void!").withStyle(ChatFormatting.DARK_PURPLE))
+                    .append(Component.literal(" §k><§r"));
+                world.getServer().getPlayerList().broadcastSystemMessage(serverMsg, false);
                 
                 // KILL THE PARTNER - they have no totem and their soulbound partner took lethal damage
-                ServerWorld partnerWorld = (ServerWorld) partner.getEntityWorld();
-                UUID partnerUuid = partner.getUuid();
+                ServerLevel partnerWorld = (ServerLevel) partner.level();
+                UUID partnerUuid = partner.getUUID();
                 SoulSeverDamageSource.markSoulSeverTarget(partnerUuid);
                 partnerWorld.getServer().execute(() -> {
                     try {
                         DamageSource soulSeverDamage = SoulSeverDamageSource.create(partnerWorld, player);
-                        partner.damage(partnerWorld, soulSeverDamage, Float.MAX_VALUE);
+                        partner.hurtServer(partnerWorld, soulSeverDamage, Float.MAX_VALUE);
                     } finally {
                         SoulSeverDamageSource.clearSoulSeverTarget(partnerUuid);
                     }
@@ -283,31 +283,31 @@ public abstract class LivingEntityMixin {
                 // Partner's totem saves BOTH
                 consumeTotem(partner);
                 applyTotemEffects(player, world);
-                applyTotemEffects(partner, (ServerWorld) partner.getEntityWorld());
+                applyTotemEffects(partner, (ServerLevel) partner.level());
                 
                 // Player notification (obfuscation + purple)
-                Text playerMsg = Text.literal("§k><§r ")
-                    .append(Text.literal(partnerName).formatted(Formatting.GOLD))
-                    .append(Text.literal(" has saved you both from the void with their totem!").formatted(Formatting.DARK_PURPLE))
-                    .append(Text.literal(" §k><§r"));
-                player.sendMessage(playerMsg, false);
+                Component playerMsg = Component.literal("§k><§r ")
+                    .append(Component.literal(partnerName).withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal(" has saved you both from the void with their totem!").withStyle(ChatFormatting.DARK_PURPLE))
+                    .append(Component.literal(" §k><§r"));
+                player.sendSystemMessage(playerMsg);
                 
                 // Partner notification
-                Text partnerMsg = Text.literal("§k><§r ")
-                    .append(Text.literal("Your totem has saved both yourself and ").formatted(Formatting.DARK_PURPLE))
-                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
-                    .append(Text.literal(" from the void!").formatted(Formatting.DARK_PURPLE))
-                    .append(Text.literal(" §k><§r"));
-                partner.sendMessage(partnerMsg, false);
+                Component partnerMsg = Component.literal("§k><§r ")
+                    .append(Component.literal("Your totem has saved both yourself and ").withStyle(ChatFormatting.DARK_PURPLE))
+                    .append(Component.literal(playerName).withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal(" from the void!").withStyle(ChatFormatting.DARK_PURPLE))
+                    .append(Component.literal(" §k><§r"));
+                partner.sendSystemMessage(partnerMsg);
                 
                 // Server-wide notification
-                Text serverMsg = Text.literal("§k><§r ")
-                    .append(Text.literal(partnerName).formatted(Formatting.GOLD))
-                    .append(Text.literal(" has saved ").formatted(Formatting.DARK_PURPLE))
-                    .append(Text.literal(playerName).formatted(Formatting.GOLD))
-                    .append(Text.literal(" from the grasp of the void!").formatted(Formatting.DARK_PURPLE))
-                    .append(Text.literal(" §k><§r"));
-                world.getServer().getPlayerManager().broadcast(serverMsg, false);
+                Component serverMsg = Component.literal("§k><§r ")
+                    .append(Component.literal(partnerName).withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal(" has saved ").withStyle(ChatFormatting.DARK_PURPLE))
+                    .append(Component.literal(playerName).withStyle(ChatFormatting.GOLD))
+                    .append(Component.literal(" from the grasp of the void!").withStyle(ChatFormatting.DARK_PURPLE))
+                    .append(Component.literal(" §k><§r"));
+                world.getServer().getPlayerList().broadcastSystemMessage(serverMsg, false);
                 
                 SimpleDeathBans.LOGGER.info("Soul Link: {} totem saved both players (TotemSavesPartner=ON)", partnerName);
                 
@@ -322,12 +322,12 @@ public abstract class LivingEntityMixin {
         // Both will die - send special notification before death
         if (!playerHasTotem && !partnerHasTotem) {
             // Send "pull from the void" notification to both
-            Text voidPullMsg = Text.literal("§k><§r ")
-                .append(Text.literal("You both feel the pull from the void!").formatted(Formatting.DARK_PURPLE))
-                .append(Text.literal(" §k><§r"));
+            Component voidPullMsg = Component.literal("§k><§r ")
+                .append(Component.literal("You both feel the pull from the void!").withStyle(ChatFormatting.DARK_PURPLE))
+                .append(Component.literal(" §k><§r"));
             
-            player.sendMessage(voidPullMsg, false);
-            partner.sendMessage(voidPullMsg, false);
+            player.sendSystemMessage(voidPullMsg);
+            partner.sendSystemMessage(voidPullMsg);
             
             SimpleDeathBans.LOGGER.info("Soul Link: Neither {} nor {} have totems - both will die", playerName, partnerName);
             
@@ -339,23 +339,23 @@ public abstract class LivingEntityMixin {
      * Check if player has a Totem of Undying in either hand.
      */
     @Unique
-    private boolean hasTotemOfUndying(ServerPlayerEntity player) {
-        return player.getStackInHand(Hand.MAIN_HAND).isOf(Items.TOTEM_OF_UNDYING) ||
-               player.getStackInHand(Hand.OFF_HAND).isOf(Items.TOTEM_OF_UNDYING);
+    private boolean hasTotemOfUndying(ServerPlayer player) {
+        return player.getItemInHand(InteractionHand.MAIN_HAND).is(Items.TOTEM_OF_UNDYING) ||
+               player.getItemInHand(InteractionHand.OFF_HAND).is(Items.TOTEM_OF_UNDYING);
     }
     
     /**
      * Consume totem from player's hand.
      */
     @Unique
-    private void consumeTotem(ServerPlayerEntity player) {
-        ItemStack mainHand = player.getStackInHand(Hand.MAIN_HAND);
-        ItemStack offHand = player.getStackInHand(Hand.OFF_HAND);
+    private void consumeTotem(ServerPlayer player) {
+        ItemStack mainHand = player.getItemInHand(InteractionHand.MAIN_HAND);
+        ItemStack offHand = player.getItemInHand(InteractionHand.OFF_HAND);
         
-        if (mainHand.isOf(Items.TOTEM_OF_UNDYING)) {
-            mainHand.decrement(1);
-        } else if (offHand.isOf(Items.TOTEM_OF_UNDYING)) {
-            offHand.decrement(1);
+        if (mainHand.is(Items.TOTEM_OF_UNDYING)) {
+            mainHand.shrink(1);
+        } else if (offHand.is(Items.TOTEM_OF_UNDYING)) {
+            offHand.shrink(1);
         }
     }
     
@@ -363,21 +363,21 @@ public abstract class LivingEntityMixin {
      * Apply totem effects to a player.
      */
     @Unique
-    private void applyTotemEffects(ServerPlayerEntity player, ServerWorld world) {
+    private void applyTotemEffects(ServerPlayer player, ServerLevel world) {
         // Set health to 1 (totem effect)
         player.setHealth(1.0F);
         
         // Clear harmful effects
-        player.clearStatusEffects();
+        player.removeAllEffects();
         
         // Apply regeneration, absorption, and fire resistance like vanilla totem
-        player.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, 900, 1));
-        player.addStatusEffect(new StatusEffectInstance(StatusEffects.ABSORPTION, 100, 1));
-        player.addStatusEffect(new StatusEffectInstance(StatusEffects.FIRE_RESISTANCE, 800, 0));
+        player.addEffect(new MobEffectInstance(MobEffects.REGENERATION, 900, 1));
+        player.addEffect(new MobEffectInstance(MobEffects.ABSORPTION, 100, 1));
+        player.addEffect(new MobEffectInstance(MobEffects.FIRE_RESISTANCE, 800, 0));
         
         // Play totem animation and sound
         world.playSound(null, player.getX(), player.getY(), player.getZ(),
-            SoundEvents.ITEM_TOTEM_USE, SoundCategory.PLAYERS, 1.0f, 1.0f);
+            SoundEvents.TOTEM_USE, SoundSource.PLAYERS, 1.0f, 1.0f);
         
         // Spawn totem particles
         spawnTotemParticles(world, player);
@@ -387,7 +387,7 @@ public abstract class LivingEntityMixin {
      * Spawns Totem of Undying particles around a player.
      */
     @Unique
-    private void spawnTotemParticles(ServerWorld world, ServerPlayerEntity player) {
+    private void spawnTotemParticles(ServerLevel world, ServerPlayer player) {
         double x = player.getX();
         double y = player.getY() + 1.0;
         double z = player.getZ();
@@ -398,7 +398,7 @@ public abstract class LivingEntityMixin {
             double offsetY = (world.getRandom().nextDouble() - 0.5) * 2.0;
             double offsetZ = (world.getRandom().nextDouble() - 0.5) * 2.0;
             
-            world.spawnParticles(ParticleTypes.TOTEM_OF_UNDYING,
+            world.sendParticles(ParticleTypes.TOTEM_OF_UNDYING,
                 x + offsetX, y + offsetY, z + offsetZ,
                 1, 0, 0, 0, 0.5);
         }

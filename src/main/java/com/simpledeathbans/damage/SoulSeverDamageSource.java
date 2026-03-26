@@ -1,13 +1,17 @@
 package com.simpledeathbans.damage;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.damage.DamageType;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.RegistryKeys;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Identifier;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+//? if >=1.21.11 {
+import net.minecraft.resources.Identifier;
+//?} else {
+/*import net.minecraft.resources.ResourceLocation;*/
+//?}
 
 import java.util.Set;
 import java.util.UUID;
@@ -18,8 +22,12 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class SoulSeverDamageSource {
     
-    public static final Identifier SOUL_SEVER_ID = Identifier.of("simpledeathbans", "soul_sever");
-    public static final RegistryKey<DamageType> SOUL_SEVER_KEY = RegistryKey.of(RegistryKeys.DAMAGE_TYPE, SOUL_SEVER_ID);
+    //? if >=1.21.11 {
+    public static final Identifier SOUL_SEVER_ID = Identifier.fromNamespaceAndPath("simpledeathbans", "soul_sever");
+    //?} else {
+    /*public static final ResourceLocation SOUL_SEVER_ID = ResourceLocation.fromNamespaceAndPath("simpledeathbans", "soul_sever");*/
+    //?}
+    public static final ResourceKey<DamageType> SOUL_SEVER_KEY = ResourceKey.create(Registries.DAMAGE_TYPE, SOUL_SEVER_ID);
     
     // Track players currently being damaged by soul sever
     private static final Set<UUID> soulSeverTargets = ConcurrentHashMap.newKeySet();
@@ -50,13 +58,13 @@ public class SoulSeverDamageSource {
      * @param world The server world
      * @param causedBy The player whose death caused the soul sever (can be null)
      */
-    public static DamageSource create(ServerWorld world, ServerPlayerEntity causedBy) {
+    public static DamageSource create(ServerLevel world, ServerPlayer causedBy) {
         // Use magic damage as a fallback since we can't register custom damage types easily
         // The death message will be handled separately
         if (causedBy != null) {
-            return world.getDamageSources().indirectMagic(causedBy, causedBy);
+            return world.damageSources().indirectMagic(causedBy, causedBy);
         }
-        return world.getDamageSources().magic();
+        return world.damageSources().magic();
     }
     
     /**
@@ -66,8 +74,8 @@ public class SoulSeverDamageSource {
         // Check by name pattern since we're using magic damage
         // indirectMagic creates damage with name like "indirectMagic" or similar
         // This prevents infinite damage sharing loops
-        String name = source.getName();
+        String name = source.getMsgId();
         return (name.contains("magic") || name.contains("Magic") || name.equals("indirectMagic")) 
-               && source.getAttacker() instanceof ServerPlayerEntity;
+               && source.getEntity() instanceof ServerPlayer;
     }
 }

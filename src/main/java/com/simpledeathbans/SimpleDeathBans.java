@@ -22,9 +22,9 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,7 +78,7 @@ public class SimpleDeathBans implements ModInitializer {
         
         // Player connection events
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
-            ServerPlayerEntity player = handler.getPlayer();
+            ServerPlayer player = handler.getPlayer();
             
             // Check if player was previously banned (ban expired)
             if (banDataManager != null) {
@@ -94,14 +94,14 @@ public class SimpleDeathBans implements ModInitializer {
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             // Clean up soul links on disconnect
             if (soulLinkManager != null) {
-                soulLinkManager.onPlayerDisconnect(handler.getPlayer().getUuid());
+                soulLinkManager.onPlayerDisconnect(handler.getPlayer().getUUID());
             }
             // Cancel ritual if committed player disconnects
             if (ritualManager != null) {
-                ritualManager.onPlayerDisconnect(handler.getPlayer().getUuid());
+                ritualManager.onPlayerDisconnect(handler.getPlayer().getUUID());
             }
             // Clean up hunger tracking
-            HungerShareHandler.clearPlayer(handler.getPlayer().getUuid());
+            HungerShareHandler.clearPlayer(handler.getPlayer().getUUID());
         });
         
         // Server tick events for mercy cooldown
@@ -139,15 +139,24 @@ public class SimpleDeathBans implements ModInitializer {
      */
     private void registerNetworking() {
         // Register the config sync payload type for both directions
-        PayloadTypeRegistry.playC2S().register(ConfigSyncPayload.ID, ConfigSyncPayload.CODEC);
+        //? if >=26.1 {
+        PayloadTypeRegistry.serverboundPlay().register(ConfigSyncPayload.ID, ConfigSyncPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(ConfigSyncPayload.ID, ConfigSyncPayload.CODEC);
+        //?} else {
+        /*PayloadTypeRegistry.playC2S().register(ConfigSyncPayload.ID, ConfigSyncPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(ConfigSyncPayload.ID, ConfigSyncPayload.CODEC);
+        *///?}
         
         // Register single-player ban payload (server to client only)
-        PayloadTypeRegistry.playS2C().register(SinglePlayerBanPayload.ID, SinglePlayerBanPayload.CODEC);
+        //? if >=26.1 {
+        PayloadTypeRegistry.clientboundPlay().register(SinglePlayerBanPayload.ID, SinglePlayerBanPayload.CODEC);
+        //?} else {
+        /*PayloadTypeRegistry.playS2C().register(SinglePlayerBanPayload.ID, SinglePlayerBanPayload.CODEC);
+        *///?}
         
         // Register server-side handler with permission validation
         ServerPlayNetworking.registerGlobalReceiver(ConfigSyncPayload.ID, (payload, context) -> {
-            ServerPlayerEntity player = context.player();
+            ServerPlayer player = context.player();
             
             context.server().execute(() -> {
                 // === MANDATORY SERVER-SIDE PERMISSION CHECK ===
@@ -157,8 +166,8 @@ public class SimpleDeathBans implements ModInitializer {
                 if (!isOp) {
                     // In multiplayer, check operator status using player name
                     // OperatorList getNames() returns all operator names - works across versions
-                    var opList = context.server().getPlayerManager().getOpList();
-                    String[] opNames = opList.getNames();
+                    var opList = context.server().getPlayerList().getOps();
+                    String[] opNames = opList.getUserList();
                     String playerName = player.getName().getString();
                     for (String name : opNames) {
                         if (name.equalsIgnoreCase(playerName)) {
@@ -250,40 +259,40 @@ public class SimpleDeathBans implements ModInitializer {
                     // Send mutual exclusivity messages to server
                     if (soulLinkOverridden) {
                         // Soul Link was actively disabled by enabling Shared Health
-                        Text msg1 = Text.literal("\u00a7k><\u00a7r ")
-                            .append(Text.literal("Soul Link has been disabled.").formatted(Formatting.RED))
-                            .append(Text.literal(" \u00a7k><\u00a7r"));
-                        context.server().getPlayerManager().broadcast(msg1, false);
+                        Component msg1 = Component.literal("\u00a7k><\u00a7r ")
+                            .append(Component.literal("Soul Link has been disabled.").withStyle(ChatFormatting.RED))
+                            .append(Component.literal(" \u00a7k><\u00a7r"));
+                        context.server().getPlayerList().broadcastSystemMessage(msg1, false);
                         
-                        Text msg2 = Text.literal("\u00a7k><\u00a7r ")
-                            .append(Text.literal("Shared Health has been enabled.").formatted(Formatting.GREEN))
-                            .append(Text.literal(" \u00a7k><\u00a7r"));
-                        context.server().getPlayerManager().broadcast(msg2, false);
+                        Component msg2 = Component.literal("\u00a7k><\u00a7r ")
+                            .append(Component.literal("Shared Health has been enabled.").withStyle(ChatFormatting.GREEN))
+                            .append(Component.literal(" \u00a7k><\u00a7r"));
+                        context.server().getPlayerList().broadcastSystemMessage(msg2, false);
                         LOGGER.info("Soul Link disabled, Shared Health enabled by {}", player.getName().getString());
                     } else if (sharedHealthEnabled) {
                         // Just Shared Health enabled (Soul Link wasn't on)
-                        Text serverMsg = Text.literal("\u00a7k><\u00a7r ")
-                            .append(Text.literal("Shared Health has been enabled.").formatted(Formatting.GREEN))
-                            .append(Text.literal(" \u00a7k><\u00a7r"));
-                        context.server().getPlayerManager().broadcast(serverMsg, false);
+                        Component serverMsg = Component.literal("\u00a7k><\u00a7r ")
+                            .append(Component.literal("Shared Health has been enabled.").withStyle(ChatFormatting.GREEN))
+                            .append(Component.literal(" \u00a7k><\u00a7r"));
+                        context.server().getPlayerList().broadcastSystemMessage(serverMsg, false);
                         LOGGER.info("Shared Health enabled by {}", player.getName().getString());
                     }
                     
                     if (soulLinkEnabled) {
                         // Soul Link newly enabled
-                        Text serverMsg = Text.literal("\u00a7k><\u00a7r ")
-                            .append(Text.literal("Soul Link has been enabled.").formatted(Formatting.GREEN))
-                            .append(Text.literal(" \u00a7k><\u00a7r"));
-                        context.server().getPlayerManager().broadcast(serverMsg, false);
+                        Component serverMsg = Component.literal("\u00a7k><\u00a7r ")
+                            .append(Component.literal("Soul Link has been enabled.").withStyle(ChatFormatting.GREEN))
+                            .append(Component.literal(" \u00a7k><\u00a7r"));
+                        context.server().getPlayerList().broadcastSystemMessage(serverMsg, false);
                         LOGGER.info("Soul Link enabled by {}", player.getName().getString());
                     }
                     
                     if (soulLinkBlocked) {
                         // Tried to enable Soul Link while Shared Health is on - just tell them no
-                        Text serverMsg = Text.literal("\u00a7k><\u00a7r ")
-                            .append(Text.literal("Must disable Shared Health before enabling Soul Link.").formatted(Formatting.RED))
-                            .append(Text.literal(" \u00a7k><\u00a7r"));
-                        player.sendMessage(serverMsg, false);
+                        Component serverMsg = Component.literal("\u00a7k><\u00a7r ")
+                            .append(Component.literal("Must disable Shared Health before enabling Soul Link.").withStyle(ChatFormatting.RED))
+                            .append(Component.literal(" \u00a7k><\u00a7r"));
+                        player.sendSystemMessage(serverMsg);
                         LOGGER.info("Soul Link enable blocked - Shared Health is active (attempted by {})", player.getName().getString());
                     }
                     
@@ -329,24 +338,20 @@ public class SimpleDeathBans implements ModInitializer {
                         config.singlePlayerEnabled
                     );
                     
-                    for (ServerPlayerEntity onlinePlayer : context.server().getPlayerManager().getPlayerList()) {
+                    for (ServerPlayer onlinePlayer : context.server().getPlayerList().getPlayers()) {
                         ServerPlayNetworking.send(onlinePlayer, broadcastPayload);
                     }
                     
-                    player.sendMessage(
-                        Text.literal("✔ Configuration saved successfully.")
-                            .formatted(Formatting.GREEN),
-                        false
-                    );
+                    player.sendSystemMessage(
+                        Component.literal("✔ Configuration saved successfully.")
+                            .withStyle(ChatFormatting.GREEN));
                 } else {
                     // Player is NOT an operator - reject and log
                     LOGGER.warn("Non-operator {} attempted to modify config", player.getName().getString());
                     
-                    player.sendMessage(
-                        Text.literal("✖ Must be Operator level 4 in order to make changes.")
-                            .formatted(Formatting.RED),
-                        false
-                    );
+                    player.sendSystemMessage(
+                        Component.literal("✖ Must be Operator level 4 in order to make changes.")
+                            .withStyle(ChatFormatting.RED));
                 }
             });
         });

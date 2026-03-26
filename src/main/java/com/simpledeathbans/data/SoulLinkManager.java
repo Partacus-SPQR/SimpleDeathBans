@@ -6,7 +6,7 @@ import com.google.gson.reflect.TypeToken;
 import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.config.ModConfig;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -48,7 +48,7 @@ public class SoulLinkManager {
     
     public SoulLinkManager(MinecraftServer server) {
         this.server = server;
-        Path rootPath = server.getSavePath(net.minecraft.util.WorldSavePath.ROOT);
+        Path rootPath = server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT);
         this.dataFile = rootPath.resolve("simpledeathbans_soullinks.json");
         this.cooldownsFile = rootPath.resolve("simpledeathbans_soullink_cooldowns.json");
     }
@@ -311,14 +311,14 @@ public class SoulLinkManager {
     }
     
     /**
-     * Get a player's soul partner as a ServerPlayerEntity (if online)
+     * Get a player's soul partner as a ServerPlayer (if online)
      */
-    public Optional<ServerPlayerEntity> getPartnerPlayer(UUID playerUuid) {
+    public Optional<ServerPlayer> getPartnerPlayer(UUID playerUuid) {
         UUID partnerUuid = soulLinks.get(playerUuid);
         if (partnerUuid == null) {
             return Optional.empty();
         }
-        return Optional.ofNullable(server.getPlayerManager().getPlayer(partnerUuid));
+        return Optional.ofNullable(server.getPlayerList().getPlayer(partnerUuid));
     }
     
     /**

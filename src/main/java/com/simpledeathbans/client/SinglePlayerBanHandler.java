@@ -3,9 +3,13 @@ package com.simpledeathbans.client;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.simpledeathbans.SimpleDeathBans;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+//? if >=26.1 {
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+//?} else {
+/*import net.minecraft.client.gui.GuiGraphics;*/
+//?}
+import net.minecraft.network.chat.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,9 +52,9 @@ public class SinglePlayerBanHandler {
      * Gets the path to the ban data file for the current world.
      */
     private static Path getBanDataPath() {
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.getServer() != null) {
-            return client.getServer().getSavePath(net.minecraft.util.WorldSavePath.ROOT)
+        Minecraft client = Minecraft.getInstance();
+        if (client.getSingleplayerServer() != null) {
+            return client.getSingleplayerServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
                     .resolve("simpledeathbans_singleplayer_ban.json");
         }
         return null;
@@ -66,9 +70,9 @@ public class SinglePlayerBanHandler {
         initialTimeFormatted = timeFormatted;
         
         // Get current world name
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.getServer() != null) {
-            currentWorldName = client.getServer().getSaveProperties().getLevelName();
+        Minecraft client = Minecraft.getInstance();
+        if (client.getSingleplayerServer() != null) {
+            currentWorldName = client.getSingleplayerServer().getWorldData().getLevelName();
         }
         
         LOGGER.info("Single-player ban freeze activated - tier: {}, duration: {}ms, ends at: {}", 
@@ -79,28 +83,23 @@ public class SinglePlayerBanHandler {
         
         // Send fancy chat notification to player
         if (client.player != null) {
-            client.player.sendMessage(Text.literal(""), false); // Empty line for spacing
-            client.player.sendMessage(
-                Text.literal("§c§k><§r §4§l☠ DEATH BAN ACTIVATED ☠ §c§k><§r"),
-                false
-            );
-            client.player.sendMessage(
-                Text.literal("§7Ban Tier: §c§l" + tier + " §7| Duration: §c" + timeFormatted),
-                false
-            );
-            client.player.sendMessage(
-                Text.literal("§9§lYou are FROZEN §r§7but §a§lIMMUNE§7 to damage."),
-                false
-            );
-            client.player.sendMessage(
-                Text.literal("§8This ban §npersists§8 if you save & quit - no escaping!"),
-                false
-            );
-            client.player.sendMessage(
-                Text.literal("§8To escape: §7Mod Menu§8 → disable §7Single-Player Mode§8."),
-                false
-            );
-            client.player.sendMessage(Text.literal(""), false); // Empty line for spacing
+            //? if >=26.1 {
+            client.player.sendSystemMessage(Component.literal(""));
+            client.player.sendSystemMessage(Component.literal("§c§k><§r §4§l☠ DEATH BAN ACTIVATED ☠ §c§k><§r"));
+            client.player.sendSystemMessage(Component.literal("§7Ban Tier: §c§l" + tier + " §7| Duration: §c" + timeFormatted));
+            client.player.sendSystemMessage(Component.literal("§9§lYou are FROZEN §r§7but §a§lIMMUNE§7 to damage."));
+            client.player.sendSystemMessage(Component.literal("§8This ban §npersists§8 if you save & quit - no escaping!"));
+            client.player.sendSystemMessage(Component.literal("§8To escape: §7Mod Menu§8 → disable §7Single-Player Mode§8."));
+            client.player.sendSystemMessage(Component.literal(""));
+            //?} else {
+            /*client.player.displayClientMessage(Component.literal(""), false);
+            client.player.displayClientMessage(Component.literal("§c§k><§r §4§l☠ DEATH BAN ACTIVATED ☠ §c§k><§r"), false);
+            client.player.displayClientMessage(Component.literal("§7Ban Tier: §c§l" + tier + " §7| Duration: §c" + timeFormatted), false);
+            client.player.displayClientMessage(Component.literal("§9§lYou are FROZEN §r§7but §a§lIMMUNE§7 to damage."), false);
+            client.player.displayClientMessage(Component.literal("§8This ban §npersists§8 if you save & quit - no escaping!"), false);
+            client.player.displayClientMessage(Component.literal("§8To escape: §7Mod Menu§8 → disable §7Single-Player Mode§8."), false);
+            client.player.displayClientMessage(Component.literal(""), false);*/
+            //?}
         }
     }
     
@@ -146,26 +145,25 @@ public class SinglePlayerBanHandler {
                 LOGGER.info("Restored single-player ban - tier: {}, remaining: {}ms", banTier, remainingMs);
                 
                 // Show fancy message to player
-                MinecraftClient client = MinecraftClient.getInstance();
+                Minecraft client = Minecraft.getInstance();
                 if (client.player != null) {
-                    client.player.sendMessage(Text.literal(""), false);
-                    client.player.sendMessage(
-                        Text.literal("§c§k><§r §4§l☠ BAN RESTORED ☠ §c§k><§r"),
-                        false
-                    );
-                    client.player.sendMessage(
-                        Text.literal("§7Ban Tier: §c§l" + banTier + " §7| Remaining: §c" + getRemainingTimeFormatted()),
-                        false
-                    );
-                    client.player.sendMessage(
-                        Text.literal("§9§lYou are FROZEN §r§7but §a§lIMMUNE§7 to damage."),
-                        false
-                    );
-                    client.player.sendMessage(
-                        Text.literal("§8Nice try! Your ban was saved and restored."),
-                        false
-                    );
-                    client.player.sendMessage(Text.literal(""), false);
+                    //? if >=26.1 {
+                    client.player.sendSystemMessage(Component.literal(""));
+                    client.player.sendSystemMessage(Component.literal("§c§k><§r §4§l☠ BAN RESTORED ☠ §c§k><§r"));
+                    client.player.sendSystemMessage(
+                        Component.literal("§7Ban Tier: §c§l" + banTier + " §7| Remaining: §c" + getRemainingTimeFormatted()));
+                    client.player.sendSystemMessage(Component.literal("§9§lYou are FROZEN §r§7but §a§lIMMUNE§7 to damage."));
+                    client.player.sendSystemMessage(Component.literal("§8Nice try! Your ban was saved and restored."));
+                    client.player.sendSystemMessage(Component.literal(""));
+                    //?} else {
+                    /*client.player.displayClientMessage(Component.literal(""), false);
+                    client.player.displayClientMessage(Component.literal("§c§k><§r §4§l☠ BAN RESTORED ☠ §c§k><§r"), false);
+                    client.player.displayClientMessage(
+                        Component.literal("§7Ban Tier: §c§l" + banTier + " §7| Remaining: §c" + getRemainingTimeFormatted()), false);
+                    client.player.displayClientMessage(Component.literal("§9§lYou are FROZEN §r§7but §a§lIMMUNE§7 to damage."), false);
+                    client.player.displayClientMessage(Component.literal("§8Nice try! Your ban was saved and restored."), false);
+                    client.player.displayClientMessage(Component.literal(""), false);*/
+                    //?}
                 }
             } else {
                 // Ban expired while offline - delete the file
@@ -215,7 +213,7 @@ public class SinglePlayerBanHandler {
     private static boolean isModDisabledInConfig() {
         SimpleDeathBans mod = SimpleDeathBans.getInstance();
         if (mod != null && mod.getConfig() != null) {
-            return !mod.getConfig().singlePlayerEnabled;
+            return !mod.getConfig().singlePlayerEnabled || !mod.getConfig().enableDeathBans;
         }
         return false;
     }
@@ -235,18 +233,19 @@ public class SinglePlayerBanHandler {
             initialTimeFormatted = "";
             deleteBanData();
             
-            MinecraftClient client = MinecraftClient.getInstance();
+            Minecraft client = Minecraft.getInstance();
             if (client.player != null) {
-                client.player.sendMessage(Text.literal(""), false);
-                client.player.sendMessage(
-                    Text.literal("§a§k><§r §2§l✓ MOD DISABLED ✓ §a§k><§r"),
-                    false
-                );
-                client.player.sendMessage(
-                    Text.literal("§aSingle-player death bans have been §l§ndisabled§r§a."),
-                    false
-                );
-                client.player.sendMessage(Text.literal(""), false);
+                //? if >=26.1 {
+                client.player.sendSystemMessage(Component.literal(""));
+                client.player.sendSystemMessage(Component.literal("§a§k><§r §2§l✓ MOD DISABLED ✓ §a§k><§r"));
+                client.player.sendSystemMessage(Component.literal("§aSingle-player death bans have been §l§ndisabled§r§a."));
+                client.player.sendSystemMessage(Component.literal(""));
+                //?} else {
+                /*client.player.displayClientMessage(Component.literal(""), false);
+                client.player.displayClientMessage(Component.literal("§a§k><§r §2§l✓ MOD DISABLED ✓ §a§k><§r"), false);
+                client.player.displayClientMessage(Component.literal("§aSingle-player death bans have been §l§ndisabled§r§a."), false);
+                client.player.displayClientMessage(Component.literal(""), false);*/
+                //?}
             }
             return;
         }
@@ -263,18 +262,19 @@ public class SinglePlayerBanHandler {
             deleteBanData();
             
             // Notify player with fancy message
-            MinecraftClient client = MinecraftClient.getInstance();
+            Minecraft client = Minecraft.getInstance();
             if (client.player != null) {
-                client.player.sendMessage(Text.literal(""), false);
-                client.player.sendMessage(
-                    Text.literal("§a§k><§r §2§l✓ BAN EXPIRED ✓ §a§k><§r"),
-                    false
-                );
-                client.player.sendMessage(
-                    Text.literal("§aYou are §l§nfree§r§a to continue playing. Stay alive!"),
-                    false
-                );
-                client.player.sendMessage(Text.literal(""), false);
+                //? if >=26.1 {
+                client.player.sendSystemMessage(Component.literal(""));
+                client.player.sendSystemMessage(Component.literal("§a§k><§r §2§l✓ BAN EXPIRED ✓ §a§k><§r"));
+                client.player.sendSystemMessage(Component.literal("§aYou are §l§nfree§r§a to continue playing. Stay alive!"));
+                client.player.sendSystemMessage(Component.literal(""));
+                //?} else {
+                /*client.player.displayClientMessage(Component.literal(""), false);
+                client.player.displayClientMessage(Component.literal("§a§k><§r §2§l✓ BAN EXPIRED ✓ §a§k><§r"), false);
+                client.player.displayClientMessage(Component.literal("§aYou are §l§nfree§r§a to continue playing. Stay alive!"), false);
+                client.player.displayClientMessage(Component.literal(""), false);*/
+                //?}
             }
         }
     }
@@ -309,18 +309,19 @@ public class SinglePlayerBanHandler {
             clearBan();
             
             // Notify player with styled message
-            MinecraftClient client = MinecraftClient.getInstance();
+            Minecraft client = Minecraft.getInstance();
             if (client.player != null) {
-                client.player.sendMessage(Text.literal(""), false);
-                client.player.sendMessage(
-                    Text.literal("§a§k><§r §2§l✓ BAN EXPIRED ✓ §a§k><§r"),
-                    false
-                );
-                client.player.sendMessage(
-                    Text.literal("§aYou are §l§nfree§r§a to continue playing. Stay alive!"),
-                    false
-                );
-                client.player.sendMessage(Text.literal(""), false);
+                //? if >=26.1 {
+                client.player.sendSystemMessage(Component.literal(""));
+                client.player.sendSystemMessage(Component.literal("§a§k><§r §2§l✓ BAN EXPIRED ✓ §a§k><§r"));
+                client.player.sendSystemMessage(Component.literal("§aYou are §l§nfree§r§a to continue playing. Stay alive!"));
+                client.player.sendSystemMessage(Component.literal(""));
+                //?} else {
+                /*client.player.displayClientMessage(Component.literal(""), false);
+                client.player.displayClientMessage(Component.literal("§a§k><§r §2§l✓ BAN EXPIRED ✓ §a§k><§r"), false);
+                client.player.displayClientMessage(Component.literal("§aYou are §l§nfree§r§a to continue playing. Stay alive!"), false);
+                client.player.displayClientMessage(Component.literal(""), false);*/
+                //?}
             }
             return false;
         }
@@ -369,66 +370,59 @@ public class SinglePlayerBanHandler {
      * Renders the ban overlay screen.
      * NOTE: Uses raw isBanned flag to avoid triggering expiration check during render.
      */
-    public static void renderBanOverlay(DrawContext context, int screenWidth, int screenHeight) {
-        // Use raw flag check - isBanned() method may clear the ban!
+    //? if >=26.1 {
+    public static void renderBanOverlay(GuiGraphicsExtractor context, int screenWidth, int screenHeight) {
         if (!isBanned) return;
-        
-        MinecraftClient client = MinecraftClient.getInstance();
-        if (client.textRenderer == null) {
-            LOGGER.warn("TextRenderer is null - cannot render overlay text");
-            return;
-        }
-        
-        // Draw semi-transparent dark background - 0xAA = ~67% opacity
-        int backgroundColor = 0xAA000000;
-        context.fill(0, 0, screenWidth, screenHeight, backgroundColor);
-        
-        // Calculate center positions
+        Minecraft client = Minecraft.getInstance();
+        if (client.font == null) return;
+        context.fill(0, 0, screenWidth, screenHeight, 0xAA000000);
         int centerX = screenWidth / 2;
         int centerY = screenHeight / 2;
-        
-        // Use the text renderer directly with drawText instead of drawCenteredTextWithShadow
-        var textRenderer = client.textRenderer;
-        
-        // Title - "BANNED" - Red color
+        var textRenderer = client.font;
         String title = "BANNED";
-        int titleWidth = textRenderer.getWidth(title);
-        context.drawText(textRenderer, title, centerX - titleWidth / 2, centerY - 60, 0xFFFF5555, true);
-        
-        // Subtitle - Purple
+        context.text(textRenderer, title, centerX - textRenderer.width(title) / 2, centerY - 60, 0xFFFF5555, true);
         String subtitle = "You have been claimed by the void.";
-        int subtitleWidth = textRenderer.getWidth(subtitle);
-        context.drawText(textRenderer, subtitle, centerX - subtitleWidth / 2, centerY - 40, 0xFFAA00AA, true);
-        
-        // Time remaining label - Gray
+        context.text(textRenderer, subtitle, centerX - textRenderer.width(subtitle) / 2, centerY - 40, 0xFFAA00AA, true);
         String timeLabel = "Time remaining:";
-        int timeLabelWidth = textRenderer.getWidth(timeLabel);
-        context.drawText(textRenderer, timeLabel, centerX - timeLabelWidth / 2, centerY - 10, 0xFFAAAAAA, true);
-        
-        // Time value - Red
+        context.text(textRenderer, timeLabel, centerX - textRenderer.width(timeLabel) / 2, centerY - 10, 0xFFAAAAAA, true);
         String timeValue = getRemainingTimeFormatted();
-        int timeValueWidth = textRenderer.getWidth(timeValue);
-        context.drawText(textRenderer, timeValue, centerX - timeValueWidth / 2, centerY + 5, 0xFFFF5555, true);
-        
-        // Ban tier - Gray with red number
+        context.text(textRenderer, timeValue, centerX - textRenderer.width(timeValue) / 2, centerY + 5, 0xFFFF5555, true);
         String tierText = "Ban Tier: " + banTier;
-        int tierWidth = textRenderer.getWidth(tierText);
-        context.drawText(textRenderer, tierText, centerX - tierWidth / 2, centerY + 30, 0xFFAAAAAA, true);
-        
-        // Info text - Dark gray
+        context.text(textRenderer, tierText, centerX - textRenderer.width(tierText) / 2, centerY + 30, 0xFFAAAAAA, true);
         String info1 = "Death results in temporary bans.";
-        int info1Width = textRenderer.getWidth(info1);
-        context.drawText(textRenderer, info1, centerX - info1Width / 2, centerY + 55, 0xFF555555, true);
-        
+        context.text(textRenderer, info1, centerX - textRenderer.width(info1) / 2, centerY + 55, 0xFF555555, true);
         String info2 = "Your ban tier increases with each death.";
-        int info2Width = textRenderer.getWidth(info2);
-        context.drawText(textRenderer, info2, centerX - info2Width / 2, centerY + 67, 0xFF555555, true);
-        
-        // Hint about disabling mod - Dark gray
+        context.text(textRenderer, info2, centerX - textRenderer.width(info2) / 2, centerY + 67, 0xFF555555, true);
         String hint = "Open Mod Menu -> Simple Death Bans -> disable Single-Player Mode";
-        int hintWidth = textRenderer.getWidth(hint);
-        context.drawText(textRenderer, hint, centerX - hintWidth / 2, centerY + 90, 0xFF555555, true);
+        context.text(textRenderer, hint, centerX - textRenderer.width(hint) / 2, centerY + 90, 0xFF555555, true);
     }
+    //?} else {
+    /*public static void renderBanOverlay(GuiGraphics context, int screenWidth, int screenHeight) {
+        if (!isBanned) return;
+        Minecraft client = Minecraft.getInstance();
+        if (client.font == null) return;
+        context.fill(0, 0, screenWidth, screenHeight, 0xAA000000);
+        int centerX = screenWidth / 2;
+        int centerY = screenHeight / 2;
+        var textRenderer = client.font;
+        String title = "BANNED";
+        context.drawString(textRenderer, title, centerX - textRenderer.width(title) / 2, centerY - 60, 0xFFFF5555, true);
+        String subtitle = "You have been claimed by the void.";
+        context.drawString(textRenderer, subtitle, centerX - textRenderer.width(subtitle) / 2, centerY - 40, 0xFFAA00AA, true);
+        String timeLabel = "Time remaining:";
+        context.drawString(textRenderer, timeLabel, centerX - textRenderer.width(timeLabel) / 2, centerY - 10, 0xFFAAAAAA, true);
+        String timeValue = getRemainingTimeFormatted();
+        context.drawString(textRenderer, timeValue, centerX - textRenderer.width(timeValue) / 2, centerY + 5, 0xFFFF5555, true);
+        String tierText = "Ban Tier: " + banTier;
+        context.drawString(textRenderer, tierText, centerX - textRenderer.width(tierText) / 2, centerY + 30, 0xFFAAAAAA, true);
+        String info1 = "Death results in temporary bans.";
+        context.drawString(textRenderer, info1, centerX - textRenderer.width(info1) / 2, centerY + 55, 0xFF555555, true);
+        String info2 = "Your ban tier increases with each death.";
+        context.drawString(textRenderer, info2, centerX - textRenderer.width(info2) / 2, centerY + 67, 0xFF555555, true);
+        String hint = "Open Mod Menu -> Simple Death Bans -> disable Single-Player Mode";
+        context.drawString(textRenderer, hint, centerX - textRenderer.width(hint) / 2, centerY + 90, 0xFF555555, true);
+    }*/
+    //?}
     
     /**
      * Called when leaving a world - DO NOT clear ban state, it should persist!
@@ -451,7 +445,7 @@ public class SinglePlayerBanHandler {
     public static void onWorldJoin() {
         LOGGER.info("World join - checking for persisted ban data");
         // Small delay to ensure world is fully loaded
-        MinecraftClient.getInstance().execute(() -> {
+        Minecraft.getInstance().execute(() -> {
             loadBanData();
         });
     }

@@ -4,18 +4,18 @@ import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.config.ModConfig;
 import com.simpledeathbans.data.BanDataManager;
 import com.simpledeathbans.data.SoulLinkManager;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.world.World;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.ChatFormatting;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.level.Level;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -35,28 +35,28 @@ import java.util.UUID;
  */
 public class VoidCrystalTotemItem extends Item {
     
-    public VoidCrystalTotemItem(Settings settings) {
+    public VoidCrystalTotemItem(Item.Properties settings) {
         super(settings);
     }
     
     @Override
-    public boolean hasGlint(ItemStack stack) {
+    public boolean isFoil(ItemStack stack) {
         return true; // Give it the enchantment glint
     }
     
     @Override
-    public ActionResult use(World world, PlayerEntity user, Hand hand) {
-        if (world.isClient()) {
-            return ActionResult.PASS;
+    public InteractionResult use(Level world, Player user, InteractionHand hand) {
+        if (world.isClientSide()) {
+            return InteractionResult.PASS;
         }
         
-        if (!(user instanceof ServerPlayerEntity player)) {
-            return ActionResult.PASS;
+        if (!(user instanceof ServerPlayer player)) {
+            return InteractionResult.PASS;
         }
         
         SimpleDeathBans mod = SimpleDeathBans.getInstance();
         if (mod == null) {
-            return ActionResult.FAIL;
+            return InteractionResult.FAIL;
         }
         
         ModConfig config = mod.getConfig();
@@ -65,27 +65,21 @@ public class VoidCrystalTotemItem extends Item {
         
         // Check if Soul Link is enabled
         if (config == null || !config.enableSoulLink) {
-            player.sendMessage(
-                Text.literal("Soul Link is not enabled on this server.").formatted(Formatting.RED),
-                false
-            );
-            return ActionResult.FAIL;
+            player.sendSystemMessage(Component.literal("Soul Link is not enabled on this server.").withStyle(ChatFormatting.RED));
+            return InteractionResult.FAIL;
         }
         
         if (soulLinkManager == null || banDataManager == null) {
-            return ActionResult.FAIL;
+            return InteractionResult.FAIL;
         }
         
-        UUID playerId = player.getUuid();
+        UUID playerId = player.getUUID();
         
         // Check if player has a soul link to sever
         Optional<UUID> partnerOpt = soulLinkManager.getPartner(playerId);
         if (partnerOpt.isEmpty()) {
-            player.sendMessage(
-                Text.literal("§5✦ §7You have no soul bond to sever... §5✦"),
-                false
-            );
-            return ActionResult.FAIL;
+            player.sendSystemMessage(Component.literal("§5✦ §7You have no soul bond to sever... §5✦"));
+            return InteractionResult.FAIL;
         }
         
         UUID partnerId = partnerOpt.get();
@@ -101,37 +95,31 @@ public class VoidCrystalTotemItem extends Item {
         }
         
         // Consume the item
-        ItemStack heldItem = player.getStackInHand(hand);
-        heldItem.decrement(1);
+        ItemStack heldItem = player.getItemInHand(hand);
+        heldItem.shrink(1);
         
         // Notify the player who severed
-        player.sendMessage(
-            Text.literal("§5✦ §4Breaking a soul bond leaves scars on your soul! §5✦"),
-            false
-        );
+        player.sendSystemMessage(Component.literal("§5✦ §4Breaking a soul bond leaves scars on your soul! §5✦"));
         
         // Play dramatic sound for the player
-        ServerWorld serverWorld = (ServerWorld) world;
+        ServerLevel serverWorld = (ServerLevel) world;
         serverWorld.playSound(null, player.getX(), player.getY(), player.getZ(),
-            SoundEvents.ENTITY_WITHER_SPAWN, SoundCategory.PLAYERS, 0.5f, 0.5f);
+            SoundEvents.WITHER_SPAWN, SoundSource.PLAYERS, 0.5f, 0.5f);
         
         // Notify the ex-partner if online
-        ServerPlayerEntity partner = serverWorld.getServer().getPlayerManager().getPlayer(partnerId);
+        ServerPlayer partner = serverWorld.getServer().getPlayerList().getPlayer(partnerId);
         if (partner != null) {
-            partner.sendMessage(
-                Text.literal("§5✦ §4Your soul bond has been severed! §5✦"),
-                false
-            );
+            partner.sendSystemMessage(Component.literal("§5✦ §4Your soul bond has been severed! §5✦"));
             // Play dramatic sound for partner too
-            ServerWorld partnerWorld = (ServerWorld) partner.getEntityWorld();
+            ServerLevel partnerWorld = (ServerLevel) partner.level();
             partnerWorld.playSound(null, partner.getX(), partner.getY(), partner.getZ(),
-                SoundEvents.ENTITY_WITHER_HURT, SoundCategory.PLAYERS, 0.8f, 0.5f);
+                SoundEvents.WITHER_HURT, SoundSource.PLAYERS, 0.8f, 0.5f);
         }
         
         SimpleDeathBans.LOGGER.info("{} severed their soul link with {} using Void Crystal", 
             player.getName().getString(), partnerName);
         
-        return ActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
     
     private String getPlayerName(UUID playerId) {

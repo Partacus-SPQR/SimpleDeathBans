@@ -6,10 +6,10 @@ import com.simpledeathbans.data.BanDataManager;
 import com.simpledeathbans.data.PlayerDataManager;
 import com.simpledeathbans.data.PlayerDataManager.PlayerActivityData;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.network.chat.Component;
 
 import java.util.UUID;
 
@@ -42,8 +42,8 @@ public class MercyCooldownHandler {
         long currentTime = System.currentTimeMillis();
         
         // Increment playtime for all online players every tick
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            UUID playerId = player.getUuid();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UUID playerId = player.getUUID();
             playerDataManager.incrementPlaytime(playerId, 1);
         }
         
@@ -53,8 +53,8 @@ public class MercyCooldownHandler {
         lastActivityCheck = currentTime;
         
         // Check each online player for mercy cooldown eligibility
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            UUID playerId = player.getUuid();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UUID playerId = player.getUUID();
             String playerName = player.getName().getString();
             
             // Get player activity data
@@ -86,19 +86,25 @@ public class MercyCooldownHandler {
                     playerDataManager.save();
                     
                     // Play feedback sound (only this player hears it)
-                    server.getOverworld().playSound(
+                    server.overworld().playSound(
                         null, // no player exclusion
                         player.getX(), player.getY(), player.getZ(),
-                        SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP,
-                        SoundCategory.PLAYERS,
+                        SoundEvents.EXPERIENCE_ORB_PICKUP,
+                        SoundSource.PLAYERS,
                         1.0f, 1.0f
                     );
                     
                     // Show action bar message: "Your past sins are forgotten."
-                    player.sendMessage(
-                        Text.translatable("simpledeathbans.mercy.forgiven"),
+                    //? if >=26.1 {
+                    player.sendOverlayMessage(
+                        Component.translatable("simpledeathbans.mercy.forgiven")
+                    );
+                    //?} else {
+                    /*player.displayClientMessage(
+                        Component.translatable("simpledeathbans.mercy.forgiven"),
                         true // action bar
                     );
+                    *///?}
                     
                     SimpleDeathBans.LOGGER.info("Mercy cooldown: {} tier reduced to {}", 
                         playerName, newTier);

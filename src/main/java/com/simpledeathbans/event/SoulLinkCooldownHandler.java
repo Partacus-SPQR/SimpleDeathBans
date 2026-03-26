@@ -4,11 +4,11 @@ import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.config.ModConfig;
 import com.simpledeathbans.data.SoulLinkManager;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.network.chat.Component;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -26,7 +26,7 @@ public class SoulLinkCooldownHandler {
      * Called on server tick to periodically check cooldowns.
      */
     public static void onServerTick(MinecraftServer server) {
-        long currentTick = server.getTicks();
+        long currentTick = server.getTickCount();
         
         SimpleDeathBans mod = SimpleDeathBans.getInstance();
         if (mod == null) return;
@@ -56,8 +56,8 @@ public class SoulLinkCooldownHandler {
         }
         
         // Check each online player who doesn't have a partner
-        for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            UUID playerId = player.getUuid();
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            UUID playerId = player.getUUID();
             
             // Skip if already has a partner
             if (soulLinkManager.hasPartner(playerId)) {
@@ -79,30 +79,26 @@ public class SoulLinkCooldownHandler {
             
             if (assignedPartner.isPresent()) {
                 // Successfully paired!
-                ServerPlayerEntity partner = server.getPlayerManager().getPlayer(assignedPartner.get());
+                ServerPlayer partner = server.getPlayerList().getPlayer(assignedPartner.get());
                 
                 if (partner != null) {
                     String partnerName = partner.getName().getString();
                     String playerName = player.getName().getString();
                     
                     // Notify both players with mystical message
-                    player.sendMessage(
-                        Text.literal("§5✦ Your souls are now intertwined with §d§l" + partnerName + " §5✦"),
-                        false
-                    );
-                    partner.sendMessage(
-                        Text.literal("§5✦ Your souls are now intertwined with §d§l" + playerName + " §5✦"),
-                        false
-                    );
+                    player.sendSystemMessage(
+                        Component.literal("§5✦ Your souls are now intertwined with §d§l" + partnerName + " §5✦"));
+                    partner.sendSystemMessage(
+                        Component.literal("§5✦ Your souls are now intertwined with §d§l" + playerName + " §5✦"));
                     
                     // Play binding sound to both
-                    ServerWorld world = (ServerWorld) player.getEntityWorld();
+                    ServerLevel world = (ServerLevel) player.level();
                     world.playSound(null, player.getX(), player.getY(), player.getZ(),
-                        SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.PLAYERS, 1.0f, 0.8f);
+                        SoundEvents.RESPAWN_ANCHOR_SET_SPAWN, SoundSource.PLAYERS, 1.0f, 0.8f);
                     
-                    ServerWorld partnerWorld = (ServerWorld) partner.getEntityWorld();
+                    ServerLevel partnerWorld = (ServerLevel) partner.level();
                     partnerWorld.playSound(null, partner.getX(), partner.getY(), partner.getZ(),
-                        SoundEvents.BLOCK_RESPAWN_ANCHOR_SET_SPAWN, SoundCategory.PLAYERS, 1.0f, 0.8f);
+                        SoundEvents.RESPAWN_ANCHOR_SET_SPAWN, SoundSource.PLAYERS, 1.0f, 0.8f);
                     
                     SimpleDeathBans.LOGGER.info("Soul link auto-assigned after cooldown expired: {} <-> {}", 
                         playerName, partnerName);

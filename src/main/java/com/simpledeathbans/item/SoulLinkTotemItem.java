@@ -3,22 +3,22 @@ package com.simpledeathbans.item;
 import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.config.ModConfig;
 import com.simpledeathbans.data.SoulLinkManager;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -45,118 +45,105 @@ public class SoulLinkTotemItem extends Item {
     
     private static final String COMPASS_USES_KEY = "compass_uses";
     
-    public SoulLinkTotemItem(Settings settings) {
+    public SoulLinkTotemItem(Item.Properties settings) {
         super(settings);
     }
     
     @Override
-    public boolean hasGlint(ItemStack stack) {
+    public boolean isFoil(ItemStack stack) {
         return true; // Give it the enchantment glint
     }
     
     @Override
-    public ActionResult use(World world, PlayerEntity user, Hand hand) {
-        if (world.isClient()) {
-            return ActionResult.PASS;
+    public InteractionResult use(Level world, Player user, InteractionHand hand) {
+        if (world.isClientSide()) {
+            return InteractionResult.PASS;
         }
         
         // Only handle main hand to avoid double-triggering
-        if (hand != Hand.MAIN_HAND) {
-            return ActionResult.PASS;
+        if (hand != InteractionHand.MAIN_HAND) {
+            return InteractionResult.PASS;
         }
         
-        if (!(user instanceof ServerPlayerEntity player)) {
-            return ActionResult.PASS;
+        if (!(user instanceof ServerPlayer player)) {
+            return InteractionResult.PASS;
         }
         
         SimpleDeathBans mod = SimpleDeathBans.getInstance();
         if (mod == null) {
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
         
         ModConfig config = mod.getConfig();
         SoulLinkManager soulLinkManager = mod.getSoulLinkManager();
         
         if (config == null || !config.enableSoulLink || soulLinkManager == null) {
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
         
-        UUID playerId = player.getUuid();
+        UUID playerId = player.getUUID();
         
         // Check if player has a soul link
         Optional<UUID> partnerOpt = soulLinkManager.getPartner(playerId);
         if (partnerOpt.isEmpty()) {
             // No partner - this is just a regular use, pass to let other handlers work
-            return ActionResult.PASS;
+            return InteractionResult.PASS;
         }
         
         // Player has a partner - this is the Soul Compass feature!
         return useSoulCompass(player, hand, soulLinkManager, config, partnerOpt.get());
     }
     
-    private ActionResult useSoulCompass(ServerPlayerEntity player, Hand hand, 
+    private InteractionResult useSoulCompass(ServerPlayer player, InteractionHand hand, 
                                          SoulLinkManager soulLinkManager, ModConfig config, UUID partnerId) {
-        UUID playerId = player.getUuid();
-        ItemStack stack = player.getStackInHand(hand);
+        UUID playerId = player.getUUID();
+        ItemStack stack = player.getItemInHand(hand);
         
         // Check cooldown
         if (soulLinkManager.isOnCompassCooldown(playerId)) {
             long remaining = soulLinkManager.getCompassCooldownRemaining(playerId);
-            player.sendMessage(
-                Text.literal("§5✦ §7Your bond pulses faintly... wait §c" + remaining + " minutes §5✦"),
-                false
-            );
-            return ActionResult.FAIL;
+            player.sendSystemMessage(Component.literal("§5✦ §7Your bond pulses faintly... wait §c" + remaining + " minutes §5✦"));
+            return InteractionResult.FAIL;
         }
         
         // Check remaining uses
         int usesRemaining = getCompassUses(stack, config);
         if (usesRemaining <= 0) {
-            player.sendMessage(
-                Text.literal("§5✦ §7This totem's compass power has faded... §5✦"),
-                false
-            );
-            return ActionResult.FAIL;
+            player.sendSystemMessage(Component.literal("§5✦ §7This totem's compass power has faded... §5✦"));
+            return InteractionResult.FAIL;
         }
         
         // Get partner
-        ServerWorld world = (ServerWorld) player.getEntityWorld();
-        ServerPlayerEntity partner = world.getServer().getPlayerManager().getPlayer(partnerId);
+        ServerLevel world = (ServerLevel) player.level();
+        ServerPlayer partner = world.getServer().getPlayerList().getPlayer(partnerId);
         
         if (partner == null) {
-            player.sendMessage(
-                Text.literal("§5✦ §7Your partner's soul is not in this realm... §5✦"),
-                false
-            );
-            return ActionResult.PASS; // Don't consume use when partner is offline
+            player.sendSystemMessage(Component.literal("§5✦ §7Your partner's soul is not in this realm... §5✦"));
+            return InteractionResult.PASS; // Don't consume use when partner is offline
         }
         
         String partnerName = partner.getName().getString();
         String playerName = player.getName().getString();
         
         // Check if same dimension
-        RegistryKey<World> playerDim = player.getEntityWorld().getRegistryKey();
-        RegistryKey<World> partnerDim = partner.getEntityWorld().getRegistryKey();
+        ResourceKey<Level> playerDim = player.level().dimension();
+        ResourceKey<Level> partnerDim = partner.level().dimension();
         
         if (!playerDim.equals(partnerDim)) {
             // Different dimensions
             String dimName = getDimensionDisplayName(partnerDim);
             
             // Notify player
-            player.sendMessage(
-                Text.literal("§5✦ §dYour bond pulses... §7" + partnerName + " §dis in the §c" + dimName + " §5✦"),
-                false
-            );
+            player.sendSystemMessage(Component.literal("§5✦ §dYour bond pulses... §7" + partnerName + " §dis in the §c" + dimName + " §5✦"));
             
             // Notify partner
-            partner.sendMessage(
-                Text.literal("§5✦ §dYour partner seeks you... §7" + playerName + " §dis in the §c" + getDimensionDisplayName(playerDim) + " §5✦"),
-                false
+            partner.sendSystemMessage(
+                Component.literal("§5✦ §dYour partner seeks you... §7" + playerName + " §dis in the §c" + getDimensionDisplayName(playerDim) + " §5✦")
             );
         } else {
             // Same dimension - calculate direction and distance
-            BlockPos playerPos = player.getBlockPos();
-            BlockPos partnerPos = partner.getBlockPos();
+            BlockPos playerPos = player.blockPosition();
+            BlockPos partnerPos = partner.blockPosition();
             
             double dx = partnerPos.getX() - playerPos.getX();
             double dz = partnerPos.getZ() - playerPos.getZ();
@@ -170,27 +157,21 @@ public class SoulLinkTotemItem extends Item {
             String direction = getDirection(dx, dz);
             
             // Notify player
-            player.sendMessage(
-                Text.literal("§5✦ §dYour bond pulses... §7" + partnerName + " §dis ~" + approxDistance + " blocks to the §e" + direction + " §5✦"),
-                false
-            );
+            player.sendSystemMessage(Component.literal("§5✦ §dYour bond pulses... §7" + partnerName + " §dis ~" + approxDistance + " blocks to the §e" + direction + " §5✦"));
             
             // Notify partner with reverse direction/distance
             String reverseDirection = getDirection(-dx, -dz);
-            partner.sendMessage(
-                Text.literal("§5✦ §dYour partner seeks you... §7" + playerName + " §dis ~" + approxDistance + " blocks to the §e" + reverseDirection + " §5✦"),
-                false
-            );
+            partner.sendSystemMessage(Component.literal("§5✦ §dYour partner seeks you... §7" + playerName + " §dis ~" + approxDistance + " blocks to the §e" + reverseDirection + " §5✦"));
         }
         
         // Play sound for both
-        ServerWorld serverWorld = (ServerWorld) player.getEntityWorld();
+        ServerLevel serverWorld = (ServerLevel) player.level();
         serverWorld.playSound(null, player.getX(), player.getY(), player.getZ(),
-            SoundEvents.BLOCK_AMETHYST_BLOCK_CHIME, SoundCategory.PLAYERS, 1.0f, 1.0f);
+            SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.0f, 1.0f);
         
-        ServerWorld partnerWorld = (ServerWorld) partner.getEntityWorld();
+        ServerLevel partnerWorld = (ServerLevel) partner.level();
         partnerWorld.playSound(null, partner.getX(), partner.getY(), partner.getZ(),
-            SoundEvents.BLOCK_AMETHYST_BLOCK_CHIME, SoundCategory.PLAYERS, 1.0f, 1.0f);
+            SoundEvents.AMETHYST_BLOCK_CHIME, SoundSource.PLAYERS, 1.0f, 1.0f);
         
         // Consume use and set cooldown
         int newUses = usesRemaining - 1;
@@ -199,24 +180,21 @@ public class SoulLinkTotemItem extends Item {
         
         // Check if totem broke
         if (newUses <= 0) {
-            stack.decrement(1);
-            player.sendMessage(
-                Text.literal("§5✦ §4The totem's compass power has been exhausted! §5✦"),
-                false
-            );
+            stack.shrink(1);
+            player.sendSystemMessage(Component.literal("§5✦ §4The totem's compass power has been exhausted! §5✦"));
             
             // Play break sound
             serverWorld.playSound(null, player.getX(), player.getY(), player.getZ(),
-                SoundEvents.ENTITY_ITEM_BREAK, SoundCategory.PLAYERS, 1.0f, 1.0f);
+                SoundEvents.ITEM_BREAK, SoundSource.PLAYERS, 1.0f, 1.0f);
         }
         
-        return ActionResult.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
     
     private int getCompassUses(ItemStack stack, ModConfig config) {
-        NbtComponent customData = stack.get(DataComponentTypes.CUSTOM_DATA);
+        CustomData customData = stack.get(DataComponents.CUSTOM_DATA);
         if (customData != null) {
-            NbtCompound nbt = customData.copyNbt();
+            CompoundTag nbt = customData.copyTag();
             if (nbt.contains(COMPASS_USES_KEY)) {
                 return nbt.getInt(COMPASS_USES_KEY).orElse(config.soulLinkCompassMaxUses);
             }
@@ -226,13 +204,13 @@ public class SoulLinkTotemItem extends Item {
     }
     
     private void setCompassUses(ItemStack stack, int uses) {
-        NbtCompound nbt = new NbtCompound();
-        NbtComponent existing = stack.get(DataComponentTypes.CUSTOM_DATA);
+        CompoundTag nbt = new CompoundTag();
+        CustomData existing = stack.get(DataComponents.CUSTOM_DATA);
         if (existing != null) {
-            nbt = existing.copyNbt();
+            nbt = existing.copyTag();
         }
         nbt.putInt(COMPASS_USES_KEY, uses);
-        stack.set(DataComponentTypes.CUSTOM_DATA, NbtComponent.of(nbt));
+        stack.set(DataComponents.CUSTOM_DATA, CustomData.of(nbt));
     }
     
     private String getDirection(double dx, double dz) {
@@ -254,8 +232,12 @@ public class SoulLinkTotemItem extends Item {
         return "Unknown";
     }
     
-    private String getDimensionDisplayName(RegistryKey<World> dim) {
-        String path = dim.getValue().getPath();
+    private String getDimensionDisplayName(ResourceKey<Level> dim) {
+        //? if >=1.21.11 {
+        String path = dim.identifier().getPath();
+        //?} else {
+        /*String path = dim.location().getPath();*/
+        //?}
         return switch (path) {
             case "overworld" -> "Overworld";
             case "the_nether" -> "Nether";

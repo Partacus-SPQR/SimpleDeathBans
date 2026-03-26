@@ -1,10 +1,14 @@
 package com.simpledeathbans.network;
 
 import com.simpledeathbans.SimpleDeathBans;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+//? if >=1.21.11 {
+import net.minecraft.resources.Identifier;
+//?} else {
+/*import net.minecraft.resources.ResourceLocation;*/
+//?}
 
 /**
  * Network payload sent from server to client when a player dies in single-player.
@@ -14,32 +18,36 @@ public record SinglePlayerBanPayload(
     int banTier,
     long banDurationMs,
     String timeFormatted
-) implements CustomPayload {
+) implements CustomPacketPayload {
     
-    public static final Identifier IDENTIFIER = Identifier.of(SimpleDeathBans.MOD_ID, "singleplayer_ban");
-    public static final Id<SinglePlayerBanPayload> ID = new Id<>(IDENTIFIER);
+    //? if >=1.21.11 {
+    public static final Identifier PAYLOAD_ID = Identifier.fromNamespaceAndPath(SimpleDeathBans.MOD_ID, "singleplayer_ban");
+    //?} else {
+    /*public static final ResourceLocation PAYLOAD_ID = ResourceLocation.fromNamespaceAndPath(SimpleDeathBans.MOD_ID, "singleplayer_ban");*/
+    //?}
+    public static final Type<SinglePlayerBanPayload> ID = new Type<>(PAYLOAD_ID);
     
-    public static final PacketCodec<PacketByteBuf, SinglePlayerBanPayload> CODEC = PacketCodec.of(
+    public static final StreamCodec<FriendlyByteBuf, SinglePlayerBanPayload> CODEC = StreamCodec.ofMember(
         SinglePlayerBanPayload::write,
         SinglePlayerBanPayload::read
     );
     
-    private void write(PacketByteBuf buf) {
+    private void write(FriendlyByteBuf buf) {
         buf.writeInt(banTier);
         buf.writeLong(banDurationMs);
-        buf.writeString(timeFormatted);
+        buf.writeUtf(timeFormatted);
     }
     
-    private static SinglePlayerBanPayload read(PacketByteBuf buf) {
+    private static SinglePlayerBanPayload read(FriendlyByteBuf buf) {
         return new SinglePlayerBanPayload(
             buf.readInt(),
             buf.readLong(),
-            buf.readString()
+            buf.readUtf()
         );
     }
     
     @Override
-    public Id<? extends CustomPayload> getId() {
+    public Type<? extends CustomPacketPayload> type() {
         return ID;
     }
 }

@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-03-26
+
+### Added
+- **Minecraft 26.1 Support** - Full compatibility with the latest Minecraft version
+  - Adapted to MC 26.1's unobfuscated runtime (no mappings required, Java 25)
+  - Updated to Fabric API 0.144.3+26.1
+  - Updated to ModMenu 18.0.0-alpha.7
+
+### Changed
+- **Rendering API** - Updated to MC 26.1's new rendering pipeline (`GuiGraphicsExtractor`, `extractRenderState`, `text`/`centeredText`)
+- **Creative Tab API** - Migrated to Fabric's `CreativeModeTabEvents` (replaces `ItemGroupEvents`) for 26.1
+- **Networking API** - Updated to 26.1's `serverboundPlay`/`clientboundPlay` payload registration
+- **HUD Rendering** - Migrated to `HudElementRegistry` for 26.1 (replaces `HudRenderCallback`)
+- **Player Messages** - Updated to 26.1's `sendSystemMessage`/`sendOverlayMessage` (replaces `displayClientMessage`)
+- **Keybinding API** - Migrated to `KeyMappingHelper` for 26.1 (replaces `KeyBindingHelper`)
+
+### Technical
+- Multi-version support expanded: 1.21.9, 1.21.10, 1.21.11, **26.1**
+- Stonecutter conditionals for all version-specific API differences
+- Cloth Config excluded for 26.1 (not yet available); fallback config screen used
+- Fabric Loom updated to 1.15.5
+
 ## [1.2.1] - 2026-01-01
 
 ### Added
