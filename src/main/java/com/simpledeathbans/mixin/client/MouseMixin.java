@@ -3,6 +3,7 @@ package com.simpledeathbans.mixin.client;
 import com.simpledeathbans.client.SinglePlayerBanHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
+import com.simpledeathbans.compat.ScreenCompat;
 import net.minecraft.client.input.MouseButtonInfo;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,7 +26,7 @@ public class MouseMixin {
      */
     @Inject(method = "onButton", at = @At("HEAD"), cancellable = true)
     private void onMouseButton(long window, MouseButtonInfo mouseInput, int action, CallbackInfo ci) {
-        if (minecraft.hasSingleplayerServer() && SinglePlayerBanHandler.isBanned() && minecraft.screen == null) {
+        if (minecraft.hasSingleplayerServer() && SinglePlayerBanHandler.isBanned() && ScreenCompat.current(minecraft) == null) {
             ci.cancel();
         }
     }
@@ -35,7 +36,7 @@ public class MouseMixin {
      */
     @Inject(method = "onMove", at = @At("HEAD"), cancellable = true)
     private void onCursorPos(long window, double x, double y, CallbackInfo ci) {
-        if (minecraft.hasSingleplayerServer() && SinglePlayerBanHandler.isBanned() && minecraft.screen == null) {
+        if (minecraft.hasSingleplayerServer() && SinglePlayerBanHandler.isBanned() && ScreenCompat.current(minecraft) == null) {
             ci.cancel();
         }
     }
@@ -45,7 +46,7 @@ public class MouseMixin {
      */
     @Inject(method = "onScroll", at = @At("HEAD"), cancellable = true)
     private void onMouseScroll(long window, double horizontal, double vertical, CallbackInfo ci) {
-        if (minecraft.hasSingleplayerServer() && SinglePlayerBanHandler.isBanned() && minecraft.screen == null) {
+        if (minecraft.hasSingleplayerServer() && SinglePlayerBanHandler.isBanned() && ScreenCompat.current(minecraft) == null) {
             ci.cancel();
         }
     }

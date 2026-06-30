@@ -4,6 +4,7 @@ import com.simpledeathbans.client.SinglePlayerBanHandler;
 import net.minecraft.client.KeyboardHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.KeyEvent;
+import com.simpledeathbans.compat.ScreenCompat;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -32,7 +33,7 @@ public class KeyboardMixin {
             // GLFW_KEY_SLASH = 47 (command)
             // GLFW_KEY_ENTER = 257 (send chat)
             // Also allow if a screen is open (like chat screen)
-            if (minecraft.screen != null) {
+            if (ScreenCompat.current(minecraft) != null) {
                 // Allow all input in screens (needed for typing in chat)
                 return;
             }

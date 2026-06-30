@@ -201,7 +201,11 @@ public class DeathEventHandler {
         ServerLevel world = (ServerLevel) player.level();
         
         // Spawn cosmetic lightning at death location (no damage, no fire)
-        LightningBolt lightning = new LightningBolt(EntityType.LIGHTNING_BOLT, world);
+        //? if >=26.2 {
+        LightningBolt lightning = new LightningBolt(net.minecraft.world.entity.EntityTypes.LIGHTNING_BOLT, world);
+        //?} else {
+        /*LightningBolt lightning = new LightningBolt(EntityType.LIGHTNING_BOLT, world);*/
+        //?}
         lightning.teleportTo(player.getX(), player.getY(), player.getZ());
         lightning.setVisualOnly(true); // No damage, no fire
         world.addFreshEntity(lightning);

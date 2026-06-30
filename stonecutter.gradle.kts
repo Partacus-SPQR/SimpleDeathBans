@@ -3,7 +3,7 @@ plugins {
     id("fabric-loom") version "1.15.5" apply false
 }
 
-stonecutter active "26.1" /* [SC] DO NOT EDIT */
+stonecutter active "26.2" /* [SC] DO NOT EDIT */
 
 stonecutter parameters {
     swaps["mod_version"] = "\"" + property("mod.version") + "\";"

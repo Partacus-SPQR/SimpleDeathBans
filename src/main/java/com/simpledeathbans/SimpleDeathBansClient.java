@@ -18,6 +18,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.KeyMapping;
+import com.simpledeathbans.compat.ScreenCompat;
 import net.minecraft.network.chat.Component;
 //? if >=1.21.11 {
 import net.minecraft.resources.Identifier;
@@ -68,8 +69,8 @@ public class SimpleDeathBansClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             // Open config screen
             while (openConfigKeyBinding.consumeClick()) {
-                if (client.screen == null) {
-                    client.setScreen(ModMenuIntegration.getConfigScreen(null));
+                if (ScreenCompat.current(client) == null) {
+                    ScreenCompat.open(client, ModMenuIntegration.getConfigScreen(null));
                 }
             }
             

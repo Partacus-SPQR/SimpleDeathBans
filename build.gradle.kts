@@ -5,8 +5,8 @@ plugins {
 version = "${property("mod.version")}+${stonecutter.current.version}"
 base.archivesName = property("mod.id") as String
 
-// MC 26.1 ships unobfuscated - no mappings needed
-val isUnobfuscated = stonecutter.current.version == "26.1"
+// MC 26.x ships unobfuscated - no mappings needed
+val isUnobfuscated = stonecutter.current.version.startsWith("26.")
 val javaVersion = if (isUnobfuscated) 25 else 21
 
 repositories {

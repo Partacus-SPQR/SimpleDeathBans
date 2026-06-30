@@ -357,7 +357,11 @@ public class ResurrectionRitualManager {
      * Spawns a cosmetic lightning bolt at the given position.
      */
     private void spawnLightning(ServerLevel world, BlockPos pos) {
-        LightningBolt lightning = new LightningBolt(EntityType.LIGHTNING_BOLT, world);
+        //? if >=26.2 {
+        LightningBolt lightning = new LightningBolt(net.minecraft.world.entity.EntityTypes.LIGHTNING_BOLT, world);
+        //?} else {
+        /*LightningBolt lightning = new LightningBolt(EntityType.LIGHTNING_BOLT, world);*/
+        //?}
         lightning.setPos(Vec3.atBottomCenterOf(pos));
         lightning.setVisualOnly(true); // Won't cause fire or damage
         world.addFreshEntity(lightning);

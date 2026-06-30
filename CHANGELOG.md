@@ -5,6 +5,21 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-06-25
+
+### Added
+- **Minecraft 26.2 Support** - Full compatibility with Minecraft 26.2 (unobfuscated runtime, Java 25)
+  - Updated to Fabric API 0.153.0+26.2 and ModMenu 20.0.0-beta.4
+
+### Changed
+- 26.2 is now the primary build target; multi-version builds cover 1.21.9, 1.21.10, 1.21.11, 26.1, and 26.2
+- **Screen API** - Adapted to 26.2 via a new `ScreenCompat` helper (`Minecraft.setScreen` → `setScreenAndShow`; `Minecraft.screen` field → `Minecraft.gui.screen()`)
+- **Lightning entity type** - `EntityType.LIGHTNING_BOLT` → `EntityTypes.LIGHTNING_BOLT` for 26.2 (used by Ghost Echo and the Resurrection ritual)
+
+### Technical
+- Multi-version support expanded: 1.21.9, 1.21.10, 1.21.11, 26.1, **26.2**
+- Server-side logic (ban data, soul link, shared health, networking, mixins) needed no changes — reuses the existing `>=26.1` Stonecutter conditionals; verified on both a dev client and a dedicated server
+
 ## [1.3.0] - 2026-03-26
 
 ### Added

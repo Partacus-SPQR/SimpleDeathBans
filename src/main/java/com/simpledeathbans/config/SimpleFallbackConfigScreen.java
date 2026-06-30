@@ -4,6 +4,7 @@ import com.simpledeathbans.SimpleDeathBans;
 import com.simpledeathbans.network.ConfigSyncPayload;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.Minecraft;
+import com.simpledeathbans.compat.ScreenCompat;
 //? if >=26.1 {
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 //?} else {
@@ -923,7 +924,7 @@ public class SimpleFallbackConfigScreen extends Screen {
             button -> {
                 Minecraft client = Minecraft.getInstance();
                 if (client != null) {
-                    client.setScreen(new KeyBindsScreen(this, client.options));
+                    ScreenCompat.open(client, new KeyBindsScreen(this, client.options));
                 }
             }
         ).bounds(footerX + buttonWidth + SPACING, footerY, buttonWidth, 20).build());
@@ -1047,7 +1048,7 @@ public class SimpleFallbackConfigScreen extends Screen {
     
     @Override
     public void onClose() {
-        Minecraft.getInstance().setScreen(parent);
+        ScreenCompat.open(Minecraft.getInstance(), parent);
     }
     
     @Override

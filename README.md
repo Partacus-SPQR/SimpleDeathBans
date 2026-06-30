@@ -1,9 +1,9 @@
 # Simple Death Bans
 
-[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.9--26.1-green)](https://minecraft.net)
+[![Minecraft](https://img.shields.io/badge/Minecraft-1.21.9--26.2-green)](https://minecraft.net)
 [![Fabric](https://img.shields.io/badge/Mod%20Loader-Fabric-blue)](https://fabricmc.net)
 [![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
-[![Version](https://img.shields.io/badge/Version-1.3.0-orange)](https://modrinth.com/project/simpledeathbans)
+[![Version](https://img.shields.io/badge/Version-1.4.0-orange)](https://modrinth.com/project/simpledeathbans)
 
 A hardcore survival Fabric mod featuring a progressive banning system with Soul Links, Mercy Cooldowns, and Resurrection Rituals.
 
@@ -15,12 +15,13 @@ A hardcore survival Fabric mod featuring a progressive banning system with Soul 
 
 | Minecraft | Mod Version | Fabric Loader | Fabric API | Cloth Config | ModMenu |
 |-----------|-------------|---------------|------------|--------------|---------|
-| **26.1** *(Latest)* | 1.3.0 | ≥0.18.2 | ≥0.144.3 | N/A | ≥18.0.0 |
-| 1.21.11 | 1.3.0 | ≥0.18.2 | ≥0.139.5 | ≥21.11.150 | ≥17.0.0 |
-| 1.21.10 | 1.3.0 | ≥0.18.2 | ≥0.138.3 | ≥20.0.149 | ≥16.0.0 |
-| 1.21.9 | 1.3.0 | ≥0.18.2 | ≥0.134.0 | ≥20.0.149 | ≥16.0.0 |
+| **26.2** *(Latest)* | 1.4.0 | ≥0.18.2 | ≥0.153.0 | N/A | ≥20.0.0 |
+| 26.1 | 1.4.0 | ≥0.18.2 | ≥0.144.3 | N/A | ≥18.0.0 |
+| 1.21.11 | 1.4.0 | ≥0.18.2 | ≥0.139.5 | ≥21.11.150 | ≥17.0.0 |
+| 1.21.10 | 1.4.0 | ≥0.18.2 | ≥0.138.3 | ≥20.0.149 | ≥16.0.0 |
+| 1.21.9 | 1.4.0 | ≥0.18.2 | ≥0.134.0 | ≥20.0.149 | ≥16.0.0 |
 
-> **Note:** Cloth Config and ModMenu are optional but recommended for the best configuration experience. Cloth Config is not yet available for MC 26.1; the fallback config screen is used instead.
+> **Note:** Cloth Config and ModMenu are optional but recommended for the best configuration experience. Cloth Config is not yet available for MC 26.x; the fallback config screen is used instead.
 
 ## Features
 
@@ -308,9 +309,9 @@ Use `/sdb unban <name>` with cheats enabled to self-unban in single-player.
 ```
 
 Output JARs will be in:
-- `versions/1.21.11/build/libs/simpledeathbans-1.2.1+1.21.11.jar`
-- `versions/1.21.10/build/libs/simpledeathbans-1.2.1+1.21.10.jar`
-- `versions/1.21.9/build/libs/simpledeathbans-1.2.1+1.21.9.jar`
+- `versions/1.21.11/build/libs/simpledeathbans-1.4.0+1.21.11.jar`
+- `versions/1.21.10/build/libs/simpledeathbans-1.4.0+1.21.10.jar`
+- `versions/1.21.9/build/libs/simpledeathbans-1.4.0+1.21.9.jar`
 
 ## License
 
